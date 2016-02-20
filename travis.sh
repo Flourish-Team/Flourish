@@ -3,6 +3,7 @@
 echo "Building Premake"
 cd Premake/source/build/gmake.unix
 make
+echo "Building Flourish"
 cd ../../../
 chmod +x ./source/bin/premake5
 ./source/bin/premake5 make
