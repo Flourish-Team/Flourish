@@ -3,7 +3,9 @@
 # This file can be validated on:
 # http://lint.travis-ci.org/
 
-before_script: chmod +x ./travis.sh
+before_script: 
+- chmod +x ./travis.sh
+- chmod +x ./Premake/bin/linux/premake5
 install:
 - if [ "$CXX" = "clang++" ] && [ "$TRAVIS_OS_NAME" = "linux" ]; then export CXX="clang++-3.7" CC="clang-3.7"; fi
 - echo ${PATH}
