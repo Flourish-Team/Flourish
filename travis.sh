@@ -2,7 +2,8 @@
 
 echo "In build script"
 cd Premake
-bin/linux/premake5 make
+chmod +x ./bin/linux/premake5
+./bin/linux/premake5 make
 cd ../Projects/make
 make
 make test
