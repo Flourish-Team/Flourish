@@ -5,6 +5,7 @@ project "Test"
    language "C++"
    targetdir "bin/%{cfg.buildcfg}"
    links { "GoogleTest" }
+   includedirs { "Include", "../../3rdParty/googletest/include" }
 
    files { "Include/**.h", "Source/**.c", "Source/**.cpp" }
 
