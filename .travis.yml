@@ -21,6 +21,7 @@ addons:
     - llvm-toolchain-precise-3.7
     packages:
     - clang-3.7
+    - libc6
 os:
   - linux
   - osx
