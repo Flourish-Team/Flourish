@@ -8,7 +8,7 @@ bin/release/premake5 test
 echo "Building Flourish"
 cd ../
 chmod +x ./source/bin/release/premake5
-./source/bin/release/premake5 make
-cd ../Projects/make
+./source/bin/release/premake5 gmake
+cd ../Projects/gmake
 make
 make test
