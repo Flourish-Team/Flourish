@@ -23,7 +23,6 @@ addons:
     - llvm-toolchain-precise-3.7
     packages:
     - clang-3.7
-    - linux-headers-3.13.0-40-generic
 os:
   - linux
   - osx
