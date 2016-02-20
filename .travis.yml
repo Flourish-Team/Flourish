@@ -3,7 +3,6 @@
 # This file can be validated on:
 # http://lint.travis-ci.org/
 
-install: ./travis_install.rb 
 language: cpp
 compiler: clang
 sudo: false
