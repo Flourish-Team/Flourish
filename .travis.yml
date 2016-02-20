@@ -26,6 +26,7 @@ addons:
     - linux-headers-3.13.0-40-generic
 os:
   - linux
+  - osx
 language: cpp
 compiler: clang
 script: ./travis.sh

@@ -11,4 +11,3 @@ chmod +x ./source/bin/release/premake5
 ./source/bin/release/premake5 gmake
 cd ../Projects/gmake
 make
-make test
