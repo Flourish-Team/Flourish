@@ -1,12 +1,10 @@
-include "../../3rdParty/googletest/premake5.lua"
-
-project "Test"
+project "GoogleTest"
    kind "StaticLib"
    language "C++"
    targetdir "bin/%{cfg.buildcfg}"
-   links { "GoogleTest" }
 
-   files { "Include/**.h", "Source/**.c", "Source/**.cpp" }
+   files { "include/gtest/**.h", "src/**.cc", "scr/**.h" }
+   includedirs { "include", "." }
 
    filter "configurations:Debug"
       defines { "DEBUG" }
