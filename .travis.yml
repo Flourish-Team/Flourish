@@ -6,3 +6,4 @@
 install: ./travis_install.rb 
 language: cpp
 compiler: clang
+sudo: false
