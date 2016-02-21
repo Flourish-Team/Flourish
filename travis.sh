@@ -18,6 +18,7 @@ then
   chmod +x ./Bin/Debug/TestProject
   ./Bin/Debug/TestProject
 elif [ "$BUILD_TYPE" = "release" ]
+then
   chmod +x ./Bin/Debug/TestProject
   ./Bin/Debug/TestProject
 else
