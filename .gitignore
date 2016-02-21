@@ -28,4 +28,4 @@
 *.app
 
 Projects
-/Libs/Test/bin/Debug/*.pdb
+Bin

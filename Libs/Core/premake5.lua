@@ -1,7 +1,7 @@
 project "Core"
    kind "StaticLib"
    language "C++"
-   targetdir "bin/%{cfg.buildcfg}"
+   targetdir "../../Bin/%{cfg.buildcfg}"
 
    files { "Include/**.h", "Source/**.c", "Source/**.cpp" }
 

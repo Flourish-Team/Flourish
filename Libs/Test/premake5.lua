@@ -3,7 +3,7 @@ include "../../3rdParty/googletest/premake5.lua"
 project "Test"
    kind "StaticLib"
    language "C++"
-   targetdir "bin/%{cfg.buildcfg}"
+   targetdir "../../Bin/%{cfg.buildcfg}"
    links { "GoogleTest" }
    includedirs { "Include", "../../3rdParty/googletest/include" }
 
