@@ -3,7 +3,7 @@ project "TestProject"
    language "C++"
    targetdir "bin/%{cfg.buildcfg}"
    includedirs { "../Libs/Test/Include", "../3rdParty/googletest/include" }
-   links { "Test" }
+   links { "Test", "GoogleTest" }
 
    files { 
       "Source/**.cpp",
