@@ -13,7 +13,7 @@ cd ../Projects/gmake
 make config=$BUILD_TYPE
 cd ../../
 
-if[ "$BUILD_TYPE" = "debug" ] then
+if [ "$BUILD_TYPE" = "debug" ] then
   chmod +x ./Bin/Debug/TestProject
   ./Bin/Debug/TestProject
 elif [ "$BUILD_TYPE" = "release" ] then
