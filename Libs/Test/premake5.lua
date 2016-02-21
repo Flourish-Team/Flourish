@@ -7,7 +7,7 @@ project "Test"
    links { "GoogleTest" }
    includedirs { "Include", "../../3rdParty/googletest/include" }
 
-   files { "Include/**.h", "Source/**.c", "Source/**.cpp" }
+   files { "Include/**.h", "Source/**.c", "Source/**.cpp", "Tests/**.cpp" }
 
    filter "configurations:Debug"
       defines { "DEBUG" }
