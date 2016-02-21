@@ -2,6 +2,7 @@
 workspace "Flourish"
    configurations { "Debug", "Release" }
    location("../Projects/" .. _ACTION)
+   flags { "Unicode" }
 
 -- include "../Libs/Core"
 include "../Libs/Test"

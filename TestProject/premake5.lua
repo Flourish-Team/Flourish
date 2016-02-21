@@ -7,7 +7,7 @@ project "TestProject"
 
    files { 
       "Source/**.cpp",
-      "../Libs/Test/Tests/**.cpp"
+      "../Libs/**/Tests/**.cpp"
    }
 
    filter "configurations:Debug"
