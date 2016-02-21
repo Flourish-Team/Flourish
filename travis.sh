@@ -19,8 +19,8 @@ then
   ./Bin/Debug/TestProject
 elif [ "$BUILD_TYPE" = "release" ]
 then
-  chmod +x ./Bin/Debug/TestProject
-  ./Bin/Debug/TestProject
+  chmod +x ./Bin/Release/TestProject
+  ./Bin/Release/TestProject
 else
   echo "Unknown build type $BUILD_TYPE"
 fi
