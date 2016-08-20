@@ -8,6 +8,7 @@ workspace "Flourish"
    		"ExtraWarnings", 
    		"FatalWarnings"
    }
+   defines { "_HAS_EXCEPTIONS=0" }
    rtti ("Off")
    exceptionhandling ("Off")
    floatingpoint "Fast"

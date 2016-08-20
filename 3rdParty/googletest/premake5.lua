@@ -4,7 +4,8 @@ project "GoogleTest"
    targetdir "../../Bin/%{cfg.buildcfg}"
    defines { "GTEST_HAS_PTHREAD=0" }
 
-   files { "include/gtest/**.h", "src/**.cc", "scr/**.h" }
+   --CB: using the unity build file
+   files { "include/gtest/**.h", "scr/**.h", "src/gtest-all.cc" }
    includedirs { "include", "." }
 
    filter "configurations:Debug"
