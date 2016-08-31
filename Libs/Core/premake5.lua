@@ -11,7 +11,6 @@ project "Core"
       "Include/**.inl", 
       "Source/**.c", 
       "Source/**.cpp",
-      "Tests/**.cpp",
 
       -- Add the Premake bat files for easy project rebuilding (Use 
       -- http://stackoverflow.com/questions/5605885/how-to-run-a-bat-from-inside-the-ide to launch from IDE) 

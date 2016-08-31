@@ -11,12 +11,11 @@ TEST(TaskManagerTests, ManualTest)
 	// Also we really need a 'wait'
 	TaskManager _taskManager;
 
-	auto firstId = _taskManager.BeginAdd([](auto p) { std::cout << "First Task!"; });
-	auto secondId = _taskManager.BeginAdd([](auto p) { std::cout << "second Task!"; }, firstId);
+	auto firstId = _taskManager.BeginAdd([](auto) { std::cout << "First Task!"; });
+	auto secondId = _taskManager.BeginAdd([](auto) { std::cout << "second Task!"; }, firstId);
 	_taskManager.FinishAdd(secondId);
 	std::this_thread::sleep_for(std::chrono::seconds(1));
 	_taskManager.FinishAdd(firstId);
 
 	std::this_thread::sleep_for(std::chrono::seconds(2));
-	int foo = 0;
 }

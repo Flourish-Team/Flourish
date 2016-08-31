@@ -82,7 +82,7 @@ namespace Flourish
 
 	void TaskManager::WorkerThreadFunc()
 	{
-		while (true)
+		for (;;)
 		{
 			std::unique_lock<std::mutex> lock(_taskQueueMutex);
 			_workAddedToTaskQueue.wait(lock);
