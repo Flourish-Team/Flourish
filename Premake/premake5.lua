@@ -8,7 +8,7 @@ workspace "Flourish"
     flags { "Symbols" }
    end
 
--- include "../Libs/Core"
+include "../Libs/Core"
 include "../Libs/Test"
 
 -- Include applications that need all the libs last
