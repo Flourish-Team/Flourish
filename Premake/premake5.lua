@@ -12,7 +12,7 @@ workspace "Flourish"
    rtti ("Off")
    exceptionhandling ("Off")
    floatingpoint "Fast"
-   startproject "TestProject"
+   startproject "TestProject" 
 
    -- Stripping symbols from OSX in release causes an error in LD
    if os.get() == "macosx" then
@@ -23,9 +23,11 @@ group("3rdParty")
 	include "../3rdParty/googletest"
 	
 group("Flourish")
-        include "../Libs/Core"
+	include "../Libs/Core"
 	include "../Libs/Test"
 
 -- Include applications that need all the libs last
 group("Examples")
 	include "../TestProject"
+
+
