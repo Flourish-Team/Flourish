@@ -21,12 +21,12 @@ namespace Flourish
 		delete[] _workerThreads;
 	}
 
-	TaskId TaskManager::BeginAdd(TaskFunction taskFunction, TaskId dependsOn /* = 0*/)
+	TaskId TaskManager::BeginAdd(WorkItem workItem, TaskId dependsOn /* = 0*/)
 	{
 		std::lock_guard<std::mutex>openTaskLock(_openTaskQueueMutex);
 		Task task = {};
 		task._id = _nextId++;
-		task._function = taskFunction;
+		task._workItem = workItem;
 		task._dependency = dependsOn;
 		// Setting open work items to 2 prevents race conditions
 		// when adding children
@@ -72,6 +72,14 @@ namespace Flourish
 		}
 	}
 
+	void TaskManager::Wait(TaskId id)
+	{
+		while (TaskPending(id))
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		}
+	}
+
 	void TaskManager::CreateAndStartWorkerThreads()
 	{
 		for (int32_t threadIdx = 0; threadIdx < 5; threadIdx++)
@@ -98,7 +106,7 @@ namespace Flourish
 			auto task = *taskIter;
 			_taskQueue.erase(taskIter);
 			lock.unlock();
-			task._function(nullptr);
+			task._workItem();
 			DecrementOpenWorkItems(task._id);
 		}
 	}
@@ -159,5 +167,19 @@ namespace Flourish
 				}
 			}
 		}
+	}
+
+	bool TaskManager::TaskPending(TaskId id)
+	{
+		std::unique_lock<std::mutex> lock(_openTaskQueueMutex);
+		for (auto& task : _openTaskQueue)
+		{
+			if (task._id == id)
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

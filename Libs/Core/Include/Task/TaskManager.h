@@ -9,16 +9,29 @@
 
 namespace Flourish
 {
-	typedef void (*TaskFunction)(void*);
+	typedef void (*WorkItemFunction)(void*);
 	typedef uint32_t TaskId;
+
+	// A work item is a function and some data
+	// it is assumed that the function knows what
+	// to do with the void* data
+	struct WorkItem
+	{
+		WorkItemFunction _function;
+		void* _data;
+
+		void operator()()
+		{
+			_function(_data);
+		}
+	};
 
 	// AT TODO: 
 	// Thread affinity
-	// We probably want something better than just a function pointer
 	struct Task
 	{
 		TaskId _id;
-		TaskFunction _function;
+		WorkItem _workItem;
 		TaskId _parentId;
 		int32_t _openWorkItems;
 		int32_t _priority;
@@ -31,9 +44,10 @@ namespace Flourish
 		TaskManager();
 		~TaskManager();
 
-		TaskId BeginAdd(TaskFunction task, TaskId dependsOn = 0);
+		TaskId BeginAdd(WorkItem workItem, TaskId dependsOn = 0);
 		void FinishAdd(TaskId id);
 		void AddChild(TaskId parentId, TaskId childId);
+		void Wait(TaskId id);
 
 	private:
 		void CreateAndStartWorkerThreads();
@@ -42,6 +56,7 @@ namespace Flourish
 		std::vector<Task>::iterator GetHighestPriorityTask();
 		void DecrementOpenWorkItems(TaskId id);
 		void NonThreadSafeDecrementOpenWorkItemsRecursive(TaskId id);
+		bool TaskPending(TaskId id);
 
 		TaskId _nextId;
 		std::thread* _workerThreads;
