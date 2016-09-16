@@ -1,11 +1,9 @@
-#pragma once
-
-#include "FString.h"
+#ifndef INCLUDING_FSTRING_IMP_FILE
+#error Trying to include FString.inl separately. Include FString.h instead
+#else
 
 namespace Flourish
 {
-	//A simple wrapper around std::string that allows an FAllocator to be specificed along with extra helper functions
-
 	template<typename CharType>
 	FStringBase<CharType>::FStringBase()
 	{
@@ -13,30 +11,23 @@ namespace Flourish
 	}
 
 	template<typename CharType>
-	FStringBase<CharType>::FStringBase(SizeType numTimesToRepeat, CharType charToRepeat)
+	FStringBase<CharType>::FStringBase(CharType charToRepeat, SizeType numTimesToRepeat)
 		: mString(numTimesToRepeat, charToRepeat)
 	{
 
 	}
 
 	template<typename CharType>
-	FStringBase<CharType>::FStringBase(const InternaStdStringType& other)
-		: mString(other)
+	FStringBase<CharType>::FStringBase(const InternaStdStringType& stdString)
+		: mString(stdString)
 	{
 
 	}
 	
 
 	template<typename CharType>
-	FStringBase<CharType>::FStringBase(const FStringBase<CharType>& other, SizeType pos)
-		: mString(other.mString, pos, NPos)
-	{
-
-	}
-
-	template<typename CharType>
-	FStringBase<CharType>::FStringBase(const FStringBase<CharType>& other, SizeType pos, SizeType count)
-		: mString(other.mString, pos, count)
+	FStringBase<CharType>::FStringBase(const FStringBase<CharType>& other, SizeType substringStartPos, SizeType substringCharCount = NPos)
+		: mString(other.mString, substringStartPos, substringCharCount)
 	{
 
 	}
@@ -49,8 +40,8 @@ namespace Flourish
 	}
 
 	template<typename CharType>
-	FStringBase<CharType>::FStringBase(const CharType* s)
-		: mString(s)
+	FStringBase<CharType>::FStringBase(const CharType* cString)
+		: mString(cString)
 	{
 		//assert(s); 
 	}
@@ -79,8 +70,8 @@ namespace Flourish
 	}
 
 	template<typename CharType>
-	FStringBase<CharType>::FStringBase(InternaStdStringType&& other)
-		: mString(std::move(other))
+	FStringBase<CharType>::FStringBase(InternaStdStringType&& stdString)
+		: mString(std::move(stdString))
 	{
 
 	}
@@ -117,13 +108,13 @@ namespace Flourish
 	}
 
 	template<typename CharType>
-	void FStringBase<CharType>::Reserve(SizeType newCapacity = 0)
+	void FStringBase<CharType>::Reserve(SizeType newSize)
 	{
-		mString.reserve(newCapacity);
+		mString.reserve(newSize);
 	}
 
 	template<typename CharType>
-	bool FStringBase<CharType>::Empty() const
+	bool FStringBase<CharType>::IsEmpty() const
 	{
 		return mString.empty();
 	}
@@ -141,181 +132,228 @@ namespace Flourish
 	}
 
 	template<typename CharType>
-	void FStringBase<CharType>::Resize(SizeType count)
+	void FStringBase<CharType>::Resize(SizeType newSize)
 	{
-		mString.resize(count);
+		mString.resize(newSize);
 	}
 
 	template<typename CharType>
-	void FStringBase<CharType>::Resize(SizeType count, CharType ch)
+	void FStringBase<CharType>::Resize(SizeType newSize, CharType charToFillNewSpaceWith)
 	{
-		mString.resize(count, ch);
+		mString.resize(newSize, ch);
 	}
 
 	template<typename CharType>
-	FStringBase<CharType>&  FStringBase<CharType>::Assign(SizeType count, CharType ch)
+	void FStringBase<CharType>::Set(CharType charToAppend, SizeType numTimesToAppend = 1)
 	{
-		mString.append(count, ch);
-		return *this;
+		mString.assign(numTimesToAppend, charToAppend);
 	}
 
 	template<typename CharType>
-	FStringBase<CharType>& FStringBase<CharType>::Assign(const FStringBase& other)
+	void FStringBase<CharType>::Set(const FStringBase& other, SizeType substringStartPos = 0, SizeType charCount = NPos)
 	{
-		mString.append(other.mString);
-		return *this;
+		mString.assign(other.mString, substringStartPos, charCount);
 	}
 
 	template<typename CharType>
-	FStringBase<CharType>& FStringBase<CharType>::Assign(const FStringBase& other, SizeType pos)
+	void FStringBase<CharType>::Set(FStringBase&& string)
 	{
-		mString.append(other.mString, pos, NPos);
-		return *this;
+		mString.assign(std::move(string.mString));
 	}
 
 	template<typename CharType>
-	FStringBase<CharType>& FStringBase<CharType>::Assign(const FStringBase& other, SizeType pos, SizeType count)
+	void FStringBase<CharType>::Set(InternaStdStringType&& stdString)
 	{
-		mString.append(other.mString, pos, count);
-		return *this;
+		mString.assign(std::move(stdString));
 	}
 
 	template<typename CharType>
-	FStringBase<CharType>& FStringBase<CharType>::Assign(FStringBase&& other)
+	void FStringBase<CharType>::Set(const CharType* charArray, SizeType arraySize)
 	{
-		mString.append(std::move(other.mString));
-		return *this;
+		mString.assign(charArray, arraySize);
 	}
 
 	template<typename CharType>
-	FStringBase<CharType>& FStringBase<CharType>::Assign(const CharType* charArray, SizeType count)
+	void FStringBase<CharType>::Set(const CharType* cString)
 	{
-		mString.append(charArray, count);
-		return *this;
-	}
-
-	template<typename CharType>
-	FStringBase<CharType>& FStringBase<CharType>::Assign(const CharType* charArray)
-	{
-		mString.append(charArray);
-		return *this;
+		mString.assign(cString);
 	}
 
 	template<typename CharType>
 	template<typename InputIterator >
-	FStringBase<CharType>& FStringBase<CharType>::Assign(InputIterator first, InputIterator last)
+	void FStringBase<CharType>::Set(InputIterator first, InputIterator last)
+	{
+		mString.assign(first, last);
+	}
+
+	template<typename CharType>
+	int FStringBase<CharType>::SetFormat(const CharType* formatCString, ...)
+	{
+		va_list args;
+
+		va_start(args, formatCString);
+		int length = vsnprintf(Data(), Capacity(), formatCString, args);
+		va_end(args);
+
+		//assert(addLength >= 0)
+
+		// +1 for null terminator
+		if (Capacity < (length + 1))
+		{
+			//resize and try again
+			Resize(length + 1);
+			va_start(args, formatCString);
+			length = vsnprintf(Data(), length + 1, formatCString, args);
+			va_end(args);
+		}
+
+		return length;
+	}
+
+	template<typename CharType>
+	void FStringBase<CharType>::Append(CharType charToAppend, SizeType numTimesToAppend = 1)
+	{
+		mString.append(numTimesToAppend, charToAppend);
+	}
+
+	template<typename CharType>
+	void FStringBase<CharType>::Append(const FStringBase& other, SizeType substringStartPos = 0, SizeType charCount = NPos)
+	{
+		mString.append(other.mString, substringStartPos, charCount);
+	}
+
+	template<typename CharType>
+	void FStringBase<CharType>::Append(FStringBase&& string)
+	{
+		mString.append(std::move(string.mString));
+	}
+
+	template<typename CharType>
+	void FStringBase<CharType>::Append(InternaStdStringType&& stdString)
+	{
+		mString.append(std::move(stdString));
+	}
+
+	template<typename CharType>
+	void FStringBase<CharType>::Append(const CharType* charArray, SizeType arraySize)
+	{
+		mString.append(charArray, arraySize);
+	}
+
+	template<typename CharType>
+	void FStringBase<CharType>::Append(const CharType* cString)
+	{
+		mString.append(cString);
+	}
+
+	template<typename CharType>
+	template<typename InputIterator >
+	void FStringBase<CharType>::Append(InputIterator first, InputIterator last)
 	{
 		mString.append(first, last);
-		return *this;
 	}
 
 	template<typename CharType>
-	FStringBase<CharType>& FStringBase<CharType>::Insert(SizeType index, SizeType count, CharType ch)
+	int FStringBase<CharType>::AppendFormat(const CharType* formatCString, ...)
 	{
-		mString.insert(index, count, ch);
-		return *this;
-	}
+		va_list args;
 
+		int currentLength = Length();
+
+		va_start(args, formatCString);
+		int addLength = vsnprintf(Data() + currentLength, Capacity() - currentLength, formatCString, args);
+		va_end(args);
+
+		//assert(addLength >= 0)
+
+		// +1 for null terminator
+		if (Capacity < currentLength + addLength + 1)
+		{
+			//resize and try again
+			Resize(currentLength + addLength + 1);
+			va_start(args, formatCString);
+			addLength = vsnprintf(Data() + currentLength, (addLength + 1), formatCString, args);
+			va_end(args);
+		}
+
+		return addLength;
+	}
+	
 	template<typename CharType>
-	FStringBase<CharType>& FStringBase<CharType>::Insert(SizeType index, const CharType* charArray)
+	void FStringBase<CharType>::Insert(SizeType index, CharType charToInsert, int numTimesToInsert = 1)
 	{
-		mString.insert(index, charArray, NPos);
+		mString.insert(index, numTimesToInsert, charToInsert);
 		return *this;
 	}
 
 	template<typename CharType>
-	FStringBase<CharType>& FStringBase<CharType>::Insert(SizeType index, const CharType* charArray, SizeType count)
+	void FStringBase<CharType>::Insert(SizeType index, const CharType* cString)
+	{
+		mString.insert(index, cString);
+		return *this;
+	}
+
+	template<typename CharType>
+	void FStringBase<CharType>::Insert(SizeType index, const CharType* charArray, SizeType count)
 	{
 		mString.insert(index, charArray, count);
 		return *this;
 	}
 
 	template<typename CharType>
-	FStringBase<CharType>& FStringBase<CharType>::Insert(SizeType index, const FStringBase<CharType>& other)
-	{
-		mString.insert(index, other.mString);
-		return *this;
-	}
-
-	template<typename CharType>
-	FStringBase<CharType>& FStringBase<CharType>::Insert(SizeType index, const FStringBase<CharType>& other, SizeType otherSubStrIndex)
-	{
-		mString.insert(index, other.mString, otherSubStrIndex, NPos);
-		return *this;
-	}
-
-	template<typename CharType>
-	FStringBase<CharType>& FStringBase<CharType>::Insert(SizeType index, const FStringBase<CharType>& other, SizeType otherSubStrIndex, SizeType otherSubStrCount)
+	void FStringBase<CharType>::Insert(SizeType index, const FStringBase<CharType>& other, SizeType otherSubStrIndex = 0, SizeType otherSubStrCount = NPos)
 	{
 		mString.insert(index, other.mString, otherSubStrIndex, otherSubStrCount);
 		return *this;
 	}
 
 	template<typename CharType>
-	typename FStringBase<CharType>::Iterator FStringBase<CharType>::Insert(ConstIterator pos, CharType ch)
+	void FStringBase<CharType>::Insert(SizeType index, const InternaStdStringType& stdStringToInsert, SizeType otherSubStrIndex = 0, SizeType otherSubStrCount = NPos)
 	{
-		return mString.insert(pos, ch);
+		mString.insert(index, stdStringToInsert, otherSubStrIndex, otherSubStrCount);
+		return *this;
 	}
 
 	template<typename CharType>
-	typename FStringBase<CharType>::Iterator FStringBase<CharType>::Insert(ConstIterator pos, SizeType count, CharType ch)
+	void FStringBase<CharType>::Insert(ConstIterator pos, CharType charToInsert, SizeType numTimesToInsert = 1)
 	{
-		return mString.insert(pos, count, ch);
+		//assert(numTimesToInsert >= 1);
+		return mString.insert(pos, numTimesToInsert, charToInsert);
 	}
 
 	template<typename CharType>
 	template< typename InputIterator >
-	typename FStringBase<CharType>::Iterator FStringBase<CharType>::Insert(ConstIterator pos, InputIterator first, InputIterator last)
+	void FStringBase<CharType>::Insert(ConstIterator pos, InputIterator first, InputIterator last)
 	{
 		return mString.insert(pos, first, last);
 	}
 
-	template<typename CharType>
-	FStringBase<CharType>& FStringBase<CharType>::Erase(SizeType index = 0)
-	{
-		mString.erase(index, NPos);
-		return *this;
-	}
 
 	template<typename CharType>
-	FStringBase<CharType>& FStringBase<CharType>::Erase(SizeType index, SizeType count)
+	void FStringBase<CharType>::Erase(SizeType index = 0, SizeType count = NPos)
 	{
 		mString.erase(index, count);
-		return *this;
 	}
 
 	template<typename CharType>
-	typename FStringBase<CharType>::Iterator FStringBase<CharType>::Erase(ConstIterator position)
+	void FStringBase<CharType>::Erase(ConstIterator position)
 	{
-		return mString.erase(position);
+		mString.erase(position);
 	}
 
 	template<typename CharType>
-	typename FStringBase<CharType>::Iterator FStringBase<CharType>::Erase(ConstIterator first, ConstIterator last)
+	void FStringBase<CharType>::Erase(ConstIterator first, ConstIterator last)
 	{
-		return mString.erase(first, last);
+		mString.erase(first, last);
 	}
 
 	template<typename CharType>
-	FStringBase<CharType>& FStringBase<CharType>::EraseAll()
+	void FStringBase<CharType>::EraseAll()
 	{
 		mString.erase(0, NPos);
-		return *this;
 	}
 
-	
 
-	template<typename CharType>
-	void FStringBase<CharType>::PushBack(CharType ch)
-	{
-		mString.push_back(ch);
-	}
-
-	template<typename CharType>
-	void FStringBase<CharType>::PopBack()
-	{
-		mString.pop_back();
-	}
 
 	template<typename CharType>
 	int FStringBase<CharType>::Compare(const FStringBase<CharType>& other) const
@@ -342,15 +380,15 @@ namespace Flourish
 	}
 
 	template<typename CharType>
-	int FStringBase<CharType>::Compare(const CharType* charArray) const
+	int FStringBase<CharType>::Compare(const CharType* cString) const
 	{
-		return mString.compare(charArray);
+		return mString.compare(cString);
 	}
 
 	template<typename CharType>
-	int FStringBase<CharType>::Compare(SizeType pos1, SizeType count1, const CharType* charArray) const
+	int FStringBase<CharType>::Compare(SizeType pos1, SizeType count1, const CharType* cString) const
 	{
-		return mString.compare(pos1, count1, charArray);
+		return mString.compare(pos1, count1, cString);
 	}
 
 	template<typename CharType>
@@ -360,94 +398,64 @@ namespace Flourish
 	}
 
 	template<typename CharType>
-	FStringBase<CharType>& FStringBase<CharType>::Replace(SizeType pos, SizeType count, const FStringBase& str)
-	{
-		return mString.replace(pos, count, str.mString);
-	}
-
-	template<typename CharType>
-	FStringBase<CharType>& FStringBase<CharType>::Replace(ConstIterator first, ConstIterator last, const FStringBase& str)
-	{
-		return mString.replace(first, last, str.mString);
-	}
-
-	template<typename CharType>
-	FStringBase<CharType>& FStringBase<CharType>::Replace(SizeType pos, SizeType count, const FStringBase& str, SizeType pos2)
-	{
-		return mString.replace(pos, count, str.mString, pos2, NPos);
-	}
-
-	template<typename CharType>
-	FStringBase<CharType>& FStringBase<CharType>::Replace(SizeType pos, SizeType count, const FStringBase& str, SizeType pos2, SizeType count2)
+	void FStringBase<CharType>::Replace(SizeType pos, SizeType count, const FStringBase& str, SizeType pos2 = 0, SizeType count2 = 0)
 	{
 		return mString.replace(pos, count, str.mString, pos2, count2);
 	}
 
 	template<typename CharType>
+	void FStringBase<CharType>::Replace(SizeType pos, SizeType count, const CharType* cString)
+	{
+		return mString.replace(pos, count, cString);
+	}
+
+	template<typename CharType>
+	void FStringBase<CharType>::Replace(SizeType pos, SizeType count, const CharType* charArray, SizeType charArraySize)
+	{
+		return mString.replace(pos, count, charArray, charArraySize);
+	}
+
+	template<typename CharType>
+	void FStringBase<CharType>::Replace(SizeType pos, SizeType count, CharType charToReplace, SizeType numCharsToInsert)
+	{
+		return mString.replace(pos, count, numCharsToInsert, charToReplace);
+	}
+
+	template<typename CharType>
+	void FStringBase<CharType>::Replace(ConstIterator first, ConstIterator last, const FStringBase& str)
+	{
+		return mString.replace(first, last, str.mString);
+	}
+
+	template<typename CharType>
+	void FStringBase<CharType>::Replace(ConstIterator first, ConstIterator last, const CharType* cString)
+	{
+		return mString.replace(first, last, cString);
+	}
+
+	template<typename CharType>
+	void FStringBase<CharType>::Replace(ConstIterator first, ConstIterator last, const CharType* charArray, SizeType charArraySize)
+	{
+		return mString.replace(first, last, charArray, charArraySize);
+	}
+
+	template<typename CharType>
+	void FStringBase<CharType>::Replace(ConstIterator first, ConstIterator last, CharType charToReplace, SizeType numCharsToInsert)
+	{
+		return mString.replace(first, last, numCharsToInsert, charToReplace);
+	}
+	
+	template<typename CharType>
 	template<typename InputIterator >
-	FStringBase<CharType>& FStringBase<CharType>::Replace(ConstIterator first, ConstIterator last, InputIterator first2, InputIterator last2)
+	void FStringBase<CharType>::Replace(ConstIterator first, ConstIterator last, InputIterator first2, InputIterator last2)
 	{
 		return mString.replace(first, last, first2, last2);
 	}
 
 	template<typename CharType>
-	FStringBase<CharType>& FStringBase<CharType>::Replace(SizeType pos, SizeType count, const CharType* cstr)
+	FStringBase<CharType> FStringBase<CharType>::SubString(SizeType startPos, SizeType count = NPos) const
 	{
-		return mString.replace(pos, count, cstr);
-	}
-
-	template<typename CharType>
-	FStringBase<CharType>& FStringBase<CharType>::Replace(SizeType pos, SizeType count, const CharType* cstr, SizeType count2)
-	{
-		return mString.replace(pos, count, cstr, count2);
-	}
-
-	template<typename CharType>
-	FStringBase<CharType>& FStringBase<CharType>::Replace(ConstIterator first, ConstIterator last, const CharType* cstr)
-	{
-		return mString.replace(first, last, cstr);
-	}
-
-	template<typename CharType>
-	FStringBase<CharType>& FStringBase<CharType>::Replace(ConstIterator first, ConstIterator last, const CharType* cstr, SizeType count2)
-	{
-		return mString.replace(first, last, cstr, count2);
-	}
-
-	template<typename CharType>
-	FStringBase<CharType>& FStringBase<CharType>::Replace(SizeType pos, SizeType count, SizeType count2, CharType ch)
-	{
-		return mString.replace(pos, count, count2, ch);
-	}
-
-	template<typename CharType>
-	FStringBase<CharType>& FStringBase<CharType>::Replace(ConstIterator first, ConstIterator last, SizeType count2, CharType ch)
-	{
-		return mString.replace(first, last, count2, ch);
-	}
-
-	template<typename CharType>
-	FStringBase<CharType> FStringBase<CharType>::SubString(SizeType pos) const
-	{
-		return FStringBase<CharType>(*this, pos, NPos);
-	}
-
-	template<typename CharType>
-	FStringBase<CharType> FStringBase<CharType>::SubString(SizeType pos, SizeType count) const
-	{
-		return FStringBase<CharType>(*this, pos, count);
-	}
-
-	template<typename CharType>
-	typename FStringBase<CharType>::SizeType FStringBase<CharType>::Copy(CharType* dest, SizeType count) const
-	{
-		return mString.copy(dest, count, 0);
-	}
-
-	template<typename CharType>
-	typename FStringBase<CharType>::SizeType FStringBase<CharType>::Copy(CharType* dest, SizeType count, SizeType pos) const
-	{
-		return mString.copy(dest, count, pos);
+		return FStringBase<CharType>(*this, startPos, count);
 	}
 
 	template<typename CharType>
@@ -774,7 +782,7 @@ namespace Flourish
 
 
 	template<typename CharType>
-	const CharType* FStringBase<CharType>::AsCharArray() const
+	const CharType* FStringBase<CharType>::AsCString() const
 	{
 		return mString.c_str();
 	}
@@ -823,7 +831,7 @@ namespace Flourish
 	}
 
 	template<typename CharType>
-	typename FStringBase<CharType>::ConstIterator FStringBase<CharType>::ConstBEndItr() const
+	typename FStringBase<CharType>::ConstIterator FStringBase<CharType>::ConstEndItr() const
 	{
 		return const_cast<const FStringBase<CharType>&>(mString).end();
 	}
@@ -841,9 +849,9 @@ namespace Flourish
 	}
 
 	template<typename CharType>
-	typename FStringBase<CharType>::ConstIterator FStringBase<CharType>::ConstReverseBeginItr() const
+	typename FStringBase<CharType>::ConstReverseIterator FStringBase<CharType>::ConstReverseBeginItr() const
 	{
-		return const_cast<const FStringBase<CharType>&>(mString).rbegin();
+		return const_cast<const InternaStdStringType>(mString).rbegin();
 	}
 
 	template<typename CharType>
@@ -859,9 +867,9 @@ namespace Flourish
 	}
 
 	template<typename CharType>
-	typename FStringBase<CharType>::ConstIterator FStringBase<CharType>::ConstReverseEndItr() const
+	typename FStringBase<CharType>::ConstReverseIterator FStringBase<CharType>::ConstReverseEndItr() const
 	{
-		return const_cast<const FStringBase<CharType>&>(mString).rend();
+		return const_cast<const InternaStdStringType>(mString).rend();
 	}
 
 	template<typename CharType>
@@ -902,139 +910,6 @@ namespace Flourish
 	typename FStringBase<CharType>::ConstReference FStringBase<CharType>::operator[](SizeType pos) const
 	{ 
 		return mString[pos]; 
-	}
-
-	template<typename CharType>
-	FStringBase<CharType>& FStringBase<CharType>::operator+=(const FStringBase<CharType>& str)
-	{ 
-		mString += (str.mString); 
-		return *this; 
-	}
-
-	template<typename CharType>
-	FStringBase<CharType>& FStringBase<CharType>::operator+=(const CharType* s)
-	{ 
-		//assert(s); 
-		mString += (s); 
-		return *this; 
-	}
-
-	template<typename CharType>
-	FStringBase<CharType>& FStringBase<CharType>::operator+=(CharType c)
-	{ 
-		mString += (c); 
-		return *this; 
-	}
-
-	template<typename CharType>
-	FStringBase<CharType> operator+(const FStringBase<CharType>& lhs, const FStringBase<CharType>& rhs)
-	{
-		FString newVal;
-		newVal.Reserve(lhs.Size() + rhs.Size());
-		newVal += lhs;
-		newVal += rhs;
-		return newVal;
-	}
-
-	template<typename CharType>
-	FStringBase<CharType> operator+(const CharType* lhs, const FStringBase<CharType>& rhs)
-	{
-		//assert(lhs);
-		FStringBase<CharType> newVal;
-		FStringBase<CharType>::SizeType lhsLen = std::char_traits<CharType>::length(lhs);
-		newVal.Reserve(lhsLen + rhs.Size());
-		newVal += lhs;
-		newVal += rhs;
-		return newVal;
-	}
-
-	template<typename CharType>
-	FStringBase<CharType> operator+(CharType lhs, const FStringBase<CharType>& rhs)
-	{
-		FStringBase<CharType> newVal;
-		newVal.Reserve(1 + rhs.Size());
-		newVal += lhs;
-		newVal += rhs;
-		return newVal;
-	}
-
-	template<typename CharType>
-	FStringBase<CharType> operator+(const FStringBase<CharType>& lhs, const CharType* rhs)
-	{
-		FStringBase<CharType> newVal;
-		FStringBase<CharType>::SizeType rhsLen = std::char_traits<char>::length(rhs);
-		newVal.Reserve(lhs.Size() + rhsLen);
-		newVal += lhs;
-		newVal += rhs;
-		return newVal;
-	}
-
-	template<typename CharType>
-	FStringBase<CharType> operator+(const FStringBase<CharType>& lhs, CharType rhs)
-	{
-		FStringBase<CharType> newVal;
-		newVal.Reserve(lhs.Size() + 1);
-		newVal += lhs;
-		newVal += rhs;
-		return newVal;
-	}
-
-	template<typename CharType>
-	FStringBase<CharType> operator+(FStringBase<CharType>&& lhs, const FStringBase<CharType>& rhs)
-	{
-		return std::move(lhs.Append(rhs));
-	}
-
-	template<typename CharType>
-	FStringBase<CharType> operator+(const FStringBase<CharType>& lhs, FStringBase<CharType>&& rhs)
-	{
-		return std::move(rhs.Append(lhs));
-	}
-
-	template<typename CharType>
-	FStringBase<CharType> operator+(FStringBase<CharType>&& lhs, FStringBase<CharType>&& rhs)
-	{
-		if (rhs.Size() <= lhs.Capacity() - lhs.Size()
-			|| rhs.Capacity() - rhs.Size() < lhs.Size())
-		{
-			return (std::move(lhs.Append(rhs)));
-		}
-		else
-		{
-			return (std::move(rhs.Insert(0, lhs)));
-		}
-	}
-
-	template<typename CharType>
-	FStringBase<CharType> operator+(const CharType* lhs, FStringBase<CharType>&& rhs)
-	{
-		//assert(lhs);
-		return std::move(rhs.Insert(0, lhs));
-	}
-
-	template<typename CharType>
-	FStringBase<CharType> operator+(CharType lhs, FStringBase<CharType>&& rhs)
-	{
-		return std::move(rhs.Insert(
-			static_cast<FStringBase<CharType>::SizeType>(0),
-			static_cast<FStringBase<CharType>::SizeType>(1),
-			lhs));
-	}
-
-	template<typename CharType>
-	FStringBase<CharType>operator+(FStringBase<CharType>&& lhs, const CharType* rhs)
-	{
-		//assert(rhs);
-		return std::move(lhs.Insert(0, rhs));
-	}
-
-	template<typename CharType>
-	FStringBase<CharType> operator+(FStringBase<CharType>&& lhs, CharType rhs)
-	{
-		return std::move(lhs.Insert(
-			static_cast<FStringBase<CharType>::SizeType>(0),
-			static_cast<FStringBase<CharType>::SizeType>(1),
-			rhs));
 	}
 
 	template<typename CharType>
@@ -1162,3 +1037,5 @@ namespace Flourish
 		return iStream;
 	}
 }
+
+#endif
