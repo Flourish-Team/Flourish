@@ -111,7 +111,7 @@ namespace Flourish
 		}
 	}
 
-	bool TaskManager::TaskQueueHasItems()
+	bool TaskManager::TaskQueueHasItems() const
 	{
 		return _taskQueue.size() > 0;
 	}

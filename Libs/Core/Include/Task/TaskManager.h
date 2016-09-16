@@ -52,7 +52,7 @@ namespace Flourish
 	private:
 		void CreateAndStartWorkerThreads();
 		void WorkerThreadFunc();
-		bool TaskQueueHasItems();
+		bool TaskQueueHasItems() const;
 		std::vector<Task>::iterator GetHighestPriorityTask();
 		void DecrementOpenWorkItems(TaskId id);
 		void NonThreadSafeDecrementOpenWorkItemsRecursive(TaskId id);
