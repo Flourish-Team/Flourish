@@ -15,3 +15,7 @@ project "GoogleTest"
    filter "configurations:Release"
       defines { "NDEBUG" }
       optimize "On"
+
+   configuration "macosx"
+            linkoptions  { "-std=c++11", "-stdlib=libc++" }
+            buildoptions { "-std=c++11", "-stdlib=libc++" }
