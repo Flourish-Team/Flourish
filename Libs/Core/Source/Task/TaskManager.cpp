@@ -12,12 +12,19 @@ namespace Flourish
 		, _workAddedToTaskQueue()
 		, _openTaskQueue()
 		, _openTaskQueueMutex()
+        , _exiting(false)
 	{
 		CreateAndStartWorkerThreads();
 	}
 
 	TaskManager::~TaskManager()
 	{
+        _exiting = true;
+        _workAddedToTaskQueue.notify_all();
+        for (int32_t threadIdx = 0; threadIdx < 5; threadIdx++)
+        {
+            _workerThreads[threadIdx].join();
+        }
 		delete[] _workerThreads;
 	}
 
@@ -93,7 +100,7 @@ namespace Flourish
 
 	void TaskManager::WorkerThreadFunc()
 	{
-		for (;;)
+		while(!_exiting)
 		{
 			std::unique_lock<std::mutex> lock(_taskQueueMutex);
 			_workAddedToTaskQueue.wait(lock);

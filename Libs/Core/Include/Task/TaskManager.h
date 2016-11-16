@@ -65,5 +65,6 @@ namespace Flourish
 		std::condition_variable _workAddedToTaskQueue;
 		std::vector<Task> _openTaskQueue;
 		std::mutex _openTaskQueueMutex;
+        std::atomic_bool _exiting;
 	};
 }
