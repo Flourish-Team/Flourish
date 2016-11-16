@@ -76,6 +76,7 @@ namespace Flourish
 	{
 		while (TaskPending(id))
 		{
+            std::this_thread::yield();
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		}
 	}
@@ -85,7 +86,9 @@ namespace Flourish
 		for (int32_t threadIdx = 0; threadIdx < 5; threadIdx++)
 		{
 			_workerThreads[threadIdx] = std::thread(&TaskManager::WorkerThreadFunc, this);
-		}
+        }
+        std::this_thread::yield();
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	}
 
 	void TaskManager::WorkerThreadFunc()
