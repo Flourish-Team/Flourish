@@ -26,6 +26,7 @@ namespace Flourish
     {
         long currentBottom = _bottom;
         _tasks[currentBottom & Mask] = task;
+        atomic_signal_fence(std::memory_order_release);
         _bottom = currentBottom + 1;
     }
     
@@ -34,7 +35,7 @@ namespace Flourish
     Task* TaskQueue::Pop()
     {
         long newBottom = _bottom - 1;
-        _bottom = newBottom;
+        _bottom.exchange(newBottom);
         
         long currentTop = _top;
         if (currentTop <= newBottom)
@@ -68,6 +69,7 @@ namespace Flourish
     Task* TaskQueue::Steal()
     {
         long currentTop = _top;
+        atomic_signal_fence(std::memory_order_acquire);
         long currentBottom = _bottom;
         if(currentTop < currentBottom)
         {
