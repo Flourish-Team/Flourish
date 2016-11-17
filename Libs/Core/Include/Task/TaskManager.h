@@ -7,41 +7,17 @@
 #include <condition_variable>
 #include <atomic>
 
+#include "Task/Task.h"
+
 namespace Flourish
 {
-	typedef void (*WorkItemFunction)(void*);
-	typedef uint32_t TaskId;
-
-	// A work item is a function and some data
-	// it is assumed that the function knows what
-	// to do with the void* data
-	struct WorkItem
-	{
-		WorkItemFunction _function;
-		void* _data;
-
-		void operator()()
-		{
-			_function(_data);
-		}
-	};
-
-	// AT TODO: 
-	// Thread affinity
-	struct Task
-	{
-		TaskId _id;
-		WorkItem _workItem;
-		TaskId _parentId;
-		int32_t _openWorkItems;
-		int32_t _priority;
-		TaskId _dependency;
-	};
-
 	class TaskManager
 	{
 	public:
-		TaskManager();
+        
+        static const int32_t AutomaticallyDetectNumThreads = -1;
+        
+        TaskManager(int32_t numThreads = TaskManager::AutomaticallyDetectNumThreads);
 		~TaskManager();
 
 		TaskId BeginAdd(WorkItem workItem, TaskId dependsOn = 0);
@@ -57,8 +33,10 @@ namespace Flourish
 		void DecrementOpenWorkItems(TaskId id);
 		void NonThreadSafeDecrementOpenWorkItemsRecursive(TaskId id);
 		bool TaskPending(TaskId id);
+        int32_t GetIdealNumThreads();
 
 		TaskId _nextId;
+        int32_t _numThreads;
 		std::thread* _workerThreads;
 		std::vector<Task> _taskQueue;
 		std::mutex _taskQueueMutex;

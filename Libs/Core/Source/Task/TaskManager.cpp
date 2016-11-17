@@ -4,9 +4,10 @@
 
 namespace Flourish
 {
-	TaskManager::TaskManager()
+	TaskManager::TaskManager(int32_t numThreads)
 		: _nextId(1)
-		, _workerThreads(new std::thread[5])
+        , _numThreads(numThreads)
+		, _workerThreads(nullptr)
 		, _taskQueue()
 		, _taskQueueMutex()
 		, _workAddedToTaskQueue()
@@ -21,7 +22,7 @@ namespace Flourish
 	{
         _exiting = true;
         _workAddedToTaskQueue.notify_all();
-        for (int32_t threadIdx = 0; threadIdx < 5; threadIdx++)
+        for (int32_t threadIdx = 0; threadIdx < _numThreads; threadIdx++)
         {
             _workerThreads[threadIdx].join();
         }
@@ -83,6 +84,7 @@ namespace Flourish
 	{
 		while (TaskPending(id))
 		{
+            WorkerThreadFunc();
             std::this_thread::yield();
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		}
@@ -90,7 +92,12 @@ namespace Flourish
 
 	void TaskManager::CreateAndStartWorkerThreads()
 	{
-		for (int32_t threadIdx = 0; threadIdx < 5; threadIdx++)
+        if(_numThreads == TaskManager::AutomaticallyDetectNumThreads)
+        {
+            _numThreads = GetIdealNumThreads();
+        }
+        _workerThreads = new std::thread[_numThreads];
+		for (int32_t threadIdx = 0; threadIdx < _numThreads; threadIdx++)
 		{
 			_workerThreads[threadIdx] = std::thread(&TaskManager::WorkerThreadFunc, this);
         }
@@ -192,4 +199,10 @@ namespace Flourish
 
 		return false;
 	}
+    
+    int32_t TaskManager::GetIdealNumThreads()
+    {
+        // TODO: Actually work this out from something sensible
+        return 5;
+    }
 }
