@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <cstdint>
 
 namespace Flourish
@@ -21,15 +22,12 @@ namespace Flourish
         }
     };
     
-    // AT TODO:
-    // Thread affinity
     struct Task
     {
         TaskId _id;
         WorkItem _workItem;
         TaskId _parentId;
-        int32_t _openWorkItems;
-        int32_t _priority;
+        std::atomic_uint _openWorkItems;
         TaskId _dependency;
     };
 }

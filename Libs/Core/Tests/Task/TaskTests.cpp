@@ -3,7 +3,6 @@
 
 using namespace Flourish;
 
-/*
 
 TEST(TaskManagerTests, TaskRuns)
 {
@@ -19,7 +18,7 @@ TEST(TaskManagerTests, TaskRuns)
 	auto taskId = _taskManager.BeginAdd(waitWorkItem);
 	_taskManager.FinishAdd(taskId);
 
-	//_taskManager.Wait(taskId);
+	_taskManager.Wait(taskId);
 
 	ASSERT_TRUE(taskHasRun) << "Task did not run";
 }
@@ -38,7 +37,7 @@ TEST(TaskManagerTests, WaitingWillRunTask)
     auto taskId = _taskManager.BeginAdd(waitWorkItem);
     _taskManager.FinishAdd(taskId);
     
-    //_taskManager.Wait(taskId);
+    _taskManager.Wait(taskId);
     
     ASSERT_TRUE(taskHasRun) << "Task did not run";
-}*/
+}

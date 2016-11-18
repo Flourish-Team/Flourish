@@ -1,27 +1,28 @@
 #include "Task/TaskManager.h"
 
+#include "Task/TaskQueue.h"
 #include "Platform/Os.h"
 
 namespace Flourish
 {
 	TaskManager::TaskManager(int32_t numThreads)
-		: _nextId(1)
+		: _nextTaskId(1)
+        , _allTasks(nullptr)
         , _numThreads(numThreads)
 		, _workerThreads(nullptr)
-		, _taskQueue()
-		, _taskQueueMutex()
-		, _workAddedToTaskQueue()
-		, _openTaskQueue()
-		, _openTaskQueueMutex()
+        , _taskQueues(nullptr)
+        , _waitForWorkMutex()
+		, _workMaybeAvailable()
         , _exiting(false)
 	{
+        CreateTasks();
 		CreateAndStartWorkerThreads();
 	}
 
 	TaskManager::~TaskManager()
 	{
         _exiting = true;
-        _workAddedToTaskQueue.notify_all();
+        _workMaybeAvailable.notify_all();
         for (int32_t threadIdx = 0; threadIdx < _numThreads; threadIdx++)
         {
             _workerThreads[threadIdx].join();
@@ -31,64 +32,59 @@ namespace Flourish
 
 	TaskId TaskManager::BeginAdd(WorkItem workItem, TaskId dependsOn /* = 0*/)
 	{
-		std::lock_guard<std::mutex>openTaskLock(_openTaskQueueMutex);
-		Task task = {};
-		task._id = _nextId++;
-		task._workItem = workItem;
-		task._dependency = dependsOn;
+        TaskId taskId = _nextTaskId++;
+        auto task = GetTaskFromId(taskId);
+		task->_id = taskId;
+		task->_workItem = workItem;
+		task->_dependency = dependsOn;
 		// Setting open work items to 2 prevents race conditions
 		// when adding children
 		// Because even if the taskFunction for this task is complete
 		// it will still have an openWorkItems of 1 until
 		// FinishAdd is called
-		task._openWorkItems = 2;
-		_openTaskQueue.push_back(task);
-		std::lock_guard<std::mutex>taskQueue(_taskQueueMutex);
-		_taskQueue.push_back(task);
-		return task._id;
+		task->_openWorkItems = 2;
+        // The first task queue is the one for this non-worker thread
+        _taskQueues[0]->Push(task);
+		return task->_id;
 	}
 
 	void TaskManager::FinishAdd(TaskId id)
 	{
-		DecrementOpenWorkItems(id);
-		_workAddedToTaskQueue.notify_one();
+        auto task = GetTaskFromId(id);
+        if(task != nullptr)
+        {
+            task->_openWorkItems--;
+            _workMaybeAvailable.notify_one();
+        }
 	}
-
-	void TaskManager::AddChild(TaskId parentId, TaskId childId)
-	{
-		std::lock_guard<std::mutex>lock(_openTaskQueueMutex);
-		for (auto openTaskIter = _openTaskQueue.begin(); openTaskIter != _openTaskQueue.end(); ++openTaskIter)
-		{
-			if (openTaskIter->_id == childId)
-			{
-				openTaskIter->_parentId = parentId;
-				if (openTaskIter->_openWorkItems <= 0)
-				{
-					// Child task is already complete
-					// Don't bother telling the parent it has a new work item
-					return;
-				}
-			}
-		}
-		for (auto openTaskIter = _openTaskQueue.begin(); openTaskIter != _openTaskQueue.end(); ++openTaskIter)
-		{
-			if (openTaskIter->_id == parentId)
-			{
-				openTaskIter->_openWorkItems++;
-				return;
-			}
-		}
-	}
+    
+    void TaskManager::AddChild(TaskId parent, TaskId child)
+    {
+        auto childTask = GetTaskFromId(child);
+        if(childTask == nullptr)
+        {
+            return;
+        }
+        childTask->_parentId = parent;
+    }
 
 	void TaskManager::Wait(TaskId id)
 	{
-		while (TaskPending(id))
+        auto task = GetTaskFromId(id);
+        if(task == nullptr)
+        {
+            return;
+        }
+		while (task->_openWorkItems > 0)
 		{
-            WorkerThreadFunc();
-            std::this_thread::yield();
-			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            WaitForTaskAndExecute(0);
 		}
 	}
+    
+    void TaskManager::CreateTasks()
+    {
+        _allTasks = new Task[MaxConcurrentTasks];
+    }
 
 	void TaskManager::CreateAndStartWorkerThreads()
 	{
@@ -97,112 +93,109 @@ namespace Flourish
             _numThreads = GetIdealNumThreads();
         }
         _workerThreads = new std::thread[_numThreads];
+        _taskQueues = new TaskQueue*[_numThreads + 1]; // The current, non-worker thread also gets a queue
+        for (int32_t queueIdx = 0; queueIdx < _numThreads + 1; queueIdx++)
+        {
+            _taskQueues[queueIdx] = new TaskQueue();
+        }
 		for (int32_t threadIdx = 0; threadIdx < _numThreads; threadIdx++)
 		{
-			_workerThreads[threadIdx] = std::thread(&TaskManager::WorkerThreadFunc, this);
+			_workerThreads[threadIdx] = std::thread(&TaskManager::WorkerThreadFunc, this, threadIdx + 1);
         }
-        std::this_thread::yield();
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	}
 
-	void TaskManager::WorkerThreadFunc()
+	void TaskManager::WorkerThreadFunc(int32_t threadIdx)
 	{
 		while(!_exiting)
 		{
-			std::unique_lock<std::mutex> lock(_taskQueueMutex);
-			_workAddedToTaskQueue.wait(lock);
-			auto taskIter = GetHighestPriorityTask();			
-			if (taskIter == _taskQueue.end())
-			{
-				// If we get here, we either had a spurious wake-up (https://en.wikipedia.org/wiki/Spurious_wakeup)
-				// or all the queued tasks still have a dependency, in which case we'll hang out until FinishAdd is called
-				// either way, we just unlock and loop back to waiting on the condition_variable
-				lock.unlock();
-				continue;
-			}
-			auto task = *taskIter;
-			_taskQueue.erase(taskIter);
-			lock.unlock();
-			task._workItem();
-			DecrementOpenWorkItems(task._id);
+            WaitForTaskAndExecute(threadIdx);
 		}
 	}
-
-	bool TaskManager::TaskQueueHasItems() const
-	{
-		return _taskQueue.size() > 0;
-	}
-
-	std::vector<Task>::iterator TaskManager::GetHighestPriorityTask()
-	{
-		auto highestPriorityTask = _taskQueue.end();
-		auto highestPriority = INT32_MIN;
-		for (auto taskQueueIter = _taskQueue.begin(); taskQueueIter != _taskQueue.end(); ++taskQueueIter)
-		{
-			if (taskQueueIter->_dependency != 0)
-			{
-				continue; // This task has a non-complete dependency, we can't start it
-			}
-
-			if (taskQueueIter->_priority > highestPriority)
-			{
-				highestPriority = taskQueueIter->_priority;
-				highestPriorityTask = taskQueueIter;
-			}
-		}
-		return highestPriorityTask;
-	}
-
-	void TaskManager::DecrementOpenWorkItems(TaskId id)
-	{
-		std::lock_guard<std::mutex>lock(_openTaskQueueMutex);
-		NonThreadSafeDecrementOpenWorkItemsRecursive(id);
-	}
-
-	void TaskManager::NonThreadSafeDecrementOpenWorkItemsRecursive(TaskId id)
-	{
-		for (auto openTaskIter = _openTaskQueue.begin(); openTaskIter != _openTaskQueue.end(); ++openTaskIter)
-		{
-			if (openTaskIter->_id == id)
-			{
-				openTaskIter->_openWorkItems--;
-				if (openTaskIter->_openWorkItems <= 0)
-				{
-					if (openTaskIter->_parentId != 0)
-					{
-						NonThreadSafeDecrementOpenWorkItemsRecursive(openTaskIter->_parentId);
-					}
-					for (auto dependantTaskIter = _openTaskQueue.begin(); dependantTaskIter != _openTaskQueue.end(); ++dependantTaskIter)
-					{
-						if (dependantTaskIter->_dependency == id)
-						{
-							dependantTaskIter->_dependency = 0;
-						}
-					}
-					_openTaskQueue.erase(openTaskIter);
-					return;
-				}
-			}
-		}
-	}
-
-	bool TaskManager::TaskPending(TaskId id)
-	{
-		std::unique_lock<std::mutex> lock(_openTaskQueueMutex);
-		for (auto& task : _openTaskQueue)
-		{
-			if (task._id == id)
-			{
-				return true;
-			}
-		}
-
-		return false;
-	}
+    
+    void TaskManager::WaitForTaskAndExecute(int32_t threadIdx)
+    {
+        auto task = GetTaskToExecute(threadIdx);
+        if(task == nullptr)
+        {
+            // Wait for a new task to be added
+            std::unique_lock<std::mutex> lock(_waitForWorkMutex);
+            _workMaybeAvailable.wait_for(lock, std::chrono::milliseconds(10));
+            lock.unlock();
+            return;
+        }
+        
+        task->_workItem();
+        FinishTask(task);
+    }
     
     int32_t TaskManager::GetIdealNumThreads()
     {
         // TODO: Actually work this out from something sensible
         return 5;
+    }
+    
+    // TODO: This method of picking a queue could do with improving
+    // the random approach could result in no tasks being done if
+    // there aren't many
+    Task* TaskManager::GetTaskToExecute(uint32_t currentThreadQueueIdx)
+    {
+        auto ourQueue = _taskQueues[currentThreadQueueIdx];
+        auto task = ourQueue->Pop();
+        if(task == nullptr)
+        {
+            // If we're a worker thread, try stealing from
+            // the task queue from the main thread first
+            if(currentThreadQueueIdx != 0)
+            {
+                task = _taskQueues[0]->Steal();
+            }
+            if(task == nullptr)
+            {
+                uint32_t randomIdx = rand() % (_numThreads + 1);
+                if(randomIdx != currentThreadQueueIdx)
+                {
+                    task = _taskQueues[randomIdx]->Steal();
+                }
+                if(task == nullptr)
+                {
+                    return nullptr;
+                }
+            }
+        }
+        auto dependancy = GetTaskFromId(task->_dependency);
+        if(dependancy != nullptr &&
+           dependancy->_openWorkItems > 0)
+        {
+            // The task depends on another that isn't done yet
+            return nullptr;
+        }
+        return task;
+    }
+    
+    Task* TaskManager::GetTaskFromId(TaskId id)
+    {
+        if(id == 0)
+        {
+            return nullptr;
+        }
+        // Id's start at 1, so ID 1 is at index 0
+        auto index = (id - 1) % MaxConcurrentTasks;
+        return &_allTasks[index];
+    }
+    
+    void TaskManager::FinishTask(Task* task)
+    {
+        task->_openWorkItems--;
+        if(task->_openWorkItems == 0)
+        {
+            auto parentTask = GetTaskFromId(task->_parentId);
+            if(parentTask != nullptr)
+            {
+                FinishTask(parentTask);
+            }
+            // We might have just finished the task
+            // another one was waiting on
+            _workMaybeAvailable.notify_one();
+        }
     }
 }
