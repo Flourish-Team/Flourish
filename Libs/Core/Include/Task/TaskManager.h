@@ -35,10 +35,6 @@ namespace Flourish
 		void WorkerThreadFunc(int32_t threadIdx);
         void WaitForTaskAndExecute(int32_t threadIdx);
         int32_t GetIdealNumThreads();
-        // Attempt to get a task for the current thread to execute. Will first try
-        // to get one from the current threads queue, if not, it'll try to steal one
-        // if neither of those gets a task, returns nullptr. Also returns nullptr
-        // if the task it does get has a dependancy that is not finished
         Task* GetTaskToExecute(uint32_t currentThreadQueueIdx);
         Task* GetTaskFromId(TaskId id);
         void FinishTask(Task* task);

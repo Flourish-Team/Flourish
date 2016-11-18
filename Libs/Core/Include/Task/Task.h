@@ -30,5 +30,6 @@ namespace Flourish
         bool _added;
         std::atomic_bool _complete;
         TaskId _dependency;
+        uint8_t padding[24];
     };
 }
