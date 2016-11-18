@@ -45,7 +45,8 @@ namespace Flourish
         
         std::atomic_uint _nextTaskId;
         Task* _allTasks;
-        int32_t _numThreads;
+        uint32_t _numThreads;
+        std::atomic_uint _numQueuedTasks;
 		std::thread* _workerThreads;
         TaskQueue** _taskQueues;
         std::mutex _waitForWorkMutex;

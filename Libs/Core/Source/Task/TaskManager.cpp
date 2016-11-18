@@ -36,6 +36,7 @@ namespace Flourish
 		: _nextTaskId(1)
         , _allTasks(nullptr)
         , _numThreads(numThreads)
+        , _numQueuedTasks(0)
 		, _workerThreads(nullptr)
         , _taskQueues(nullptr)
         , _waitForWorkMutex()
@@ -50,7 +51,7 @@ namespace Flourish
 	{
         _exiting = true;
         _workMaybeAvailable.notify_all();
-        for (int32_t threadIdx = 0; threadIdx < _numThreads; threadIdx++)
+        for (uint32_t threadIdx = 0; threadIdx < _numThreads; threadIdx++)
         {
             _workerThreads[threadIdx].join();
         }
@@ -97,6 +98,7 @@ namespace Flourish
             assert(!task->_added);
             task->_added = true;
             _taskQueues[0]->Push(task);
+            _numQueuedTasks++;
             _workMaybeAvailable.notify_one();
         }
     }
@@ -121,17 +123,17 @@ namespace Flourish
 
 	void TaskManager::CreateAndStartWorkerThreads()
 	{
-        if(_numThreads == TaskManager::AutomaticallyDetectNumThreads)
+        if((int32_t)_numThreads == TaskManager::AutomaticallyDetectNumThreads)
         {
             _numThreads = GetIdealNumThreads();
         }
         _workerThreads = new std::thread[_numThreads];
         _taskQueues = new TaskQueue*[_numThreads + 1]; // The current, non-worker thread also gets a queue
-        for (int32_t queueIdx = 0; queueIdx < _numThreads + 1; queueIdx++)
+        for (uint32_t queueIdx = 0; queueIdx < _numThreads + 1; queueIdx++)
         {
             _taskQueues[queueIdx] = new TaskQueue();
         }
-		for (int32_t threadIdx = 0; threadIdx < _numThreads; threadIdx++)
+		for (uint32_t threadIdx = 0; threadIdx < _numThreads; threadIdx++)
 		{
 			_workerThreads[threadIdx] = std::thread(&TaskManager::WorkerThreadFunc, this, threadIdx + 1);
         }
@@ -150,13 +152,18 @@ namespace Flourish
         auto task = GetTaskToExecute(threadIdx);
         if(task == nullptr)
         {
+            if(_numQueuedTasks > 0)
+            {
+                // Task was added whilst we were looking for one, back to the top!
+                return;
+            }
             // Wait for a new task to be added
             std::unique_lock<std::mutex> lock(_waitForWorkMutex);
-            _workMaybeAvailable.wait_for(lock, std::chrono::milliseconds(10));
+            _workMaybeAvailable.wait(lock);
             lock.unlock();
             return;
         }
-        
+        _numQueuedTasks--;
         task->_workItem();
         FinishTask(task);
     }
@@ -167,35 +174,28 @@ namespace Flourish
         return 5;
     }
     
-    // TODO: This method of picking a queue could do with improving
-    // the random approach could result in no tasks being done if
-    // there aren't many
     Task* TaskManager::GetTaskToExecute(uint32_t currentThreadQueueIdx)
     {
         auto ourQueue = _taskQueues[currentThreadQueueIdx];
         auto task = ourQueue->Pop();
-        if(task == nullptr)
+        if(task != nullptr)
         {
-            // If we're a worker thread, try stealing from
-            // the task queue from the main thread first
-            if(currentThreadQueueIdx != 0)
+            return task;
+        }
+        // Try stealing from one of the other queues
+        for (uint32_t queueIdx = 0; queueIdx < _numThreads + 1; queueIdx++)
+        {
+            if(queueIdx == currentThreadQueueIdx)
             {
-                task = _taskQueues[0]->Steal();
+                continue;
             }
-            if(task == nullptr)
+            auto stolenTask = _taskQueues[queueIdx]->Steal();
+            if(stolenTask != nullptr)
             {
-                uint32_t randomIdx = rand() % (_numThreads + 1);
-                if(randomIdx != currentThreadQueueIdx)
-                {
-                    task = _taskQueues[randomIdx]->Steal();
-                }
-                if(task == nullptr)
-                {
-                    return nullptr;
-                }
+                return stolenTask;
             }
         }
-        return task;
+        return nullptr;
     }
     
     Task* TaskManager::GetTaskFromId(TaskId id)
