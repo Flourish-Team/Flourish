@@ -27,7 +27,8 @@ namespace Flourish
         TaskId _id;
         WorkItem _workItem;
         TaskId _parentId;
-        std::atomic_uint _openWorkItems;
+        bool _added;
+        std::atomic_bool _complete;
         TaskId _dependency;
     };
 }

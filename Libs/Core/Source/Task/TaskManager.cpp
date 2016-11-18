@@ -63,7 +63,8 @@ namespace Flourish
         auto task = GetTaskFromId(taskId);
 		task->_id = taskId;
 		task->_workItem = workItem;
-		task->_openWorkItems = 1;
+        task->_added = false;
+        task->_complete = false;
 		return task->_id;
 	}
     
@@ -93,6 +94,8 @@ namespace Flourish
         if(task != nullptr)
         {
             // The first task queue is the one for this non-worker thread
+            assert(!task->_added);
+            task->_added = true;
             _taskQueues[0]->Push(task);
             _workMaybeAvailable.notify_one();
         }
@@ -105,7 +108,7 @@ namespace Flourish
         {
             return;
         }
-		while (task->_openWorkItems > 0)
+		while (!task->_complete)
 		{
             WaitForTaskAndExecute(0);
 		}
@@ -192,15 +195,6 @@ namespace Flourish
                 }
             }
         }
-        auto dependancy = GetTaskFromId(task->_dependency);
-        if(dependancy != nullptr &&
-           dependancy->_openWorkItems > 0)
-        {
-            // The task depends on another that isn't done yet
-            // so stick it at the back of our queue
-            _taskQueues[currentThreadQueueIdx]->Push(task);
-            return nullptr;
-        }
         return task;
     }
     
@@ -217,17 +211,14 @@ namespace Flourish
     
     void TaskManager::FinishTask(Task* task)
     {
-        task->_openWorkItems--;
-        if(task->_openWorkItems == 0)
+        task->_complete = true;
+        auto parentTask = GetTaskFromId(task->_parentId);
+        if(parentTask != nullptr)
         {
-            auto parentTask = GetTaskFromId(task->_parentId);
-            if(parentTask != nullptr)
-            {
-                FinishTask(parentTask);
-            }
-            // We might have just finished the task
-            // another one was waiting on
-            _workMaybeAvailable.notify_one();
+            FinishTask(parentTask);
         }
+        // We might have just finished the task
+        // another one was waiting on
+        _workMaybeAvailable.notify_one();
     }
 }
