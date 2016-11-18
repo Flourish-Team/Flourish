@@ -23,9 +23,10 @@ namespace Flourish
         TaskManager(int32_t numThreads = TaskManager::AutomaticallyDetectNumThreads);
 		~TaskManager();
 
-		TaskId BeginAdd(WorkItem workItem, TaskId dependsOn = 0);
-		void FinishAdd(TaskId id);
+		TaskId BeginAdd(WorkItem workItem);
+        TaskId AddDependantTasks(TaskId root, std::vector<TaskId> dependancies);
         void AddChild(TaskId parent, TaskId child);
+        void FinishAdd(TaskId id);
 		void Wait(TaskId id);
 
 	private:

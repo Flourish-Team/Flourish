@@ -21,7 +21,7 @@ namespace Flourish
             _function(_data);
         }
     };
-    
+
     struct Task
     {
         TaskId _id;

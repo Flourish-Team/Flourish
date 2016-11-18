@@ -1,10 +1,37 @@
 #include "Task/TaskManager.h"
 
+#include <cassert>
+
 #include "Task/TaskQueue.h"
 #include "Platform/Os.h"
 
 namespace Flourish
 {
+    struct RootAndDependancies
+    {
+        RootAndDependancies(TaskManager* taskManager, TaskId root, std::vector<TaskId> dependanices)
+        {
+            _taskManager = taskManager;
+            _root = root;
+            _dependancies = dependanices;
+        }
+        
+        TaskManager* _taskManager;
+        TaskId _root;
+        std::vector<TaskId> _dependancies;
+    };
+    
+    void WaitForRootThenAddDependancies(void* data)
+    {
+        auto rootAndDependancies = (RootAndDependancies*)data;
+        rootAndDependancies->_taskManager->Wait(rootAndDependancies->_root);
+        for(auto& dependancy : rootAndDependancies->_dependancies)
+        {
+            rootAndDependancies->_taskManager->FinishAdd(dependancy);
+        }
+        delete rootAndDependancies;
+    }
+    
 	TaskManager::TaskManager(int32_t numThreads)
 		: _nextTaskId(1)
         , _allTasks(nullptr)
@@ -30,33 +57,25 @@ namespace Flourish
 		delete[] _workerThreads;
 	}
 
-	TaskId TaskManager::BeginAdd(WorkItem workItem, TaskId dependsOn /* = 0*/)
+	TaskId TaskManager::BeginAdd(WorkItem workItem)
 	{
         TaskId taskId = _nextTaskId++;
         auto task = GetTaskFromId(taskId);
 		task->_id = taskId;
 		task->_workItem = workItem;
-		task->_dependency = dependsOn;
-		// Setting open work items to 2 prevents race conditions
-		// when adding children
-		// Because even if the taskFunction for this task is complete
-		// it will still have an openWorkItems of 1 until
-		// FinishAdd is called
-		task->_openWorkItems = 2;
-        // The first task queue is the one for this non-worker thread
-        _taskQueues[0]->Push(task);
+		task->_openWorkItems = 1;
 		return task->_id;
 	}
-
-	void TaskManager::FinishAdd(TaskId id)
-	{
-        auto task = GetTaskFromId(id);
-        if(task != nullptr)
-        {
-            task->_openWorkItems--;
-            _workMaybeAvailable.notify_one();
-        }
-	}
+    
+    TaskId TaskManager::AddDependantTasks(TaskId root, std::vector<TaskId> dependancies)
+    {
+        WorkItem waitForRootThenAddDependancies;
+        waitForRootThenAddDependancies._data = new RootAndDependancies(this, root, dependancies);
+        waitForRootThenAddDependancies._function = &WaitForRootThenAddDependancies;
+        auto wrapperTaskId = BeginAdd(waitForRootThenAddDependancies);
+        FinishAdd(wrapperTaskId);
+        return wrapperTaskId;
+    }
     
     void TaskManager::AddChild(TaskId parent, TaskId child)
     {
@@ -66,6 +85,17 @@ namespace Flourish
             return;
         }
         childTask->_parentId = parent;
+    }
+    
+    void TaskManager::FinishAdd(TaskId id)
+    {
+        auto task = GetTaskFromId(id);
+        if(task != nullptr)
+        {
+            // The first task queue is the one for this non-worker thread
+            _taskQueues[0]->Push(task);
+            _workMaybeAvailable.notify_one();
+        }
     }
 
 	void TaskManager::Wait(TaskId id)
@@ -167,6 +197,8 @@ namespace Flourish
            dependancy->_openWorkItems > 0)
         {
             // The task depends on another that isn't done yet
+            // so stick it at the back of our queue
+            _taskQueues[currentThreadQueueIdx]->Push(task);
             return nullptr;
         }
         return task;
