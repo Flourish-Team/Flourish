@@ -7,29 +7,29 @@
 
 namespace Flourish
 {
-    struct RootAndDependancies
+    struct RootAndDependencies
     {
-        RootAndDependancies(TaskManager* taskManager, TaskId root, std::vector<TaskId> dependanices)
+        RootAndDependencies(TaskManager* taskManager, TaskId root, std::vector<TaskId> dependenices)
         {
             _taskManager = taskManager;
             _root = root;
-            _dependancies = dependanices;
+            _dependencies = dependenices;
         }
         
         TaskManager* _taskManager;
         TaskId _root;
-        std::vector<TaskId> _dependancies;
+        std::vector<TaskId> _dependencies;
     };
     
-    void WaitForRootThenAddDependancies(void* data)
+    void WaitForRootThenAddDependencies(void* data)
     {
-        auto rootAndDependancies = (RootAndDependancies*)data;
-        rootAndDependancies->_taskManager->Wait(rootAndDependancies->_root);
-        for(auto& dependancy : rootAndDependancies->_dependancies)
+        auto rootAndDependencies = (RootAndDependencies*)data;
+        rootAndDependencies->_taskManager->Wait(rootAndDependencies->_root);
+        for(auto& dependancy : rootAndDependencies->_dependencies)
         {
-            rootAndDependancies->_taskManager->FinishAdd(dependancy);
+            rootAndDependencies->_taskManager->FinishAdd(dependancy);
         }
-        delete rootAndDependancies;
+        delete rootAndDependencies;
     }
     
 	TaskManager::TaskManager(int32_t numThreads)
@@ -69,12 +69,10 @@ namespace Flourish
 		return task->_id;
 	}
     
-    TaskId TaskManager::AddDependantTasks(TaskId root, std::vector<TaskId> dependancies)
+    TaskId TaskManager::AddDependentTasks(TaskId root, std::vector<TaskId> dependencies)
     {
-        WorkItem waitForRootThenAddDependancies;
-        waitForRootThenAddDependancies._data = new RootAndDependancies(this, root, dependancies);
-        waitForRootThenAddDependancies._function = &WaitForRootThenAddDependancies;
-        auto wrapperTaskId = BeginAdd(waitForRootThenAddDependancies);
+        WorkItem waitForRootThenAddDependencies(&WaitForRootThenAddDependencies, new RootAndDependencies(this, root, dependencies));
+        auto wrapperTaskId = BeginAdd(waitForRootThenAddDependencies);
         FinishAdd(wrapperTaskId);
         return wrapperTaskId;
     }
@@ -101,6 +99,13 @@ namespace Flourish
             _numQueuedTasks++;
             _workMaybeAvailable.notify_one();
         }
+    }
+    
+    TaskId TaskManager::AddTaskWithNoChildrenOrDependencies(Flourish::WorkItem workItem)
+    {
+        auto taskId = BeginAdd(workItem);
+        FinishAdd(taskId);
+        return taskId;
     }
 
 	void TaskManager::Wait(TaskId id)

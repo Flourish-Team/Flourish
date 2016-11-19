@@ -24,9 +24,10 @@ namespace Flourish
 		~TaskManager();
 
 		TaskId BeginAdd(WorkItem workItem);
-        TaskId AddDependantTasks(TaskId root, std::vector<TaskId> dependancies);
+        TaskId AddDependentTasks(TaskId root, std::vector<TaskId> dependencies);
         void AddChild(TaskId parent, TaskId child);
         void FinishAdd(TaskId id);
+        TaskId AddTaskWithNoChildrenOrDependencies(WorkItem workItem);
 		void Wait(TaskId id);
 
 	private:
