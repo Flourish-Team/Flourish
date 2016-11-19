@@ -68,3 +68,38 @@ TEST(TaskManagerTests, DependancyMustFinishFirst)
     
     ASSERT_EQUAL(taskRunSatus, 2);
 }
+
+TEST(TaskManagerTests, ParentDoesNotFinishUntilChildFinishes)
+{
+    TaskManager taskManager(0);
+    std::atomic_uint numChildrenFinished(0);
+    
+    WorkItem child1([](void* data){
+        (*(std::atomic_uint*)data)++;
+    }, &numChildrenFinished);
+    WorkItem child2([](void* data){
+        (*(std::atomic_uint*)data)++;
+    }, &numChildrenFinished);
+    WorkItem child3([](void* data){
+        (*(std::atomic_uint*)data)++;
+    }, &numChildrenFinished);
+    
+    WorkItem parent([](void*) {});
+    
+    auto parentId = taskManager.BeginAdd(parent);
+    auto child1Id = taskManager.BeginAdd(child1);
+    auto child2Id = taskManager.BeginAdd(child2);
+    auto child3Id = taskManager.BeginAdd(child3);
+    taskManager.AddChild(parentId, child1Id);
+    taskManager.AddChild(parentId, child2Id);
+    taskManager.AddChild(parentId, child3Id);
+    
+    taskManager.FinishAdd(child3Id);
+    taskManager.FinishAdd(child2Id);
+    taskManager.FinishAdd(child1Id);
+    taskManager.FinishAdd(parentId);
+    
+    taskManager.Wait(parentId);
+    
+    ASSERT_EQUAL(numChildrenFinished, 3u) << "Not all children finished before parent";
+}

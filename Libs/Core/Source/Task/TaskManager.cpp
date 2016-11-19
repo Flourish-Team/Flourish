@@ -65,7 +65,7 @@ namespace Flourish
 		task->_id = taskId;
 		task->_workItem = workItem;
         task->_added = false;
-        task->_complete = false;
+        task->_openWorkItems = 1;
 		return task->_id;
 	}
     
@@ -79,12 +79,18 @@ namespace Flourish
     
     void TaskManager::AddChild(TaskId parent, TaskId child)
     {
+        auto parentTask = GetTaskFromId(parent);
+        if(parentTask == nullptr)
+        {
+            return;
+        }
         auto childTask = GetTaskFromId(child);
         if(childTask == nullptr)
         {
             return;
         }
         childTask->_parentId = parent;
+        parentTask->_openWorkItems++;
     }
     
     void TaskManager::FinishAdd(TaskId id)
@@ -114,7 +120,7 @@ namespace Flourish
         {
             return;
         }
-		while (!task->_complete)
+		while (task->_openWorkItems > 0)
 		{
             WaitForTaskAndExecute(0);
 		}
@@ -216,15 +222,18 @@ namespace Flourish
     
     void TaskManager::FinishTask(Task* task)
     {
-        task->_complete = true;
-        auto parentTask = GetTaskFromId(task->_parentId);
-        if(parentTask != nullptr)
+        task->_openWorkItems--;
+        if(task->_openWorkItems <= 0)
         {
-            FinishTask(parentTask);
+        auto parentTask = GetTaskFromId(task->_parentId);
+            if(parentTask != nullptr)
+            {
+                FinishTask(parentTask);
+            }
+            // We might have just finished the task
+            // another one was waiting on
+            _workMaybeAvailable.notify_one();
         }
-        // We might have just finished the task
-        // another one was waiting on
-        _workMaybeAvailable.notify_one();
     }
     
     TaskQueue* TaskManager::GetTaskQueueForCurrentThread()

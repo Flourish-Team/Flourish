@@ -45,7 +45,7 @@ namespace Flourish
         WorkItem _workItem;
         TaskId _parentId;
         bool _added;
-        std::atomic_bool _complete;
+        std::atomic_uint _openWorkItems;
         TaskId _dependency;
         uint8_t padding[24];
         
@@ -60,7 +60,7 @@ namespace Flourish
             , _workItem(workItem)
             , _parentId(0)
             , _added(false)
-            , _complete(false)
+            , _openWorkItems(1)
             , _dependency(0)
         {
             _workItem = workItem;
