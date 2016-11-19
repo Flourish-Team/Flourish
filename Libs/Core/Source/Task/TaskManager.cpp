@@ -92,8 +92,7 @@ namespace Flourish
         auto task = GetTaskFromId(id);
         if(task != nullptr)
         {
-            // The first task queue is the one for this non-worker thread
-            assert(!task->_added);
+            assert(!task->_added); // If this is hit a task was added twice
             task->_added = true;
             _taskQueues[0]->Push(task);
             _numQueuedTasks++;
@@ -175,8 +174,9 @@ namespace Flourish
     
     int32_t TaskManager::GetIdealNumThreads()
     {
-        // TODO: Actually work this out from something sensible
-        return 5;
+        auto numConcurrentThreads = std::thread::hardware_concurrency();
+        assert(numConcurrentThreads != 0); // If you hit this, it can't be detected
+        return numConcurrentThreads - 1;
     }
     
     Task* TaskManager::GetTaskToExecute(uint32_t currentThreadQueueIdx)
