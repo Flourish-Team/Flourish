@@ -39,6 +39,7 @@ namespace Flourish
         Task* GetTaskToExecute(uint32_t currentThreadQueueIdx);
         Task* GetTaskFromId(TaskId id);
         void FinishTask(Task* task);
+        TaskQueue* GetTaskQueueForCurrentThread();
         
         std::atomic_uint _nextTaskId;
         Task* _allTasks;

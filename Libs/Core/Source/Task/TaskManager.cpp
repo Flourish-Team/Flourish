@@ -94,7 +94,7 @@ namespace Flourish
         {
             assert(!task->_added); // If this is hit a task was added twice
             task->_added = true;
-            _taskQueues[0]->Push(task);
+            GetTaskQueueForCurrentThread()->Push(task);
             _numQueuedTasks++;
             _workMaybeAvailable.notify_one();
         }
@@ -225,5 +225,21 @@ namespace Flourish
         // We might have just finished the task
         // another one was waiting on
         _workMaybeAvailable.notify_one();
+    }
+    
+    TaskQueue* TaskManager::GetTaskQueueForCurrentThread()
+    {
+        for(uint32_t threadIdx = 0; threadIdx < _numThreads; threadIdx++)
+        {
+            if(_workerThreads[threadIdx].get_id() == std::this_thread::get_id())
+            {
+                return _taskQueues[threadIdx + 1];
+            }
+        };
+        
+        // The current thread is not a worker thread. It's probably
+        // the thread that created the TaskManager, but even if it isn't
+        // the only sensible thing to return is queue 0 (which isn't worked by a worker thread)
+        return _taskQueues[0];
     }
 }
