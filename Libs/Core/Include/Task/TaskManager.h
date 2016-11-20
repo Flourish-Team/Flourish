@@ -7,6 +7,7 @@
 #include <condition_variable>
 #include <atomic>
 #include <map>
+#include <functional>
 
 #include "Task/Task.h"
 
@@ -29,6 +30,12 @@ namespace Flourish
         void FinishAdd(TaskId id);
         TaskId AddTaskWithNoChildrenOrDependencies(WorkItem workItem);
 		void Wait(TaskId id);
+        template<typename Callable>
+        WorkItem WorkItemWithTaskAllocator(Callable callable, void* data = nullptr)
+        {
+            // TODO: Make this use an allocator
+            return WorkItem(WorkItemFunction(callable), data);
+        }
 
 	private:
         void CreateTasks();

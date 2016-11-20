@@ -3,41 +3,34 @@
 
 using namespace Flourish;
 
-struct SetBoolWhenRunWorkItem : WorkItem
-{
-    std::atomic_bool _taskHasRun;
-    
-    SetBoolWhenRunWorkItem()
-        : WorkItem([](void* data){ *((std::atomic_bool*)data) = true; }, &_taskHasRun)
-    {
-        
-    }
-    
-};
-
-
 TEST(TaskManagerTests, TaskRuns)
 {
 	TaskManager taskManager;
-    SetBoolWhenRunWorkItem workItem;
+    bool taskHasRun;
+    auto workItem = taskManager.WorkItemWithTaskAllocator([&](void*){
+        taskHasRun = true;
+    });
     
 	auto taskId = taskManager.AddTaskWithNoChildrenOrDependencies(workItem);
 
 	taskManager.Wait(taskId);
 
-	ASSERT_TRUE(workItem._taskHasRun) << "Task did not run";
+	ASSERT_TRUE(taskHasRun) << "Task did not run";
 }
 
 TEST(TaskManagerTests, WaitingWillRunTask)
 {
     TaskManager taskManager(0);
-    SetBoolWhenRunWorkItem workItem;
+    bool taskHasRun;
+    auto workItem = taskManager.WorkItemWithTaskAllocator([&](void*){
+        taskHasRun = true;
+    });
     
     auto taskId = taskManager.AddTaskWithNoChildrenOrDependencies(workItem);
     
     taskManager.Wait(taskId);
     
-    ASSERT_TRUE(workItem._taskHasRun) << "Task did not run";
+    ASSERT_TRUE(taskHasRun) << "Task did not run";
 }
 
 TEST(TaskManagerTests, DependancyMustFinishFirst)
@@ -45,17 +38,15 @@ TEST(TaskManagerTests, DependancyMustFinishFirst)
     TaskManager taskManager(0);
     int32_t taskRunSatus = -1;
     
-    WorkItem workItemA([](void* data) {
-        auto& status = *((int32_t*)data);
-        ASSERT_EQUAL(status, -1) << "Status was not expected value during task A";
-        status = 1;
-    }, &taskRunSatus);
+    auto workItemA = taskManager.WorkItemWithTaskAllocator([&](void*) {
+        ASSERT_EQUAL(taskRunSatus, -1) << "Status was not expected value during task A";
+        taskRunSatus = 1;
+    });
     
-    WorkItem workItemB([](void* data) {
-        auto& status = *((int32_t*)data);
-        ASSERT_EQUAL(status, 1) << "Status was not expected value during task B";
-        status = 2;
-    }, &taskRunSatus);
+    auto workItemB = taskManager.WorkItemWithTaskAllocator([&](void*) {
+        ASSERT_EQUAL(taskRunSatus, 1) << "Status was not expected value during task B";
+        taskRunSatus = 2;
+    });
     
     auto taskA = taskManager.BeginAdd(workItemA);
     auto taskB = taskManager.BeginAdd(workItemB);
@@ -74,17 +65,17 @@ TEST(TaskManagerTests, ParentDoesNotFinishUntilChildFinishes)
     TaskManager taskManager(0);
     std::atomic_uint numChildrenFinished(0);
     
-    WorkItem child1([](void* data){
-        (*(std::atomic_uint*)data)++;
-    }, &numChildrenFinished);
-    WorkItem child2([](void* data){
-        (*(std::atomic_uint*)data)++;
-    }, &numChildrenFinished);
-    WorkItem child3([](void* data){
-        (*(std::atomic_uint*)data)++;
-    }, &numChildrenFinished);
+    auto child1 = taskManager.WorkItemWithTaskAllocator([&](void*){
+        numChildrenFinished++;
+    });
+    auto child2 = taskManager.WorkItemWithTaskAllocator([&](void*){
+        numChildrenFinished++;
+    });
+    auto child3 = taskManager.WorkItemWithTaskAllocator([&](void*){
+        numChildrenFinished++;
+    });
     
-    WorkItem parent([](void*) {});
+    auto parent = taskManager.WorkItemWithTaskAllocator([](void*) {});
     
     auto parentId = taskManager.BeginAdd(parent);
     auto child1Id = taskManager.BeginAdd(child1);
