@@ -2,10 +2,11 @@
 
 #include <atomic>
 #include <cstdint>
+#include <functional>
 
 namespace Flourish
 {
-    typedef void (*WorkItemFunction)(void*);
+    typedef std::function<void(void*)> WorkItemFunction;
     typedef uint32_t TaskId;
     
     // A work item is a function and some data

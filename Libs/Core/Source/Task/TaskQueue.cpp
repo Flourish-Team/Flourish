@@ -1,6 +1,6 @@
 #include "Task/TaskQueue.h"
 
-#include <stdatomic.h>
+#include <atomic>
 
 #include "Task/Task.h"
 
