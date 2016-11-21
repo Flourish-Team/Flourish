@@ -11,7 +11,7 @@ namespace Flourish
     {
         if(!splitter->ShouldSplit(data, dataCount))
         {
-            auto taskId = taskSystem->BeginAdd(taskSystem->WorkItemWithTaskAllocator([&](void*){
+            auto taskId = taskSystem->BeginAdd(taskSystem->WorkItemWithTaskAllocator([=](void*){
                 workFunc(data, dataCount);
             }));
             taskSystem->AddChild(parentTask, taskId);

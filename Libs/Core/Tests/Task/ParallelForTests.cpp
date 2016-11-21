@@ -283,3 +283,32 @@ TEST(ParallelForTests, ShouldSplitCorrectly)
     ASSERT_EQUAL(recordReplaySplitter._dataList[2], &dummyData[expectedOffset]) << "Third split did not have correct data";
     ASSERT_EQUAL(recordReplaySplitter._dataCountList[2], expectedSize) << "Third split did not have correct data count";
 }
+
+#include "Task/CountSplitter.h"
+#include "Task/TaskManager.h"
+TEST(ParallelForTests, RunsAllTasks)
+{
+    const uint32_t dummyDataSize = 100;
+    int dummyData[dummyDataSize];
+    CountSplitter<int> countSplitter(10);
+    TaskManager taskManager;
+    for(uint32_t index = 0; index < dummyDataSize; index++)
+    {
+        dummyData[index] = index;
+    }
+    
+    auto parallelFor = ParallelFor<int, CountSplitter<int>>(dummyData, dummyDataSize, &countSplitter, [&](int* data, uint32_t dataCount){
+        for(uint32_t index = 0; index < dataCount; index++)
+        {
+            data[index] *= 2;
+        }
+    }, &taskManager);
+    
+    auto taskId = parallelFor.Run();
+    taskManager.Wait(taskId);
+    
+    for(uint32_t index = 0; index < dummyDataSize; index++)
+    {
+        ASSERT_EQUAL(dummyData[index], ((int)index * 2)) << "Data for index " << index << " was incorrect";
+    }
+}

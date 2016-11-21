@@ -31,7 +31,7 @@ namespace Flourish
         
         static WorkItem Empty()
         {
-            return WorkItem(nullptr);
+            return WorkItem([](void*){});
         }
         
         void operator()()
