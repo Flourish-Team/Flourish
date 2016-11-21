@@ -10,6 +10,7 @@
 #include <functional>
 
 #include "Task/Task.h"
+#include "Task/TaskThreadGate.h"
 
 namespace Flourish
 {
@@ -51,11 +52,9 @@ namespace Flourish
         std::atomic_uint _nextTaskId;
         Task* _allTasks;
         uint32_t _numThreads;
-        std::atomic_uint _numQueuedTasks;
 		std::thread* _workerThreads;
         TaskQueue** _taskQueues;
-        std::mutex _waitForWorkMutex;
-        std::condition_variable _workMaybeAvailable;
+        TaskThreadGate<std::condition_variable> _taskThreadGate;
         std::atomic_bool _exiting;
 	};
 }

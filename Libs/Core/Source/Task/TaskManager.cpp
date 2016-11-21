@@ -36,11 +36,9 @@ namespace Flourish
 		: _nextTaskId(1)
         , _allTasks(nullptr)
         , _numThreads(numThreads)
-        , _numQueuedTasks(0)
 		, _workerThreads(nullptr)
         , _taskQueues(nullptr)
-        , _waitForWorkMutex()
-		, _workMaybeAvailable()
+        , _taskThreadGate()
         , _exiting(false)
 	{
         CreateTasks();
@@ -50,7 +48,7 @@ namespace Flourish
 	TaskManager::~TaskManager()
 	{
         _exiting = true;
-        _workMaybeAvailable.notify_all();
+        _taskThreadGate.OpenPermenentlyAndNotifyAll();
         for (uint32_t threadIdx = 0; threadIdx < _numThreads; threadIdx++)
         {
             _workerThreads[threadIdx].join();
@@ -101,8 +99,7 @@ namespace Flourish
             assert(!task->_added); // If this is hit a task was added twice
             task->_added = true;
             GetTaskQueueForCurrentThread()->Push(task);
-            _numQueuedTasks++;
-            _workMaybeAvailable.notify_one();
+            _taskThreadGate.OpenAndNotifyOne();
         }
     }
     
@@ -162,18 +159,10 @@ namespace Flourish
         auto task = GetTaskToExecute(threadIdx);
         if(task == nullptr)
         {
-            if(_numQueuedTasks > 0)
-            {
-                // Task was added whilst we were looking for one, back to the top!
-                return;
-            }
-            // Wait for a new task to be added
-            std::unique_lock<std::mutex> lock(_waitForWorkMutex);
-            _workMaybeAvailable.wait(lock);
-            lock.unlock();
+            // Wait for a more work
+            _taskThreadGate.Wait();
             return;
         }
-        _numQueuedTasks--;
         task->_workItem();
         FinishTask(task);
     }
@@ -232,7 +221,9 @@ namespace Flourish
             }
             // We might have just finished the task
             // another one was waiting on
-            _workMaybeAvailable.notify_one();
+            // We notify all here in-case notify_one
+            // picks a thread that isn't the one that's waiting
+            _taskThreadGate.OpenAndNotifyAll();
         }
     }
     

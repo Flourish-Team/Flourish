@@ -16,6 +16,8 @@ project "TestProject"
       "../Libs/**/Tests/**.cpp"
    }
 
+   defines { "FL_RUNNING_TESTS" }
+
    filter "configurations:Debug"
       defines { "DEBUG" }
       flags { "Symbols" }
