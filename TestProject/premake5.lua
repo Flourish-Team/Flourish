@@ -4,7 +4,8 @@ project "TestProject"
    targetdir "../Bin/%{cfg.buildcfg}"
    includedirs 
    { 
-      "../Libs/Core/Include", 
+      "../Libs/Core/Include",
+      "../Libs/Core/Tests",
       "../Libs/Test/Include",
       "../3rdParty/googletest/include" 
    }
@@ -13,7 +14,8 @@ project "TestProject"
 
    files { 
       "Source/**.cpp",
-      "../Libs/**/Tests/**.cpp"
+      "../Libs/**/Tests/**.cpp",
+      "../Libs/**/Tests/**.h"
    }
 
    defines { "FL_RUNNING_TESTS" }
