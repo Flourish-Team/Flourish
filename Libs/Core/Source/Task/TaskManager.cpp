@@ -32,6 +32,8 @@ namespace Flourish
         delete rootAndDependencies;
     }
     
+    thread_local TaskQueue* TaskManager::_currentThreadTaskQueue = nullptr;
+    
 	TaskManager::TaskManager(int32_t numThreads)
 		: _nextTaskId(1)
         , _allTasks(nullptr)
@@ -54,6 +56,8 @@ namespace Flourish
             _workerThreads[threadIdx].join();
         }
 		delete[] _workerThreads;
+        delete _currentThreadTaskQueue;
+        delete[] _taskQueues;
 	}
 
 	TaskId TaskManager::BeginAdd(WorkItem workItem)
@@ -98,7 +102,7 @@ namespace Flourish
         {
             assert(!task->_added); // If this is hit a task was added twice
             task->_added = true;
-            GetTaskQueueForCurrentThread()->Push(task);
+            _currentThreadTaskQueue->Push(task);
             _taskThreadGate.OpenAndNotifyOne();
         }
     }
@@ -119,7 +123,7 @@ namespace Flourish
         }
 		while (task->_openWorkItems > 0)
 		{
-            WaitForTaskAndExecute(0);
+            WaitForTaskAndExecute();
 		}
 	}
     
@@ -136,10 +140,13 @@ namespace Flourish
         }
         _workerThreads = new std::thread[_numThreads];
         _taskQueues = new TaskQueue*[_numThreads + 1]; // The current, non-worker thread also gets a queue
-        for (uint32_t queueIdx = 0; queueIdx < _numThreads + 1; queueIdx++)
+        for(uint32_t queueIdx = 0; queueIdx < _numThreads + 1; queueIdx++)
         {
-            _taskQueues[queueIdx] = new TaskQueue();
+            _taskQueues[queueIdx] = nullptr;
         }
+        
+        CreateTaskQueueForCurrentThread(0);
+        
 		for (uint32_t threadIdx = 0; threadIdx < _numThreads; threadIdx++)
 		{
 			_workerThreads[threadIdx] = std::thread(&TaskManager::WorkerThreadFunc, this, threadIdx + 1);
@@ -148,15 +155,17 @@ namespace Flourish
 
 	void TaskManager::WorkerThreadFunc(int32_t threadIdx)
 	{
+        CreateTaskQueueForCurrentThread(threadIdx);
 		while(!_exiting)
 		{
-            WaitForTaskAndExecute(threadIdx);
+            WaitForTaskAndExecute();
 		}
+        delete _currentThreadTaskQueue;
 	}
     
-    void TaskManager::WaitForTaskAndExecute(int32_t threadIdx)
+    void TaskManager::WaitForTaskAndExecute()
     {
-        auto task = GetTaskToExecute(threadIdx);
+        auto task = GetTaskToExecute();
         if(task == nullptr)
         {
             // Wait for a more work
@@ -174,22 +183,23 @@ namespace Flourish
         return numConcurrentThreads - 1;
     }
     
-    Task* TaskManager::GetTaskToExecute(uint32_t currentThreadQueueIdx)
+    Task* TaskManager::GetTaskToExecute()
     {
-        auto ourQueue = _taskQueues[currentThreadQueueIdx];
-        auto task = ourQueue->Pop();
+        auto task = _currentThreadTaskQueue->Pop();
         if(task != nullptr)
         {
             return task;
         }
         // Try stealing from one of the other queues
+        // This will actually check the current thread queue again, but that's okay
         for (uint32_t queueIdx = 0; queueIdx < _numThreads + 1; queueIdx++)
         {
-            if(queueIdx == currentThreadQueueIdx)
+            auto queueToStealFrom = _taskQueues[queueIdx];
+            if(queueToStealFrom == nullptr)
             {
                 continue;
             }
-            auto stolenTask = _taskQueues[queueIdx]->Steal();
+            auto stolenTask = queueToStealFrom->Steal();
             if(stolenTask != nullptr)
             {
                 return stolenTask;
@@ -227,19 +237,9 @@ namespace Flourish
         }
     }
     
-    TaskQueue* TaskManager::GetTaskQueueForCurrentThread()
+    void TaskManager::CreateTaskQueueForCurrentThread(uint32_t threadIdx)
     {
-        for(uint32_t threadIdx = 0; threadIdx < _numThreads; threadIdx++)
-        {
-            if(_workerThreads[threadIdx].get_id() == std::this_thread::get_id())
-            {
-                return _taskQueues[threadIdx + 1];
-            }
-        };
-        
-        // The current thread is not a worker thread. It's probably
-        // the thread that created the TaskManager, but even if it isn't
-        // the only sensible thing to return is queue 0 (which isn't worked by a worker thread)
-        return _taskQueues[0];
+        _currentThreadTaskQueue = new TaskQueue();
+        _taskQueues[threadIdx] = _currentThreadTaskQueue;
     }
 }

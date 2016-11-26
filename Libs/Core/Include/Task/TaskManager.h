@@ -42,18 +42,19 @@ namespace Flourish
         void CreateTasks();
 		void CreateAndStartWorkerThreads();
 		void WorkerThreadFunc(int32_t threadIdx);
-        void WaitForTaskAndExecute(int32_t threadIdx);
+        void WaitForTaskAndExecute();
         int32_t GetIdealNumThreads();
-        Task* GetTaskToExecute(uint32_t currentThreadQueueIdx);
+        Task* GetTaskToExecute();
         Task* GetTaskFromId(TaskId id);
         void FinishTask(Task* task);
-        TaskQueue* GetTaskQueueForCurrentThread();
+        void CreateTaskQueueForCurrentThread(uint32_t threadIdx);
         
         std::atomic_uint _nextTaskId;
         Task* _allTasks;
         uint32_t _numThreads;
 		std::thread* _workerThreads;
         TaskQueue** _taskQueues;
+        static thread_local TaskQueue* _currentThreadTaskQueue;
         TaskThreadGate<std::condition_variable> _taskThreadGate;
         std::atomic_bool _exiting;
 	};
