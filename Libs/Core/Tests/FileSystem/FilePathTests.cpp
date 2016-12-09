@@ -1,9 +1,11 @@
-//
-//  FilePathTests.cpp
-//  TestProject
-//
-//  Created by Andrew Thorpe on 09/12/2016.
-//
-//
+#include "Test.h"
+#include "FileSystem/FilePath.h"
 
-#include <stdio.h>
+using namespace Flourish;
+
+TEST(FilePathTests, ConvertsDoubleBackslashToForwardSlash)
+{
+    FilePath filePath("Some\\path\\with\\backslashes\\");
+    
+    ASSERT_EQUAL(filePath.AsString(), "Some/path/with/backslashes/");
+}

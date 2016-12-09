@@ -1,13 +1,20 @@
-//
-//  FilePath.h
-//  Core
-//
-//  Created by Andrew Thorpe on 09/12/2016.
-//
-//
+#pragma once
 
-#ifndef FilePath_h
-#define FilePath_h
+#include <string>
 
-
-#endif /* FilePath_h */
+namespace Flourish
+{
+    // A platform agnostic file path.
+    // Uses / as a seperator (and will convert \\ automatically).
+    // Assumes input is UTF-8 encoded
+    class FilePath
+    {
+    public:
+        FilePath(const char* path);
+        FilePath(const std::string& path);
+        std::string AsString() const;
+    
+    private:
+        std::string _contentsAsString;
+    };
+}
