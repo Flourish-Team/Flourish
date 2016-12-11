@@ -34,7 +34,7 @@ TEST(TaskThreadGate, WaitsWhenNotOpen)
     
     gate.Wait();
     
-    ASSERT_TRUE(gate.GetWaitMechanism()->_hasWaited) << "Gate should not be open, should have waited";
+    EXPECT_TRUE(gate.GetWaitMechanism()->_hasWaited) << "Gate should not be open, should have waited";
 }
 
 TEST(TaskThreadGate, OpenAndNotifyOneNotifiesOne)
@@ -43,7 +43,7 @@ TEST(TaskThreadGate, OpenAndNotifyOneNotifiesOne)
     
     gate.OpenAndNotifyOne();
     
-    ASSERT_TRUE(gate.GetWaitMechanism()->_notifiedOne) << "Gate should have notified one";
+    EXPECT_TRUE(gate.GetWaitMechanism()->_notifiedOne) << "Gate should have notified one";
 }
 
 TEST(TaskThreadGate, OpenAndNotifyAllNotifiesAll)
@@ -52,7 +52,7 @@ TEST(TaskThreadGate, OpenAndNotifyAllNotifiesAll)
     
     gate.OpenAndNotifyAll();
     
-    ASSERT_TRUE(gate.GetWaitMechanism()->_notifiedAll) << "Gate should have notified all";
+    EXPECT_TRUE(gate.GetWaitMechanism()->_notifiedAll) << "Gate should have notified all";
 }
 
 TEST(TaskThreadGate, OpenPermenentlyAndNotifyAllNotifiesAll)
@@ -61,7 +61,7 @@ TEST(TaskThreadGate, OpenPermenentlyAndNotifyAllNotifiesAll)
     
     gate.OpenPermenentlyAndNotifyAll();
     
-    ASSERT_TRUE(gate.GetWaitMechanism()->_notifiedAll) << "Gate should have notified all";
+    EXPECT_TRUE(gate.GetWaitMechanism()->_notifiedAll) << "Gate should have notified all";
 }
 
 TEST(TaskThreadGate, WaitAfterOpenAndNotifyOneShouldNotWait)
@@ -72,7 +72,7 @@ TEST(TaskThreadGate, WaitAfterOpenAndNotifyOneShouldNotWait)
     
     gate.Wait();
     
-    ASSERT_FALSE(gate.GetWaitMechanism()->_hasWaited) << "Gate should not have waited";
+    EXPECT_FALSE(gate.GetWaitMechanism()->_hasWaited) << "Gate should not have waited";
 }
 
 TEST(TaskThreadGate, WaitAfterOpenAndNotifyAllShouldNotWait)
@@ -83,7 +83,7 @@ TEST(TaskThreadGate, WaitAfterOpenAndNotifyAllShouldNotWait)
     
     gate.Wait();
     
-    ASSERT_FALSE(gate.GetWaitMechanism()->_hasWaited) << "Gate should not have waited";
+    EXPECT_FALSE(gate.GetWaitMechanism()->_hasWaited) << "Gate should not have waited";
 }
 
 TEST(TaskThreadGate, WaitClosesGate)
@@ -97,7 +97,7 @@ TEST(TaskThreadGate, WaitClosesGate)
     
     gate.Wait();
     
-    ASSERT_TRUE(gate.GetWaitMechanism()->_hasWaited) << "Gate should have closed after the first wait, and waited on the second";
+    EXPECT_TRUE(gate.GetWaitMechanism()->_hasWaited) << "Gate should have closed after the first wait, and waited on the second";
 }
 
 TEST(TaskThreadGate, WaitShouldNotCloseGateIfOpenPermenently)
@@ -111,5 +111,5 @@ TEST(TaskThreadGate, WaitShouldNotCloseGateIfOpenPermenently)
     
     gate.Wait();
     
-    ASSERT_FALSE(gate.GetWaitMechanism()->_hasWaited) << "Gate should not closed after the first wait because it should be open permenently";
+    EXPECT_FALSE(gate.GetWaitMechanism()->_hasWaited) << "Gate should not closed after the first wait because it should be open permenently";
 }

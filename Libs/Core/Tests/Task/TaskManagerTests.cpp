@@ -15,7 +15,7 @@ TEST(TaskManagerTests, TaskRuns)
 
 	taskManager.Wait(taskId);
 
-	ASSERT_TRUE(taskHasRun) << "Task did not run";
+	EXPECT_TRUE(taskHasRun) << "Task did not run";
 }
 
 TEST(TaskManagerTests, WaitingWillRunTask)
@@ -30,7 +30,7 @@ TEST(TaskManagerTests, WaitingWillRunTask)
     
     taskManager.Wait(taskId);
     
-    ASSERT_TRUE(taskHasRun) << "Task did not run";
+    EXPECT_TRUE(taskHasRun) << "Task did not run";
 }
 
 TEST(TaskManagerTests, DependancyMustFinishFirst)
@@ -39,12 +39,12 @@ TEST(TaskManagerTests, DependancyMustFinishFirst)
     int32_t taskRunSatus = -1;
     
     auto workItemA = taskManager.WorkItemWithTaskAllocator([&](void*) {
-        ASSERT_EQUAL(taskRunSatus, -1) << "Status was not expected value during task A";
+        EXPECT_EQUAL(taskRunSatus, -1) << "Status was not expected value during task A";
         taskRunSatus = 1;
     });
     
     auto workItemB = taskManager.WorkItemWithTaskAllocator([&](void*) {
-        ASSERT_EQUAL(taskRunSatus, 1) << "Status was not expected value during task B";
+        EXPECT_EQUAL(taskRunSatus, 1) << "Status was not expected value during task B";
         taskRunSatus = 2;
     });
     
@@ -57,7 +57,7 @@ TEST(TaskManagerTests, DependancyMustFinishFirst)
     
     taskManager.Wait(taskB);
     
-    ASSERT_EQUAL(taskRunSatus, 2);
+    EXPECT_EQUAL(taskRunSatus, 2);
 }
 
 TEST(TaskManagerTests, ParentDoesNotFinishUntilChildFinishes)
@@ -92,5 +92,5 @@ TEST(TaskManagerTests, ParentDoesNotFinishUntilChildFinishes)
     
     taskManager.Wait(parentId);
     
-    ASSERT_EQUAL(numChildrenFinished, 3u) << "Not all children finished before parent";
+    EXPECT_EQUAL(numChildrenFinished, 3u) << "Not all children finished before parent";
 }

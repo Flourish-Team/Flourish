@@ -8,14 +8,14 @@ TEST(TaskQueueTests, PopReturnsNullIfEmpty)
 {
     TaskQueue queue;
     auto result = queue.Pop();
-    ASSERT_EQUAL(result, nullptr);
+    EXPECT_EQUAL(result, nullptr);
 }
 
 TEST(TaskQueueTests, StealReturnsNullIfEmpty)
 {
     TaskQueue queue;
     auto result = queue.Steal();
-    ASSERT_EQUAL(result, nullptr);
+    EXPECT_EQUAL(result, nullptr);
 }
 
 TEST(TaskQueueTests, PopReturnsLastTaskAdded)
@@ -28,7 +28,7 @@ TEST(TaskQueueTests, PopReturnsLastTaskAdded)
     queue.Push(&taskB);
     
     auto result = queue.Pop();
-    ASSERT_EQUAL(result, &taskB);
+    EXPECT_EQUAL(result, &taskB);
 }
 
 TEST(TaskQueueTests, StealReturnsFirstTaskAdded)
@@ -41,5 +41,5 @@ TEST(TaskQueueTests, StealReturnsFirstTaskAdded)
     queue.Push(&taskB);
     
     auto result = queue.Steal();
-    ASSERT_EQUAL(result, &taskA);
+    EXPECT_EQUAL(result, &taskA);
 }

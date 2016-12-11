@@ -32,8 +32,8 @@ TEST(ParallelForTests, ShouldAskSplitterIfDataShouldBeSplit)
     
     parallelFor.Run();
     
-    ASSERT_EQUAL(dummyData, mockSplitter._data) << "Data passed to splitter was incorrect";
-    ASSERT_EQUAL(dummyDataSize, mockSplitter._count) << "Count passed to splitter was incorrect";
+    EXPECT_EQUAL(dummyData, mockSplitter._data) << "Data passed to splitter was incorrect";
+    EXPECT_EQUAL(dummyDataSize, mockSplitter._count) << "Count passed to splitter was incorrect";
 }
 
 TEST(ParallelForTests, ShouldAddTaskIfSplitReturnsFalse)
@@ -47,7 +47,7 @@ TEST(ParallelForTests, ShouldAddTaskIfSplitReturnsFalse)
     
     parallelFor.Run();
     
-    ASSERT_TRUE(mockTaskSystem._taskAdded) << "Task was not added";
+    EXPECT_TRUE(mockTaskSystem._taskAdded) << "Task was not added";
 }
 
 TEST(ParallelForTests, ShouldSplitIntoSubtasksIfSplitReturnsTrue)
@@ -68,8 +68,8 @@ TEST(ParallelForTests, ShouldSplitIntoSubtasksIfSplitReturnsTrue)
     
     replaySplitter.AssertUsedAllExpectedResponses();
     recordTaskSystem.AssertExpectedNumberOfTasksAdded();
-    ASSERT_EQUAL(recordTaskSystem._parentTasks[1], TaskId(0)) << "First subtask was not parented correclty";
-    ASSERT_EQUAL(recordTaskSystem._parentTasks[2], TaskId(0)) << "Second subtask was not parented correclty";
+    EXPECT_EQUAL(recordTaskSystem._parentTasks[1], TaskId(0)) << "First subtask was not parented correclty";
+    EXPECT_EQUAL(recordTaskSystem._parentTasks[2], TaskId(0)) << "Second subtask was not parented correclty";
 }
 
 TEST(ParallelForTests, ShouldSplitDataAndCount)
@@ -88,16 +88,16 @@ TEST(ParallelForTests, ShouldSplitDataAndCount)
     
     parallelFor.Run();
     
-    ASSERT_EQUAL(recordReplaySplitter._dataList[0], dummyData) << "First split did not have correct data";
-    ASSERT_EQUAL(recordReplaySplitter._dataCountList[0], dummyDataSize) << "First split did not have correct data count";
+    EXPECT_EQUAL(recordReplaySplitter._dataList[0], dummyData) << "First split did not have correct data";
+    EXPECT_EQUAL(recordReplaySplitter._dataCountList[0], dummyDataSize) << "First split did not have correct data count";
     
-    ASSERT_EQUAL(recordReplaySplitter._dataList[1], dummyData) << "Second split did not have correct data";
-    ASSERT_EQUAL(recordReplaySplitter._dataCountList[1], dummyDataSize / 2u) << "Second split did not have correct data count";
+    EXPECT_EQUAL(recordReplaySplitter._dataList[1], dummyData) << "Second split did not have correct data";
+    EXPECT_EQUAL(recordReplaySplitter._dataCountList[1], dummyDataSize / 2u) << "Second split did not have correct data count";
     
     auto expectedOffset = dummyDataSize / 2u;
     auto expectedSize = dummyDataSize - expectedOffset;
-    ASSERT_EQUAL(recordReplaySplitter._dataList[2], &dummyData[expectedOffset]) << "Third split did not have correct data";
-    ASSERT_EQUAL(recordReplaySplitter._dataCountList[2], expectedSize) << "Third split did not have correct data count";
+    EXPECT_EQUAL(recordReplaySplitter._dataList[2], &dummyData[expectedOffset]) << "Third split did not have correct data";
+    EXPECT_EQUAL(recordReplaySplitter._dataCountList[2], expectedSize) << "Third split did not have correct data count";
 }
 
 TEST(ParallelForTests, RunsAllTasks)
@@ -123,6 +123,6 @@ TEST(ParallelForTests, RunsAllTasks)
     
     for(uint32_t index = 0; index < dummyDataSize; index++)
     {
-        ASSERT_EQUAL(dummyData[index], ((int)index * 2)) << "Data for index " << index << " was incorrect";
+        EXPECT_EQUAL(dummyData[index], ((int)index * 2)) << "Data for index " << index << " was incorrect";
     }
 }

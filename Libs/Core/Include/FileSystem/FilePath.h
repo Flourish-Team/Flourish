@@ -12,7 +12,10 @@ namespace Flourish
     public:
         FilePath(const char* path);
         FilePath(const std::string& path);
+        
         std::string AsString() const;
+        FilePath& GetDirectory();
+        FilePath& GetFileName();
     
     private:
         std::string _contentsAsString;

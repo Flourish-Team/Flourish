@@ -44,7 +44,7 @@ namespace Flourish
             
             void AssertExpectedNumberOfTasksAdded()
             {
-                ASSERT_EQUAL(_numTasksAdded, expectedNumTasks) << "Incorrect number of tasks added";
+                EXPECT_EQUAL(_numTasksAdded, expectedNumTasks) << "Incorrect number of tasks added";
             }
             
             uint32_t _numTasksAdded;

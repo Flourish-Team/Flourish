@@ -27,7 +27,7 @@ namespace Flourish
             
             void FinishAdd(TaskId id)
             {
-                ASSERT_EQUAL(id, 4u) << "Incorrect TaskId was passed to FinishAdd";
+                EXPECT_EQUAL(id, 4u) << "Incorrect TaskId was passed to FinishAdd";
                 _taskAdded = true;
             }
             

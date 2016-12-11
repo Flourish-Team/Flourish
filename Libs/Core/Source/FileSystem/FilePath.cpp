@@ -32,4 +32,21 @@ namespace Flourish
     {
         return _contentsAsString;
     }
+    
+    FilePath& FilePath::GetDirectory()
+    {
+        auto lastSlash = _contentsAsString.find_last_of('/');
+        if(lastSlash != std::string::npos)
+        {
+            _contentsAsString.resize(lastSlash);
+            return *this;
+        }
+        _contentsAsString.resize(0);
+        return *this;
+    }
+    
+    FilePath& FilePath::GetFileName()
+    {
+        return *this;
+    }
 }

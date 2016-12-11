@@ -33,7 +33,7 @@ namespace Flourish
             
             void AssertUsedAllExpectedResponses()
             {
-                ASSERT_EQUAL(_currentResonse, count) << "Did not use all the expected responses";
+                EXPECT_EQUAL(_currentResonse, count) << "Did not use all the expected responses";
             }
             
             bool _shouldSplit[count];
