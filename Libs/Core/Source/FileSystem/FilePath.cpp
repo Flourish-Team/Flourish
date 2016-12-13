@@ -3,24 +3,8 @@
 namespace Flourish
 {
     FilePath::FilePath(const char* path)
+        : _contentsAsString(path)
     {
-        // strlen works for UTF-8 encoded strings
-        auto length = strlen(path);
-        // We know the string will be at most 'length', it might be shorter
-        _contentsAsString.resize(length);
-        uint32_t destIdx = 0;
-        for(uint32_t sourceIdx = 0; sourceIdx < length; sourceIdx++)
-        {
-            if(path[sourceIdx] == '\\')
-            {
-                _contentsAsString[destIdx] = '/';
-            }
-            else
-            {
-                _contentsAsString[destIdx] = path[sourceIdx];
-            }
-            destIdx++;
-        }
     }
     
     FilePath::FilePath(const std::string& path)
@@ -35,7 +19,7 @@ namespace Flourish
     
     FilePath& FilePath::GetDirectory()
     {
-        auto lastSlash = _contentsAsString.find_last_of('/');
+        auto lastSlash = GetLastDirSeperatorIdx();
         if(lastSlash != std::string::npos)
         {
             _contentsAsString.resize(lastSlash);
@@ -47,6 +31,44 @@ namespace Flourish
     
     FilePath& FilePath::GetFileName()
     {
+        auto lastSlash = GetLastDirSeperatorIdx();
+        if(lastSlash != std::string::npos)
+        {
+            _contentsAsString.erase(0, lastSlash + 1);
+        }
         return *this;
+    }
+    
+    FilePath& FilePath::GetFileNameWithoutExtension()
+    {
+        auto lastSlash = GetLastDirSeperatorIdx();
+        if(lastSlash != std::string::npos)
+        {
+            _contentsAsString.erase(0, lastSlash + 1);
+        }
+        auto lastDot = _contentsAsString.find_last_of('.');
+        if(lastDot != std::string::npos)
+        {
+            _contentsAsString.erase(lastDot);
+        }
+        return *this;
+    }
+    
+    std::string::size_type FilePath::GetLastDirSeperatorIdx() const
+    {
+        if(_contentsAsString.empty())
+        {
+            return std::string::npos;
+        }
+        for(std::string::size_type charIdx = _contentsAsString.length() - 1; charIdx != 0; charIdx--)
+        {
+            if(_contentsAsString[charIdx] == '/' ||
+               _contentsAsString[charIdx] == '\\')
+            {
+                return charIdx;
+            }
+        }
+        
+        return std::string::npos;
     }
 }

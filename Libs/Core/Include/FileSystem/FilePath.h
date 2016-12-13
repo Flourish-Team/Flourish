@@ -16,8 +16,11 @@ namespace Flourish
         std::string AsString() const;
         FilePath& GetDirectory();
         FilePath& GetFileName();
+        FilePath& GetFileNameWithoutExtension();
     
     private:
+        std::string::size_type GetLastDirSeperatorIdx() const;
+        
         std::string _contentsAsString;
     };
 }
