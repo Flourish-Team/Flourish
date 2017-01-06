@@ -17,7 +17,7 @@ namespace Flourish
             {
                 for(uint32_t index = 0; index < expectedNumTasks; index++)
                 {
-                    _parentTasks[index] = -1;
+                    _parentTasks[index] = INVALID_TASK_ID;
                 }
             }
             

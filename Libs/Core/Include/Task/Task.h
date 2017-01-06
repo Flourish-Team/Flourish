@@ -2,12 +2,15 @@
 
 #include <atomic>
 #include <cstdint>
+#include <stdint.h>
 #include <functional>
 
 namespace Flourish
 {
     typedef std::function<void(void*)> WorkItemFunction;
     typedef uint32_t TaskId;
+
+	const TaskId INVALID_TASK_ID = UINT32_MAX;
     
     // A work item is a function and some data
     // it is assumed that the function knows what
