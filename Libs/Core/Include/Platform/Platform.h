@@ -112,6 +112,6 @@
 #else
 	#undef  FL_ENDIAN_LITTLE
 	#define FL_ENDIAN_LITTLE FL_ON
-#endif // BX_PLATFORM_
+#endif 
 
 #include "Os.h"

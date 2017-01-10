@@ -3,10 +3,10 @@
 
 //Platform independant macros for compiler specific functions
 #if FL_ENABLED(FL_COMPILER_GCC) || FL_ENABLED(FL_COMPILER_CLANG)
-	#define BX_ALIGN_DECL(_align, _decl)	_decl __attribute__( (aligned(_align) ) )
-	#define BX_FORCE_INLINE inline			__attribute__( (__always_inline__) )
-	#define BX_FUNCTION						__PRETTY_FUNCTION__
-	#define BX_NO_INLINE					__attribute__( (noinline) )
+	#define FL_ALIGN_DECL(_align, _decl)	_decl __attribute__( (aligned(_align) ) )
+	#define FL_FORCE_INLINE inline			__attribute__( (__always_inline__) )
+	#define FL_FUNCTION						__PRETTY_FUNCTION__
+	#define FL_NO_INLINE					__attribute__( (noinline) )
 
 	#define FL_DLL_EXPORT
 #elif FL_ENABLED(FL_COMPILER_MSVC)
