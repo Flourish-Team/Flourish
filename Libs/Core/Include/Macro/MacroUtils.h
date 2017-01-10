@@ -14,8 +14,10 @@
 #define FL_STRINGIFY(str) FL_STRINGIFY_HELPER(str)
 #define FL_STRINGIFY_HELPER(x) #x
 
-// Can be used on a variable to prevent "Unused Variable" Warnings
-#define FL_UNUSED(var) do { (void)(true ? (void)0 : ( (void)(var) ) ); } while (0)
+// Can be used on a variable to prevent "Unused Variable" Warnings. Suround the variable in the function signature
+// e.g
+// Foo(int a, float FL_UNUSED(b))
+#define FL_UNUSED(var)
 
 
 // FL_VA_NUM_ARGS() lets you retrieve the number of arguments handed to a variable-argument macro
