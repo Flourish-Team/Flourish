@@ -2,7 +2,7 @@ project "Core"
    kind "StaticLib"
    language "C++"
    targetdir "../../Bin/%{cfg.buildcfg}"
-   includedirs { "Include" }
+   includedirs { "Include", "../../3rdParty/debugbreak/" }
    links { "Test", "GoogleTest" }
 
    files 
@@ -17,13 +17,7 @@ project "Core"
       "Premake/*"  
    }
 
-   filter "configurations:Debug"
-      defines { "DEBUG" }
-      flags { "Symbols" }
 
-   filter "configurations:Release"
-      defines { "NDEBUG" }
-      optimize "On"
 
    configuration "macosx"
             linkoptions  { "-std=c++11", "-stdlib=libc++" }

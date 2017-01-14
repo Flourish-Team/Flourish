@@ -14,6 +14,14 @@ workspace "Flourish"
    floatingpoint "Fast"
    startproject "TestProject" 
 
+  filter "configurations:Debug"
+      defines { "_DEBUG", }
+      flags { "Symbols" }
+
+   filter "configurations:Release"
+      defines { "NDEBUG" }
+      optimize "On"
+
    -- Stripping symbols from OSX in release causes an error in LD
    if os.get() == "macosx" then
     flags { "Symbols" }

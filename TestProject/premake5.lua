@@ -20,14 +20,6 @@ project "TestProject"
 
    defines { "FL_RUNNING_TESTS" }
 
-   filter "configurations:Debug"
-      defines { "DEBUG" }
-      flags { "Symbols" }
-
-   filter "configurations:Release"
-      defines { "NDEBUG" }
-      optimize "On"
-
    configuration "macosx"
             linkoptions  { "-std=c++11", "-stdlib=libc++" }
             buildoptions { "-std=c++11", "-stdlib=libc++" }

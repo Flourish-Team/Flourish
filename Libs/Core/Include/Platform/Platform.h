@@ -2,6 +2,11 @@
 
 #include "Macro/FeatureSwitches.h"
 
+//Build Macros
+//TODO: Add more levels (e.g Final, opt debug etc)
+#define FL_DEBUG	FL_OFF
+#define FL_RELEASE	FL_OFF
+
 //Platform Macros
 #define FL_PLATFORM_WINDOWS FL_OFF
 #define FL_PLATFORM_OSX     FL_OFF
@@ -30,6 +35,20 @@
 //Sources
 //https://github.com/bkaradzic/bx/blob/c74fa71b2a60e5a46cdc2e051571b163f9b89e1a/include/bx/platform.h
 //https://sourceforge.net/p/predef/wiki/Home/
+
+// Discover FL_PLATFORM_*
+#if defined(_DEBUG)
+	#undef FL_DEBUG
+	#define FL_DEBUG FL_ON
+#else
+	#undef FL_RELEASE
+	#define FL_RELEASE FL_ON
+
+	//Make sure NDEBUG is also defined
+	#if !defined(NDEBUG)
+		#define NDEBUG
+	#endif
+#endif
 
 
 // Discover FL_PLATFORM_*
@@ -115,3 +134,4 @@
 #endif 
 
 #include "Os.h"
+#include "PlatformFeatures.h"
