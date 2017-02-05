@@ -33,6 +33,19 @@
 
 
 --
+-- Make a shallow copy of a table
+--
+
+	function table.shallowcopy(object)
+		local copy = {}
+		for k, v in pairs(object) do
+			copy[k] = v
+		end
+		return copy
+	end
+
+
+--
 -- Make a complete copy of a table, including any child tables it contains.
 --
 
@@ -53,6 +66,7 @@
 				clone[key] = copy(value)
 			end
 
+			setmetatable(clone, getmetatable(object))
 			return clone
 		end
 
@@ -269,7 +283,7 @@
 			local minindex = 1
 			local maxindex = #tbl + 1
 			while minindex < maxindex do
-				local index = minindex + bit32.arshift(maxindex - minindex, 1)
+				local index = minindex + math.floor((maxindex - minindex) / 2)
 				local test = tbl[index]
 				if fn(value, test) then
 					maxindex = index
@@ -425,8 +439,8 @@
 			if not v then
 				return formatting .. '(nil)'
 			elseif type(v) == "table" then
-				if recurse then
-					return formatting .. '\n' .. table.tostring(v, recurse, i+1)
+				if recurse and recurse > 0 then
+					return formatting .. '\n' .. table.tostring(v, recurse-1, i+1)
 				else
 					return formatting .. "<table>"
 				end
@@ -447,6 +461,15 @@
 
 		if type(tab) == "table" then
 			local first = true
+
+			-- add the meta table.
+			local mt = getmetatable(tab)
+			if mt then
+				res = res .. format_value('__mt', mt, indent)
+				first = false
+			end
+
+			-- add all values.
 			for k, v in pairs(tab) do
 				if not first then
 					res = res .. '\n'
@@ -490,4 +513,22 @@
 				return nil
 			end
 		end)
+	end
+
+
+--
+-- Compares two tables.
+--
+	function table.equals(a, b)
+		for k, v in pairs(a) do
+			if b[k] ~= v then
+				return false
+			end
+		end
+		for k, v in pairs(b) do
+			if a[k] ~= v then
+				return false
+			end
+		end
+		return true
 	end

@@ -15,7 +15,7 @@
 	local wks, prj
 
 	function suite.setup()
-		_ACTION = "vs2008"
+		premake.action.set("vs2008")
 		wks, prj = test.createWorkspace()
 	end
 
@@ -86,7 +86,7 @@
 --
 
 	function suite.looksGood_onSymbolsFlag()
-		flags "Symbols"
+		symbols "On"
 		prepare()
 		test.capture [[
 <Tool
@@ -110,7 +110,7 @@
 --
 
 	function suite.looksGood_onSymbolsAndOptimizeFlags()
-		flags { "Symbols" }
+		symbols "On"
 		optimize "On"
 		prepare()
 		test.capture [[
@@ -133,7 +133,7 @@
 --
 
 	function suite.looksGood_onC7DebugFormat()
-		flags "Symbols"
+		symbols "On"
 		debugformat "C7"
 		prepare()
 		test.capture [[
@@ -225,7 +225,8 @@
 --
 
 	function suite.minimalRebuildFlagsSet_onMinimalRebuildAndSymbols()
-		flags { "Symbols", "NoMinimalRebuild" }
+		flags { "NoMinimalRebuild" }
+		symbols "On"
 		prepare()
 		test.capture [[
 <Tool
@@ -291,7 +292,7 @@
 --
 
 	function suite.runtimeLibraryIsDebug_onSymbolsNoOptimize()
-		flags { "Symbols" }
+		symbols "On"
 		prepare()
 		test.capture [[
 <Tool
@@ -382,7 +383,7 @@
 --
 
 	function suite._64BitPortabilityOn_onVS2005()
-		_ACTION = "vs2005"
+		premake.action.set("vs2005")
 		prepare()
 		test.capture [[
 <Tool
@@ -400,7 +401,7 @@
 	end
 
 	function suite._64BitPortabilityOff_onVS2005_andCLR()
-		_ACTION = "vs2005"
+		premake.action.set("vs2005")
 		clr "On"
 		prepare()
 		test.capture [[
@@ -422,7 +423,7 @@
 --
 
 	function suite.runtimeLibraryIsDebug_onVS2005_NoWarnings()
-		_ACTION = "vs2005"
+		premake.action.set("vs2005")
 		warnings "Off"
 		prepare()
 		test.capture [[
@@ -542,7 +543,8 @@
 --
 
 	function suite.releaseRuntime_onFlag()
-		flags { "Symbols", "ReleaseRuntime" }
+		flags { "ReleaseRuntime" }
+		symbols "On"
 		prepare()
 		test.capture [[
 <Tool
@@ -555,7 +557,8 @@
 	end
 
 	function suite.releaseRuntime_onStaticAndReleaseRuntime()
-		flags { "Symbols", "ReleaseRuntime", "StaticRuntime" }
+		flags { "ReleaseRuntime", "StaticRuntime" }
+		symbols "On"
 		prepare()
 		test.capture [[
 <Tool

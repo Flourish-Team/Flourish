@@ -29,7 +29,7 @@
 		"projectProperties",
 		"configurations",
 		"applicationIcon",
-		"assemblyReferences",
+		"references",
 	}
 
 	function cs2005.generate(prj)
@@ -114,82 +114,106 @@
 	end
 
 
+	function cs2005.dofile(node, cfg, condition)
+		local filecfg = fileconfig.getconfig(node, cfg)
+		if filecfg then
+			local fname = path.translate(node.relpath)
+
+			-- Files that live outside of the project tree need to be "linked"
+			-- and provided with a project relative pseudo-path. Check for any
+			-- leading "../" sequences and, if found, remove them and mark this
+			-- path as external.
+			local link, count = node.relpath:gsub("%.%.%/", "")
+			local external = (count > 0)
+
+			-- Try to provide a little bit of flexibility by allowing virtual
+			-- paths for external files. Would be great to support them for all
+			-- files but Visual Studio chokes if file is already in project area.
+			if external and node.vpath ~= node.relpath then
+				link = node.vpath
+			end
+
+			-- Deduce what, if any, special attributes are required for this file.
+			-- For example, forms may have related source, designer, and resource
+			-- files which need to be associated.
+
+			local info = dotnet.fileinfo(filecfg)
+
+			-- Process any sub-elements required by this file; choose the write
+			-- element form to use based on the results.
+
+			local contents = premake.capture(function ()
+				-- Try to write file-level elements in the same order as Visual Studio
+				local elements = {
+					"AutoGen",
+					"CopyToOutputDirectory",
+					"DesignTime",
+					"DependentUpon",
+					"DesignTimeSharedInput",
+					"Generator",
+					"LastGenOutput",
+					"SubType",
+				}
+
+				for _, el in ipairs(elements) do
+					local value = info[el]
+					if value then
+						_p(3,"<%s>%s</%s>", el, value, el)
+					end
+				end
+				if info.action == "EmbeddedResource" and cfg.customtoolnamespace then
+					_p(3,"<CustomToolNamespace>%s</CustomToolNamespace>", cfg.customtoolnamespace)
+				end
+			end)
+
+			if #contents > 0 or external then
+				_p(2,'<%s%s Include="%s">', info.action, condition, fname)
+				if external then
+					_p(3,'<Link>%s</Link>', path.translate(link))
+				end
+				if #contents > 0 then
+					_p("%s", contents)
+				end
+				_p(2,'</%s>', info.action)
+			else
+				_p(2,'<%s%s Include="%s" />', info.action, condition, fname)
+			end
+		end
+	end
+
+
 --
 -- Write out the source files item group.
 --
 
 	function cs2005.files(prj)
-		-- Some settings applied at project level; can't be changed in cfg
-		local cfg = project.getfirstconfig(prj)
-
-		-- Try to write file-level elements in the same order as Visual Studio
-		local elements = {
-			"AutoGen",
-			"CopyToOutputDirectory",
-			"DesignTime",
-			"DependentUpon",
-			"DesignTimeSharedInput",
-			"Generator",
-			"LastGenOutput",
-			"SubType",
-		}
+		local firstcfg = project.getfirstconfig(prj)
 
 		local tr = project.getsourcetree(prj)
 		premake.tree.traverse(tr, {
 			onleaf = function(node, depth)
-				local filecfg = fileconfig.getconfig(node, cfg)
-				local fname = path.translate(node.relpath)
+				-- test if all fileinfo's are going to be the same for each config.
+				local allsame = true
+				local first = nil
+				for cfg in project.eachconfig(prj) do
+					local filecfg = fileconfig.getconfig(node, cfg)
+					local info = dotnet.fileinfo(filecfg)
 
-				-- Files that live outside of the project tree need to be "linked"
-				-- and provided with a project relative pseudo-path. Check for any
-				-- leading "../" sequences and, if found, remove them and mark this
-				-- path as external.
-
-				local link, count = node.relpath:gsub("%.%.%/", "")
-				local external = (count > 0)
-
-				-- Try to provide a little bit of flexibility by allowing virtual
-				-- paths for external files. Would be great to support them for all
-				-- files but Visual Studio chokes if file is already in project area.
-
-				if external and node.vpath ~= node.relpath then
-					link = node.vpath
+					if first == nil then
+						first = info
+					elseif not table.equals(first, info) then
+						allsame = false
+					end
 				end
 
-				-- Deduce what, if any, special attributes are required for this file.
-				-- For example, forms may have related source, designer, and resource
-				-- files which need to be associated.
-
-				local info = dotnet.fileinfo(filecfg)
-
-				-- Process any sub-elements required by this file; choose the write
-				-- element form to use based on the results.
-
-				local contents = premake.capture(function ()
-					for _, el in ipairs(elements) do
-						local value = info[el]
-						if value then
-							_p(3,"<%s>%s</%s>", el, value, el)
-						end
-					end
-				end)
-
-				if #contents > 0 or external then
-					_p(2,'<%s Include="%s">', info.action, fname)
-					if external then
-						_p(3,'<Link>%s</Link>', path.translate(link))
-					end
-					if #contents > 0 then
-						_p("%s", contents)
-					end
-					if info.action == "EmbeddedResource" and cfg.customtoolnamespace then
-						_p(3,"<CustomToolNamespace>%s</CustomToolNamespace>", cfg.customtoolnamespace)
-					end
-					_p(2,'</%s>', info.action)
+				-- output to csproj.
+				if allsame then
+					cs2005.dofile(node, firstcfg, '')
 				else
-					_p(2,'<%s Include="%s" />', info.action, fname)
+					for cfg in project.eachconfig(prj) do
+						cs2005.dofile(node, cfg, ' ' .. cs2005.condition(cfg))
+					end
 				end
-
 			end
 		}, false)
 	end
@@ -254,7 +278,7 @@
 --
 
 	function cs2005.debugProps(cfg)
-		if cfg.flags.Symbols then
+		if cfg.symbols == p.ON then
 			_p(2,'<DebugSymbols>true</DebugSymbols>')
 			_p(2,'<DebugType>full</DebugType>')
 		else
@@ -285,12 +309,28 @@
 
 
 --
+-- Write out the references item group.
+--
+
+	cs2005.elements.references = function(prj)
+		return {
+			cs2005.assemblyReferences,
+			cs2005.nuGetReferences,
+		}
+	end
+
+	function cs2005.references(prj)
+		_p(1,'<ItemGroup>')
+		p.callArray(cs2005.elements.references, prj)
+		_p(1,'</ItemGroup>')
+	end
+
+
+--
 -- Write the list of assembly (system, or non-sibling) references.
 --
 
 	function cs2005.assemblyReferences(prj)
-		_p(1,'<ItemGroup>')
-
 		-- C# doesn't support per-configuration links (does it?) so just use
 		-- the settings from the first available config instead
 		local cfg = project.getfirstconfig(prj)
@@ -314,8 +354,44 @@
 				_x(2,'<Reference Include="%s" />', name)
 			end
 		end)
+	end
 
-		_p(1,'</ItemGroup>')
+
+--
+-- Write the list of NuGet references.
+--
+
+	function cs2005.nuGetReferences(prj)
+		if _ACTION >= "vs2010" then
+			for i = 1, #prj.nuget do
+				local package = prj.nuget[i]
+				_x(2, '<Reference Include="%s">', vstudio.nuget2010.packageId(package))
+
+				-- We need to write HintPaths for all supported framework
+				-- versions. The last HintPath will override any previous
+				-- HintPaths (if the condition is met that is).
+
+				for _, frameworkVersion in ipairs(cs2005.identifyFrameworkVersions(prj)) do
+					local assembly = vstudio.path(
+						prj,
+						p.filename(
+							prj.solution,
+							string.format(
+								"packages\\%s\\lib\\%s\\%s.dll",
+								vstudio.nuget2010.packageName(package),
+								cs2005.formatNuGetFrameworkVersion(frameworkVersion),
+								vstudio.nuget2010.packageId(package)
+							)
+						)
+					)
+
+					_x(3, '<HintPath Condition="Exists(\'%s\')">%s</HintPath>', assembly, assembly)
+				end
+
+				_p(3, '<Private>True</Private>')
+				_p(2, '</Reference>')
+			end
+		end
 	end
 
 
@@ -365,9 +441,9 @@
 --
 
 	function cs2005.propertyGroup(cfg)
-		local platform = vstudio.projectPlatform(cfg)
+		p.push('<PropertyGroup %s>', cs2005.condition(cfg))
+
 		local arch = cs2005.arch(cfg)
-		p.push('<PropertyGroup Condition=" \'$(Configuration)|$(Platform)\' == \'%s|%s\' ">', platform, arch)
 		if arch ~= "AnyCPU" or _ACTION > "vs2008" then
 			p.x('<PlatformTarget>%s</PlatformTarget>', arch)
 		end
@@ -398,7 +474,44 @@
 --
 
 	function cs2005.condition(cfg)
-		return string.format('Condition="\'$(Configuration)|$(Platform)\'==\'%s\'"', premake.esc(vstudio.projectConfig(cfg)))
+		local platform = vstudio.projectPlatform(cfg)
+		local arch = cs2005.arch(cfg)
+		return string.format('Condition=" \'$(Configuration)|$(Platform)\' == \'%s|%s\' "', platform, arch)
+	end
+
+
+--
+-- Build and return a list of all .NET Framework versions up to and including
+-- the project's framework version.
+--
+
+	function cs2005.identifyFrameworkVersions(prj)
+		local frameworks = {}
+
+		local cfg = p.project.getfirstconfig(prj)
+		local action = premake.action.current()
+		local targetFramework = cfg.dotnetframework or action.vstudio.targetFramework
+
+		for _, frameworkVersion in ipairs(vstudio.frameworkVersions) do
+			if frameworkVersion == targetFramework then
+				break
+			end
+
+			table.insert(frameworks, frameworkVersion)
+		end
+
+		table.insert(frameworks, targetFramework)
+
+		return frameworks
+	end
+
+
+--
+-- When given a .NET Framework version, returns it formatted for NuGet.
+--
+
+	function cs2005.formatNuGetFrameworkVersion(framework)
+		return "net" .. framework:gsub("%.", "")
 	end
 
 ---------------------------------------------------------------------------

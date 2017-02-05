@@ -884,7 +884,7 @@
 
 		settings['ALWAYS_SEARCH_USER_PATHS'] = 'NO'
 
-		if not cfg.flags.Symbols then
+		if cfg.symbols ~= p.OFF then
 			settings['DEBUG_INFORMATION_FORMAT'] = 'dwarf-with-dsym'
 		end
 
@@ -983,11 +983,17 @@
 
 		settings['CONFIGURATION_TEMP_DIR'] = '$(OBJROOT)'
 
-		if cfg.flags.Symbols then
+		if config.isDebugBuild(cfg) then
 			settings['COPY_PHASE_STRIP'] = 'NO'
 		end
 
 		settings['GCC_C_LANGUAGE_STANDARD'] = 'gnu99'
+
+		if cfg.flags['C++14'] then
+			settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++14'
+		elseif cfg.flags['C++11'] then
+			settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++0x'
+		end
 
 		if cfg.exceptionhandling == p.OFF then
 			settings['GCC_ENABLE_CPP_EXCEPTIONS'] = 'NO'
@@ -997,7 +1003,7 @@
 			settings['GCC_ENABLE_CPP_RTTI'] = 'NO'
 		end
 
-		if cfg.flags.Symbols and not cfg.flags.NoEditAndContinue then
+		if cfg.symbols == p.ON and not cfg.flags.NoEditAndContinue then
 			settings['GCC_ENABLE_FIX_AND_CONTINUE'] = 'YES'
 		end
 
@@ -1043,6 +1049,11 @@
 			cfg.libdirs[i] = premake.project.getrelative(cfg.project, cfg.libdirs[i])
 		end
 		settings['LIBRARY_SEARCH_PATHS'] = cfg.libdirs
+
+		for i,v in ipairs(cfg.frameworkdirs) do
+			cfg.frameworkdirs[i] = premake.project.getrelative(cfg.project, cfg.frameworkdirs[i])
+		end
+		settings['FRAMEWORK_SEARCH_PATHS'] = cfg.frameworkdirs
 
 		local objDir = path.getrelative(tr.project.location, cfg.objdir)
 		settings['OBJROOT'] = objDir

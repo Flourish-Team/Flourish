@@ -32,6 +32,7 @@
 		options = true,
 		platforms = true,
 		system = true,
+		toolset = true,
 	}
 
 
@@ -93,6 +94,7 @@
 		local crit = {}
 		crit.patterns = patterns
 		crit.data = criteria._compile(patterns)
+		crit.terms = terms
 		return crit
 	end
 

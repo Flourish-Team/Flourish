@@ -14,7 +14,17 @@ workspace "Flourish"
    floatingpoint "Fast"
    startproject "TestProject" 
 
-  filter "configurations:Debug"
+   	--Create x32/x64 platforms for each system (TODO: OSX/linux)
+	filter { "system:windows" }
+		platforms { "Win32", "Win64" }
+
+	filter { "platforms:*64" }
+	    architecture "x32"
+
+	filter { "platforms:*64" }
+	    architecture "x64"
+
+   filter "configurations:Debug"
       defines { "_DEBUG", }
       flags { "Symbols" }
 
@@ -22,10 +32,10 @@ workspace "Flourish"
       defines { "NDEBUG" }
       optimize "On"
 
-   -- Stripping symbols from OSX in release causes an error in LD
-   if os.get() == "macosx" then
-    flags { "Symbols" }
-   end
+	  -- Stripping symbols from OSX in release causes an error in LD
+	  if os.get() == "macosx" then
+	  flags { "Symbols" }
+	  end
 
 group("3rdParty")
 	include "../3rdParty/googletest"

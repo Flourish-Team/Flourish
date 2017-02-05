@@ -18,7 +18,6 @@
 
 	m.elements.project = function(r)
 		return {
-			p.xmlUtf8,
 			m.projectSchemaDefinitions,
 			m.rule,
 			m.ruleItem,
@@ -28,6 +27,7 @@
 	end
 
 	function m.generate(r)
+		p.xmlUtf8()
 		p.callArray(m.elements.project, r)
 		p.out('</ProjectSchemaDefinitions>')
 	end
@@ -119,6 +119,8 @@
 				m.stringListProperty(def)
 			elseif type(def.values) == "table" then
 				m.enumProperty(def)
+			elseif def.kind and def.kind:startswith("list:") then
+				m.stringListProperty(def)
 			else
 				m.stringProperty(def)
 			end
@@ -338,10 +340,12 @@
 
 
 	function m.fileExtension(r)
-		p.push('<FileExtension')
-		p.w('Name="*%s"', r.fileextension)
-		p.w('ContentType="%s" />', r.name)
-		p.pop()
+		for _, v in ipairs(r.fileextension) do
+			p.push('<FileExtension')
+			p.w('Name="*%s"', v)
+			p.w('ContentType="%s" />', r.name)
+			p.pop()
+		end
 	end
 
 

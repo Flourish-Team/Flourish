@@ -20,6 +20,7 @@
 		return {
 			p.vstudio.projectElement,
 			m.availableItemGroup,
+			m.computedProperties,
 			m.computeInputsGroup,
 			m.usingTask,
 			m.ruleTarget,
@@ -54,6 +55,29 @@
 	end
 
 
+---
+-- Generate the computed outputs property.
+---
+	function m.computedProperties(r)
+		-- create shadow context.
+		local pathVars = p.rule.createPathVars(r, "%%(%s)")
+		local ctx = p.context.extent(r, { pathVars = pathVars })
+
+		-- now use the shadow context to detoken.
+		local buildoutputs = ctx.buildoutputs
+
+		-- write the output.
+		if buildoutputs and #buildoutputs > 0 then
+			local outputs = table.concat(buildoutputs, ";")
+			p.push('<ItemDefinitionGroup>')
+			p.push('<%s>', r.name)
+			p.x('<Outputs>%s</Outputs>', path.translate(outputs))
+			p.pop('</%s>', r.name)
+			p.pop('</ItemDefinitionGroup>')
+		end
+	end
+
+
 
 ---
 -- Generate the computed input targets group.
@@ -61,6 +85,7 @@
 
 	m.elements.computeInputsGroup = function(r)
 		return {
+			m.computeCompileInputsTargets,
 			m.computeLinkInputsTargets,
 			m.computeLibInputsTargets,
 		}
@@ -254,6 +279,15 @@
 
 
 
+	function m.computeCompileInputsTargets(r)
+		p.push('<ComputeCompileInputsTargets>')
+		p.w('$(ComputeCompileInputsTargets);')
+		p.w('Compute%sOutput;', r.name)
+		p.pop('</ComputeCompileInputsTargets>')
+	end
+
+
+
 	function m.dependsOnTargets(r)
 		p.w('DependsOnTargets="$(%sDependsOn);Compute%sOutput"', r.name, r.name)
 	end
@@ -267,10 +301,20 @@
 
 
 	function m.linkLib(r)
-		local linkable
-		for i = 1, #r.buildoutputs do
-			if (path.islinkable(r.buildoutputs[i])) then
+		-- create shadow context.
+		local pathVars = p.rule.createPathVars(r, "%%(%s)")
+		local ctx = p.context.extent(r, { pathVars = pathVars })
+
+		-- now use the shadow context to detoken.
+		local buildoutputs = ctx.buildoutputs
+
+		local linkable, compileable
+		for i = 1, #buildoutputs do
+			if (path.islinkable(buildoutputs[i])) then
 				linkable = true
+			end
+			if (path.iscppfile(buildoutputs[i])) then
+				compileable = true
 			end
 		end
 		if linkable then
@@ -280,6 +324,12 @@
 				p.w('Condition="\'%%(Extension)\'==\'.obj\' or \'%%(Extension)\'==\'.res\' or \'%%(Extension)\'==\'.rsc\' or \'%%(Extension)\'==\'.lib\'" />')
 				p.pop()
 			end
+		end
+		if compileable then
+			p.push('<ClCompile', el)
+			p.w('Include="%%(%sOutputs.Identity)"', r.name)
+			p.w('Condition="\'%%(Extension)\'==\'.cc\' or \'%%(Extension)\'==\'.cpp\' or \'%%(Extension)\'==\'.cxx\' or \'%%(Extension)\'==\'.c\'" />')
+			p.pop()
 		end
 	end
 
@@ -295,25 +345,25 @@
 		p.w('<Message')
 		p.w('  Importance="High"')
 		p.w('  Text="%%(%s.ExecutionDescription)" />', r.name)
- 	end
+	end
 
 
 
 	function m.outputs(r)
 		p.w('<%sOutputs', r.name)
 		p.w('  Condition="\'@(%s)\' != \'\' and \'%%(%s.ExcludedFromBuild)\' != \'true\'"', r.name, r.name)
-        p.w('  Include="%%(%s.Outputs)" />', r.name)
+		p.w('  Include="%%(%s.Outputs)" />', r.name)
 	end
 
 
 
- 	function m.properties(r)
+	function m.properties(r)
 		local defs = r.propertydefinition
 		for i = 1, #defs do
 			local name = defs[i].name
 			p.w('%s="%%(%s.%s)"', name, r.name, name)
 		end
- 	end
+	end
 
 
 

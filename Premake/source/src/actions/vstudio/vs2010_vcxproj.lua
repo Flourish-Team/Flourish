@@ -46,6 +46,7 @@
 			m.projectReferences,
 			m.importLanguageTargets,
 			m.importExtensionTargets,
+			m.ensureNuGetPackageBuildImports,
 		}
 	end
 
@@ -54,7 +55,6 @@
 		p.callArray(m.elements.project, prj)
 		p.out('</Project>')
 	end
-
 
 
 --
@@ -126,6 +126,7 @@
 			m.ignoreWarnDuplicateFilename,
 			m.keyword,
 			m.projectName,
+			m.targetPlatformVersion,
 		}
 	end
 
@@ -215,6 +216,37 @@
 		end
 	end
 
+
+--
+-- Write the NMake property group for Makefile projects, which includes the custom
+-- build commands, output file location, etc.
+--
+
+	m.elements.nmakeProperties = function(cfg)
+		return {
+			m.nmakeOutput,
+			m.nmakeBuildCommands,
+			m.nmakeRebuildCommands,
+			m.nmakeCleanCommands,
+			m.nmakePreprocessorDefinitions,
+			m.nmakeIncludeDirs
+		}
+	end
+
+	function m.nmakeProperties(cfg)
+		if vstudio.isMakefile(cfg) then
+			m.propertyGroup(cfg)
+			p.callArray(m.elements.nmakeProperties, cfg)
+			p.pop('</PropertyGroup>')
+		end
+	end
+
+
+--
+-- Output properties and NMake properties should appear side-by-side
+-- for each configuration.
+--
+
 	function m.outputPropertiesGroup(prj)
 		for cfg in project.eachconfig(prj) do
 			m.outputProperties(cfg)
@@ -222,23 +254,6 @@
 		end
 	end
 
-
-
---
--- Write the NMake property group for Makefile projects, which includes the custom
--- build commands, output file location, etc.
---
-
-	function m.nmakeProperties(cfg)
-		if vstudio.isMakefile(cfg) then
-			m.propertyGroup(cfg)
-			m.nmakeOutput(cfg)
-			m.nmakeCommandLine(cfg, cfg.buildcommands, "Build")
-			m.nmakeCommandLine(cfg, cfg.rebuildcommands, "ReBuild")
-			m.nmakeCommandLine(cfg, cfg.cleancommands, "Clean")
-			p.pop('</PropertyGroup>')
-		end
-	end
 
 
 --
@@ -307,7 +322,6 @@
 			m.clCompileAdditionalUsingDirectories,
 			m.forceIncludes,
 			m.debugInformationFormat,
-			m.programDataBaseFileName,
 			m.optimization,
 			m.functionLevelLinking,
 			m.intrinsicFunctions,
@@ -389,12 +403,14 @@
 		if cfg.kind == p.STATICLIB then
 			return {
 				m.subSystem,
+				m.fullProgramDatabaseFile,
 				m.generateDebugInformation,
 				m.optimizeReferences,
 			}
 		else
 			return {
 				m.subSystem,
+				m.fullProgramDatabaseFile,
 				m.generateDebugInformation,
 				m.optimizeReferences,
 				m.additionalDependencies,
@@ -408,6 +424,7 @@
 				m.largeAddressAware,
 				m.targetMachine,
 				m.additionalLinkOptions,
+				m.programDatabaseFile,
 			}
 		end
 	end
@@ -430,6 +447,8 @@
 	m.elements.lib = function(cfg, explicit)
 		if cfg.kind == p.STATICLIB then
 			return {
+				m.additionalDependencies,
+				m.additionalLibraryDirectories,
 				m.treatLinkerWarningAsErrors,
 				m.targetMachine,
 				m.additionalLinkOptions,
@@ -521,11 +540,14 @@
 					local fld = p.rule.getPropertyField(rule, prop)
 					local value = cfg[fld.name]
 					if value ~= nil then
-						if fld.kind == "path" then
+						if fld.kind == "list:path" then
+							value = table.concat(vstudio.path(cfg, value), ';')
+						elseif fld.kind == "path" then
 							value = vstudio.path(cfg, value)
 						else
 							value = p.rule.getPropertyString(rule, prop, value)
 						end
+
 						if value ~= nil and #value > 0 then
 							m.element(prop.name, nil, '%s', value)
 						end
@@ -573,223 +595,258 @@
 	end
 
 
+	function m.generatedFile(cfg, file)
+		if file.generated then
+			local path = path.translate(file.dependsOn.relpath)
+			m.element("AutoGen", nil, 'true')
+			m.element("DependentUpon", nil, path)
+		end
+	end
+
+
 ---
 -- Write out the list of source code files, and any associated configuration.
 ---
 
-	m.elements.files = function(prj, groups)
-		return {
-			m.clIncludeFiles,
-			m.clCompileFiles,
-			m.noneFiles,
-			m.resourceCompileFiles,
-			m.customBuildFiles,
-			m.customRuleFiles,
-			m.midlFiles
-	}
-	end
-
-
 	function m.files(prj)
 		local groups = m.categorizeSources(prj)
-		p.callArray(m.elements.files, prj, groups)
+		for _, group in ipairs(groups) do
+			group.category.emitFiles(prj, group)
+		end
 	end
 
 
-	m.elements.ClCompileFile = function(cfg, file)
-		return {}
-	end
+	m.categories = {}
+
+---
+-- ClInclude group
+---
+	m.categories.ClInclude = {
+		name       = "ClInclude",
+		extensions = { ".h", ".hh", ".hpp", ".hxx" },
+		priority   = 1,
+
+		emitFiles = function(prj, group)
+			m.emitFiles(prj, group, "ClInclude", {m.generatedFile})
+		end,
+
+		emitFilter = function(prj, group)
+			m.filterGroup(prj, group, "ClInclude")
+		end
+	}
 
 
-	m.elements.ClCompileFileCfg = function(fcfg, condition)
-		if fcfg then
-			return {
-				m.excludedFromBuild,
-				m.objectFileName,
-				m.clCompilePreprocessorDefinitions,
-				m.clCompileUndefinePreprocessorDefinitions,
-				m.optimization,
-				m.forceIncludes,
-				m.precompiledHeader,
-				m.enableEnhancedInstructionSet,
-				m.additionalCompileOptions,
-				m.disableSpecificWarnings,
-				m.treatSpecificWarningsAsErrors
-			}
-		else
-			return {
+---
+-- ClCompile group
+---
+	m.categories.ClCompile = {
+		name       = "ClCompile",
+		extensions = { ".cc", ".cpp", ".cxx", ".c", ".s", ".m", ".mm" },
+		priority   = 2,
+
+		emitFiles = function(prj, group)
+			local fileCfgFunc = function(fcfg, condition)
+				if fcfg then
+					return {
+						m.excludedFromBuild,
+						m.objectFileName,
+						m.clCompilePreprocessorDefinitions,
+						m.clCompileUndefinePreprocessorDefinitions,
+						m.optimization,
+						m.forceIncludes,
+						m.precompiledHeader,
+						m.enableEnhancedInstructionSet,
+						m.additionalCompileOptions,
+						m.disableSpecificWarnings,
+						m.treatSpecificWarningsAsErrors
+					}
+				else
+					return {
+						m.excludedFromBuild
+					}
+				end
+			end
+
+			m.emitFiles(prj, group, "ClCompile", {m.generatedFile}, fileCfgFunc)
+		end,
+
+		emitFilter = function(prj, group)
+			m.filterGroup(prj, group, "ClCompile")
+		end
+	}
+
+
+---
+-- None group
+---
+	m.categories.None = {
+		name = "None",
+		priority = 3,
+
+		emitFiles = function(prj, group)
+			m.emitFiles(prj, group, "None", {m.generatedFile})
+		end,
+
+		emitFilter = function(prj, group)
+			m.filterGroup(prj, group, "None")
+		end
+	}
+
+
+---
+-- ResourceCompile group
+---
+	m.categories.ResourceCompile = {
+		name       = "ResourceCompile",
+		extensions = ".rc",
+		priority   = 4,
+
+		emitFiles = function(prj, group)
+			local fileCfgFunc = {
 				m.excludedFromBuild
 			}
+
+			m.emitFiles(prj, group, "ResourceCompile", nil, fileCfgFunc, function(cfg)
+				return cfg.system == p.WINDOWS
+			end)
+		end,
+
+		emitFilter = function(prj, group)
+			m.filterGroup(prj, group, "ResourceCompile")
 		end
-	end
+	}
 
 
-	function m.clCompileFiles(prj, groups)
-		m.emitFiles(prj, groups, "ClCompile")
-	end
+---
+-- CustomBuild group
+---
+	m.categories.CustomBuild = {
+		name = "CustomBuild",
+		priority = 5,
 
+		emitFiles = function(prj, group)
+			local fileFunc = {
+				m.fileType
+			}
 
-	m.elements.ClIncludeFile = function(cfg, file)
-		return {}
-	end
+			local fileCfgFunc = {
+				m.excludedFromBuild,
+				m.buildCommands,
+				m.buildOutputs,
+				m.linkObjects,
+				m.buildMessage,
+				m.buildAdditionalInputs
+			}
 
+			m.emitFiles(prj, group, "CustomBuild", fileFunc, fileCfgFunc, function (cfg, fcfg)
+				return fileconfig.hasCustomBuildRule(fcfg)
+			end)
+		end,
 
-	m.elements.ClIncludeFileCfg = function(fcfg, condition)
-		return {}
-	end
-
-
-	function m.clIncludeFiles(prj, groups)
-		m.emitFiles(prj, groups, "ClInclude")
-	end
-
-
-	m.elements.CustomBuildFile = function(cfg, file)
-		return {
-			m.fileType
-		}
-	end
-
-	m.elements.CustomBuildFileCfg = function(fcfg, condition)
-		return {
-			m.excludedFromBuild,
-			m.buildCommands,
-			m.buildOutputs,
-			m.buildMessage,
-			m.buildAdditionalInputs
-		}
-	end
-
-	function m.customBuildFiles(prj, groups)
-		m.emitFiles(prj, groups, "CustomBuild", function (cfg, fcfg)
-			return fileconfig.hasCustomBuildRule(fcfg)
-		end)
-	end
-
-
-
-	function m.customRuleFiles(prj, groups)
-		for i = 1, #prj.rules do
-			local rule = p.global.getRule(prj.rules[i])
-			local files = groups[rule.name]
-			if files and #files > 0 then
-				p.push('<ItemGroup>')
-
-				for _, file in ipairs(files) do
-					local contents = p.capture(function()
-						p.push()
-						for prop in p.rule.eachProperty(rule) do
-							local fld = p.rule.getPropertyField(rule, prop)
-
-							for cfg in project.eachconfig(prj) do
-								local fcfg = fileconfig.getconfig(file, cfg)
-								if fcfg and fcfg[fld.name] then
-									local value = p.rule.getPropertyString(rule, prop, fcfg[fld.name])
-									if value and #value > 0 then
-										m.element(prop.name, m.condition(cfg), '%s', value)
-									end
-								end
-							end
-
-						end
-						p.pop()
-					end)
-
-					if #contents > 0 then
-						p.push('<%s Include=\"%s\">', rule.name, path.translate(file.relpath))
-						p.outln(contents)
-						p.pop('</%s>', rule.name)
-					else
-						p.x('<%s Include=\"%s\" />', rule.name, path.translate(file.relpath))
-					end
-				end
-
-				p.pop('</ItemGroup>')
-			end
+		emitFilter = function(prj, group)
+			m.filterGroup(prj, group, "CustomBuild")
 		end
-	end
+	}
 
 
+---
+-- Midl group
+---
+	m.categories.Midl = {
+		name       = "Midl",
+		extensions = ".idl",
+		priority   = 6,
 
-	m.elements.NoneFile = function(cfg, file)
-		return {}
-	end
+		emitFiles = function(prj, group)
+			local fileCfgFunc = {
+				m.excludedFromBuild
+			}
+
+			m.emitFiles(prj, group, "Midl", nil, fileCfgFunc, function(cfg)
+				return cfg.system == p.WINDOWS
+			end)
+		end,
+
+		emitFilter = function(prj, group)
+			m.filterGroup(prj, group, "Midl")
+		end
+	}
+
+---
+-- Masm group
+---
+	m.categories.Masm = {
+		name       = "Masm",
+		extensions = ".asm",
+		priority   = 7,
+
+		emitFiles = function(prj, group)
+			local fileCfgFunc = {
+				m.excludedFromBuild
+			}
+
+			m.emitFiles(prj, group, "Masm", nil, fileCfgFunc, function(cfg)
+				return cfg.system == p.WINDOWS
+			end)
+		end,
+
+		emitFilter = function(prj, group)
+			m.filterGroup(prj, group, "Masm")
+		end,
+
+		emitExtensionSettings = function(prj, group)
+			p.w('<Import Project="$(VCTargetsPath)\\BuildCustomizations\\masm.props" />')
+		end,
+
+		emitExtensionTargets = function(prj, group)
+			p.w('<Import Project="$(VCTargetsPath)\\BuildCustomizations\\masm.targets" />')
+		end
+	}
 
 
-	m.elements.NoneFileCfg = function(fcfg, condition)
-		return {}
-	end
-
-
-	function m.noneFiles(prj, groups)
-		m.emitFiles(prj, groups, "None")
-	end
-
-
-	m.elements.ResourceCompileFile = function(cfg, file)
-		return {}
-	end
-
-	m.elements.ResourceCompileFileCfg = function(fcfg, condition)
-		return {
-			m.excludedFromBuild
-		}
-	end
-
-
-	function m.resourceCompileFiles(prj, groups)
-		m.emitFiles(prj, groups, "ResourceCompile", function(cfg)
-			return cfg.system == p.WINDOWS
-		end)
-	end
-
-
-
-	m.elements.MidlFile = function(cfg, file)
-		return {}
-	end
-
-
-	m.elements.MidlFileCfg = function(fcfg, condition)
-		return {
-			m.excludedFromBuild
-		}
-	end
-
-	function m.midlFiles(prj, groups)
-		m.emitFiles(prj, groups, "Midl", function(cfg)
-			return cfg.system == p.WINDOWS
-		end)
-	end
-
-
-
+---
+-- Categorize files into groups.
+---
 	function m.categorizeSources(prj)
-		local groups = prj._vc2010_sources
-		if groups then
-			return groups
+		-- if we already did this, return the cached result.
+		if prj._vc2010_sources then
+			return prj._vc2010_sources
 		end
 
-		groups = {}
-		prj._vc2010_sources = groups
+		-- build the new group table.
+		local result = {}
+		local groups = {}
+		prj._vc2010_sources = result
 
 		local tr = project.getsourcetree(prj)
 		tree.traverse(tr, {
 			onleaf = function(node)
 				local cat = m.categorizeFile(prj, node)
-				groups[cat] = groups[cat] or {}
-				table.insert(groups[cat], node)
+				groups[cat.name] = groups[cat.name] or {
+					category = cat,
+					files = {}
+				}
+				table.insert(groups[cat.name].files, node)
 			end
 		})
 
 		-- sort by relative-to path; otherwise VS will reorder the files
-		for group, files in pairs(groups) do
-			table.sort(files, function (a, b)
+		for name, group in pairs(groups) do
+			table.sort(group.files, function (a, b)
 				return a.relpath < b.relpath
 			end)
+			table.insert(result, group)
 		end
 
-		return groups
+		-- sort by category priority then name; so we get stable results.
+		table.sort(result, function (a, b)
+			if (a.category.priority == b.category.priority) then
+				return a.category.name < b.category.name
+			end
+			return a.category.priority < b.category.priority
+		end)
+
+		return result
 	end
 
 
@@ -799,44 +856,50 @@
 		for cfg in project.eachconfig(prj) do
 			local fcfg = fileconfig.getconfig(file, cfg)
 			if fileconfig.hasCustomBuildRule(fcfg) then
-				return "CustomBuild"
+				return m.categories.CustomBuild
 			end
 		end
 
 		-- If there is a custom rule associated with it, use that
 		local rule = p.global.getRuleForFile(file.name, prj.rules)
 		if rule then
-			return rule.name
+			return {
+				name      = rule.name,
+				priority  = 100,
+				rule      = rule,
+				emitFiles = function(prj, group)
+					m.emitRuleFiles(prj, group)
+				end,
+				emitFilter = function(prj, group)
+					m.filterGroup(prj, group, group.category.name)
+				end
+			}
 		end
 
 		-- Otherwise use the file extension to deduce a category
-		if path.iscppfile(file.name) then
-			return "ClCompile"
-		elseif path.iscppheader(file.name) then
-			return "ClInclude"
-		elseif path.isresourcefile(file.name) then
-			return "ResourceCompile"
-		elseif path.isidlfile(file.name) then
-			return "Midl"
-		else
-			return "None"
+		for _, cat in pairs(m.categories) do
+			if cat.extensions and path.hasextension(file.name, cat.extensions) then
+				return cat
+			end
 		end
+
+		return m.categories.None
 	end
 
 
-	function m.emitFiles(prj, groups, group, check)
-		local files = groups[group]
+	function m.emitFiles(prj, group, tag, fileFunc, fileCfgFunc, checkFunc)
+		local files = group.files
 		if files and #files > 0 then
 			p.push('<ItemGroup>')
 			for _, file in ipairs(files) do
 
 				local contents = p.capture(function ()
 					p.push()
-					p.callArray(m.elements[group .. "File"], cfg, file)
+					p.callArray(fileFunc, cfg, file)
 					for cfg in project.eachconfig(prj) do
 						local fcfg = fileconfig.getconfig(file, cfg)
-						if not check or check(cfg, fcfg) then
-							p.callArray(m.elements[group .. "FileCfg"], fcfg, m.condition(cfg))
+						if not checkFunc or checkFunc(cfg, fcfg) then
+							p.callArray(fileCfgFunc, fcfg, m.condition(cfg))
 						end
 					end
 					p.pop()
@@ -844,14 +907,54 @@
 
 				local rel = path.translate(file.relpath)
 				if #contents > 0 then
-					p.push('<%s Include="%s">', group, rel)
+					p.push('<%s Include="%s">', tag, rel)
 					p.outln(contents)
-					p.pop('</%s>', group)
+					p.pop('</%s>', tag)
 				else
-					p.x('<%s Include="%s" />', group, rel)
+					p.x('<%s Include="%s" />', tag, rel)
 				end
 
 			end
+			p.pop('</ItemGroup>')
+		end
+	end
+
+	function m.emitRuleFiles(prj, group)
+		local files = group.files
+		local rule = group.category.rule
+
+		if files and #files > 0 then
+			p.push('<ItemGroup>')
+
+			for _, file in ipairs(files) do
+				local contents = p.capture(function()
+					p.push()
+					for prop in p.rule.eachProperty(rule) do
+						local fld = p.rule.getPropertyField(rule, prop)
+
+						for cfg in project.eachconfig(prj) do
+							local fcfg = fileconfig.getconfig(file, cfg)
+							if fcfg and fcfg[fld.name] then
+								local value = p.rule.getPropertyString(rule, prop, fcfg[fld.name])
+								if value and #value > 0 then
+									m.element(prop.name, m.condition(cfg), '%s', value)
+								end
+							end
+						end
+
+					end
+					p.pop()
+				end)
+
+				if #contents > 0 then
+					p.push('<%s Include=\"%s\">', rule.name, path.translate(file.relpath))
+					p.outln(contents)
+					p.pop('</%s>', rule.name)
+				else
+					p.x('<%s Include=\"%s\" />', rule.name, path.translate(file.relpath))
+				end
+			end
+
 			p.pop('</ItemGroup>')
 		end
 	end
@@ -1016,6 +1119,13 @@
 	end
 
 
+	function m.linkObjects(fcfg, condition)
+		if fcfg.linkbuildoutputs ~= nil then
+			m.element("LinkObjects", condition, tostring(fcfg.linkbuildoutputs))
+		end
+	end
+
+
 	function m.characterSet(cfg)
 		if not vstudio.isMakefile(cfg) then
 			m.element("CharacterSet", nil, iif(cfg.characterset == p.MBCS, "MultiByte", "Unicode"))
@@ -1093,10 +1203,10 @@
 	function m.debugInformationFormat(cfg)
 		local value
 		local tool, toolVersion = p.config.toolset(cfg)
-		if cfg.flags.Symbols then
+		if (cfg.symbols == p.ON) or (cfg.symbols == "FastLink") then
 			if cfg.debugformat == "c7" then
 				value = "OldStyle"
-			elseif cfg.architecture == "x86_64" or
+			elseif (cfg.architecture == "x86_64" and _ACTION < "vs2015") or
 				   cfg.clr ~= p.OFF or
 				   config.isOptimizedBuild(cfg) or
 				   cfg.editandcontinue == p.OFF or
@@ -1106,9 +1216,10 @@
 			else
 				value = "EditAndContinue"
 			end
-		end
-		if value then
+
 			m.element("DebugInformationFormat", nil, value)
+		elseif cfg.symbols == p.OFF then
+			m.element("DebugInformationFormat", nil, "None")
 		end
 	end
 
@@ -1136,6 +1247,8 @@
 				v = "StreamingSIMDExtensions2"
 			elseif x == "SSE" then
 				v = "StreamingSIMDExtensions"
+			elseif x == "IA32" and _ACTION > "vs2010" then
+				v = "NoExtensions"
 			end
 		end
 		if v then
@@ -1195,6 +1308,7 @@
 		end
 	end
 
+
 	function m.inlineFunctionExpansion(cfg)
 		if cfg.inlining then
 			local types = {
@@ -1206,6 +1320,7 @@
 			m.element("InlineFunctionExpansion", nil, types[cfg.inlining])
 		end
 	end
+
 
 	function m.forceIncludes(cfg, condition)
 		if #cfg.forceincludes > 0 then
@@ -1223,6 +1338,13 @@
 	end
 
 
+	function m.fullProgramDatabaseFile(cfg)
+		if _ACTION >= "vs2015" and cfg.symbols == "FastLink" then
+			m.element("FullProgramDatabaseFile", nil, "true")
+		end
+	end
+
+
 	function m.functionLevelLinking(cfg)
 		if config.isOptimizedBuild(cfg) then
 			m.element("FunctionLevelLinking", nil, "true")
@@ -1231,7 +1353,21 @@
 
 
 	function m.generateDebugInformation(cfg)
-		m.element("GenerateDebugInformation", nil, tostring(cfg.flags.Symbols ~= nil))
+		local lookup = {}
+		if _ACTION >= "vs2015" then
+			lookup[p.ON]       = "true"
+			lookup[p.OFF]      = "false"
+			lookup["FastLink"] = "DebugFastLink"
+		else
+			lookup[p.ON]       = "true"
+			lookup[p.OFF]      = "false"
+			lookup["FastLink"] = "true"
+		end
+
+		local value = lookup[cfg.symbols]
+		if value then
+			m.element("GenerateDebugInformation", nil, value)
+		end
 	end
 
 
@@ -1312,7 +1448,10 @@
 
 	m.elements.importExtensionTargets = function(prj)
 		return {
+			m.importGroupTargets,
 			m.importRuleTargets,
+			m.importNuGetTargets,
+			m.importBuildCustomizationsTargets
 		}
 	end
 
@@ -1322,11 +1461,54 @@
 		p.pop('</ImportGroup>')
 	end
 
+	function m.importGroupTargets(prj)
+		local groups = m.categorizeSources(prj)
+		for _, group in ipairs(groups) do
+			if group.category.emitExtensionTargets then
+				group.category.emitExtensionTargets(prj, group)
+			end
+		end
+	end
+
 	function m.importRuleTargets(prj)
 		for i = 1, #prj.rules do
 			local rule = p.global.getRule(prj.rules[i])
 			local loc = vstudio.path(prj, p.filename(rule, ".targets"))
 			p.x('<Import Project="%s" />', loc)
+		end
+	end
+
+	local function nuGetTargetsFile(prj, package)
+		return p.vstudio.path(prj, p.filename(prj.solution, string.format("packages\\%s\\build\\native\\%s.targets", vstudio.nuget2010.packageName(package), vstudio.nuget2010.packageId(package))))
+	end
+
+	function m.importNuGetTargets(prj)
+		for i = 1, #prj.nuget do
+			local targetsFile = nuGetTargetsFile(prj, prj.nuget[i])
+			p.x('<Import Project="%s" Condition="Exists(\'%s\')" />', targetsFile, targetsFile)
+		end
+	end
+
+	function m.importBuildCustomizationsTargets(prj)
+		for i, build in ipairs(prj.buildcustomizations) do
+			p.w('<Import Project="$(VCTargetsPath)\\%s.targets" />', path.translate(build))
+		end
+	end
+
+
+
+	function m.ensureNuGetPackageBuildImports(prj)
+		if #prj.nuget > 0 then
+			p.push('<Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">')
+			p.push('<PropertyGroup>')
+			p.x('<ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>')
+			p.pop('</PropertyGroup>')
+
+			for i = 1, #prj.nuget do
+				local targetsFile = nuGetTargetsFile(prj, prj.nuget[i])
+				p.x('<Error Condition="!Exists(\'%s\')" Text="$([System.String]::Format(\'$(ErrorText)\', \'%s\'))" />', targetsFile, targetsFile)
+			end
+			p.pop('</Target>')
 		end
 	end
 
@@ -1344,7 +1526,9 @@
 
 	m.elements.importExtensionSettings = function(prj)
 		return {
+			m.importGroupSettings,
 			m.importRuleSettings,
+			m.importBuildCustomizationsProps
 		}
 	end
 
@@ -1354,11 +1538,29 @@
 		p.pop('</ImportGroup>')
 	end
 
+
+	function m.importGroupSettings(prj)
+		local groups = m.categorizeSources(prj)
+		for _, group in ipairs(groups) do
+			if group.category.emitExtensionSettings then
+				group.category.emitExtensionSettings(prj, group)
+			end
+		end
+	end
+
+
 	function m.importRuleSettings(prj)
 		for i = 1, #prj.rules do
 			local rule = p.global.getRule(prj.rules[i])
 			local loc = vstudio.path(prj, p.filename(rule, ".props"))
 			p.x('<Import Project="%s" />', loc)
+		end
+	end
+
+
+	function m.importBuildCustomizationsProps(prj)
+		for i, build in ipairs(prj.buildcustomizations) do
+			p.w('<Import Project="$(VCTargetsPath)\\%s.props" />', path.translate(build))
 		end
 	end
 
@@ -1478,11 +1680,31 @@
 	end
 
 
+	function m.nmakeBuildCommands(cfg)
+		m.nmakeCommandLine(cfg, cfg.buildcommands, "Build")
+	end
+
+
+	function m.nmakeCleanCommands(cfg)
+		m.nmakeCommandLine(cfg, cfg.cleancommands, "Clean")
+	end
+
+
 	function m.nmakeCommandLine(cfg, commands, phase)
 		if #commands > 0 then
 			commands = os.translateCommands(commands, p.WINDOWS)
 			commands = table.concat(p.esc(commands), p.eol())
 			p.w('<NMake%sCommandLine>%s</NMake%sCommandLine>', phase, commands, phase)
+		end
+	end
+
+
+	function m.nmakeIncludeDirs(cfg)
+		if cfg.kind ~= p.NONE and #cfg.includedirs > 0 then
+			local dirs = vstudio.path(cfg, cfg.includedirs)
+			if #dirs > 0 then
+				m.element("NMakeIncludeSearchPath", nil, "%s", table.concat(dirs, ";"))
+			end
 		end
 	end
 
@@ -1494,10 +1716,24 @@
 		end
 	end
 
+
 	function m.nmakeOutput(cfg)
 		m.element("NMakeOutput", nil, "$(OutDir)%s", cfg.buildtarget.name)
 	end
 
+
+	function m.nmakePreprocessorDefinitions(cfg)
+		if cfg.kind ~= p.NONE and #cfg.defines > 0 then
+			local defines = table.concat(cfg.defines, ";")
+			defines = p.esc(defines) .. ";$(NMakePreprocessorDefinitions)"
+			m.element('NMakePreprocessorDefinitions', nil, defines)
+		end
+	end
+
+
+	function m.nmakeRebuildCommands(cfg)
+		m.nmakeCommandLine(cfg, cfg.rebuildcommands, "ReBuild")
+	end
 
 
 	function m.objectFileName(fcfg)
@@ -1622,9 +1858,10 @@
 	end
 
 
-	function m.programDataBaseFileName(cfg)
-		-- just a placeholder for overriding; will use the default VS name
-		-- for changes, see https://github.com/premake/premake-core/issues/151
+	function m.programDatabaseFile(cfg)
+		if cfg.symbolspath and cfg.symbols == p.ON and cfg.debugformat ~= "c7" then
+			m.element("ProgramDatabaseFile", nil, p.project.getrelative(cfg.project, cfg.symbolspath))
+		end
 	end
 
 
@@ -1785,6 +2022,14 @@
 
 	function m.targetName(cfg)
 		m.element("TargetName", nil, "%s%s", cfg.buildtarget.prefix, cfg.buildtarget.basename)
+	end
+
+
+	function m.targetPlatformVersion(prj)
+		local min = project.systemversion(prj)
+		if min ~= nil and _ACTION >= "vs2015" then
+			m.element("WindowsTargetPlatformVersion", nil, min)
+		end
 	end
 
 

@@ -35,11 +35,20 @@
 		kind "SharedLib"
 		prepare { "ldFlags", "linkCmd" }
 		test.capture [[
-  ALL_LDFLAGS += $(LDFLAGS) -s -shared
+  ALL_LDFLAGS += $(LDFLAGS) -shared -Wl,-soname=libMyProject.so -s
   LINKCMD = $(CXX) -o "$@" $(OBJECTS) $(RESOURCES) $(ALL_LDFLAGS) $(LIBS)
 		]]
 	end
 
+	function suite.links_onMacOSXCppSharedLib()
+		_OS = "macosx"
+		kind "SharedLib"
+		prepare { "ldFlags", "linkCmd" }
+		test.capture [[
+  ALL_LDFLAGS += $(LDFLAGS) -dynamiclib -Wl,-install_name,@rpath/libMyProject.dylib -Wl,-x
+  LINKCMD = $(CXX) -o "$@" $(OBJECTS) $(RESOURCES) $(ALL_LDFLAGS) $(LIBS)
+		]]
+	end
 
 --
 -- Check link command for a shared C library.
@@ -50,7 +59,7 @@
 		kind "SharedLib"
 		prepare { "ldFlags", "linkCmd" }
 		test.capture [[
-  ALL_LDFLAGS += $(LDFLAGS) -s -shared
+  ALL_LDFLAGS += $(LDFLAGS) -shared -Wl,-soname=libMyProject.so -s
   LINKCMD = $(CC) -o "$@" $(OBJECTS) $(RESOURCES) $(ALL_LDFLAGS) $(LIBS)
 		]]
 	end
@@ -153,9 +162,26 @@
 
         prepare { "ldFlags", "libs", "ldDeps" }
         test.capture [[
-  ALL_LDFLAGS += $(LDFLAGS) -Lbuild/bin/Debug -s
+  ALL_LDFLAGS += $(LDFLAGS) -Lbuild/bin/Debug -Wl,-rpath,'$$ORIGIN/../../build/bin/Debug' -s
   LIBS += -lMyProject2
   LDDEPS += build/bin/Debug/libMyProject2.so
+        ]]
+    end
+
+    function suite.links_onMacOSXSiblingSharedLib()
+    	_OS = "macosx"
+        links "MyProject2"
+		flags { "RelativeLinks" }
+
+        test.createproject(wks)
+        kind "SharedLib"
+        location "build"
+
+        prepare { "ldFlags", "libs", "ldDeps" }
+        test.capture [[
+  ALL_LDFLAGS += $(LDFLAGS) -Lbuild/bin/Debug -Wl,-rpath,'@loader_path/../../build/bin/Debug' -Wl,-x
+  LIBS += -lMyProject2
+  LDDEPS += build/bin/Debug/libMyProject2.dylib
         ]]
     end
 
@@ -163,7 +189,7 @@
 -- Check a linking multiple siblings.
 --
 
-	function suite.links_onSiblingStaticLib()
+	function suite.links_onMultipleSiblingStaticLib()
 		links "MyProject2"
 		links "MyProject3"
 
@@ -179,6 +205,31 @@
 		test.capture [[
   ALL_LDFLAGS += $(LDFLAGS) -s
   LIBS += build/bin/Debug/libMyProject2.a build/bin/Debug/libMyProject3.a
+  LDDEPS += build/bin/Debug/libMyProject2.a build/bin/Debug/libMyProject3.a
+		]]
+	end
+
+--
+-- Check a linking multiple siblings with link groups enabled.
+--
+
+	function suite.links_onSiblingStaticLibWithLinkGroups()
+		links "MyProject2"
+		links "MyProject3"
+		linkgroups "On"
+
+		test.createproject(wks)
+		kind "StaticLib"
+		location "build"
+
+		test.createproject(wks)
+		kind "StaticLib"
+		location "build"
+
+		prepare { "ldFlags", "libs", "ldDeps" }
+		test.capture [[
+  ALL_LDFLAGS += $(LDFLAGS) -s
+  LIBS += -Wl,--start-group build/bin/Debug/libMyProject2.a build/bin/Debug/libMyProject3.a -Wl,--end-group
   LDDEPS += build/bin/Debug/libMyProject2.a build/bin/Debug/libMyProject3.a
 		]]
 	end

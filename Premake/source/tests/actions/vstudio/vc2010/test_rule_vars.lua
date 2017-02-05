@@ -18,6 +18,7 @@
 	local wks, prj
 
 	function suite.setup()
+		premake.action.set("vs2010")
 		rule "MyRule"
 		wks, prj = test.createWorkspace()
 		rules { "MyRule" }
@@ -99,11 +100,11 @@
 
 	function suite.onPathVar()
 		createVar { name="MyVar", kind="path" }
-		myRuleVars { MyVar = "../../path/to/file" }
+		myRuleVars { MyVar = "../path/to/file" }
 		prepare()
 		test.capture [[
 <MyRule>
-	<MyVar>..\..\path\to\file</MyVar>
+	<MyVar>..\path\to\file</MyVar>
 </MyRule>
 		]]
 	end

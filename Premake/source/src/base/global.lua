@@ -17,6 +17,12 @@
 		return p.container.new(p.global, name)
 	end
 
+---
+-- Bakes the global scope.
+---
+	function global.bake(self)
+		p.container.bakeChildren(self)
+	end
 
 
 ---
@@ -79,10 +85,9 @@
 ---
 
 	function global.getRuleForFile(fname, rules)
-		local ext = path.getextension(fname):lower()
 		for rule in global.eachRule() do
 			if not rules or table.contains(rules, rule.name) then
-				if rule.fileextension == ext then
+				if path.hasextension(fname, rule.fileextension) then
 					return rule
 				end
 			end

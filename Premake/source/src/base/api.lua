@@ -153,7 +153,7 @@
 
 		-- otherwise, a new instance
 		if not instance then
-			instance = class.new(name)
+			instance = class.new(name, parent)
 			if parent then
 				p.container.addChild(parent, instance)
 			end
@@ -555,15 +555,20 @@
 				table.foreachi(value, recurse)
 
 			elseif hasDeprecatedValues and value:contains("*") then
-				local current = configset.fetch(target, field)
+				local current = configset.fetch(target, field, {
+					matcher = function(cset, block, filter)
+						local current = cset.current
+						return criteria.matches(current._criteria, block._criteria.terms or {}) or
+							   criteria.matches(block._criteria, current._criteria.terms or {})
+					end
+				})
+
 				local mask = path.wildcards(value)
 				for _, item in ipairs(current) do
 					if item:match(mask) == item then
 						recurse(item)
 					end
 				end
-				table.insert(removes, value)
-
 			else
 				local value, err, additional = api.checkValue(field, value)
 				if err then
@@ -898,8 +903,8 @@
 -- contain any other kind of data.
 ---
 
-	local function storeListItem(current, item)
-		if current[item] then
+	local function storeListItem(current, item, allowDuplicates)
+		if not allowDuplicates and current[item] then
 			table.remove(current, table.indexof(current, item))
 		end
 		table.insert(current, item)
@@ -932,13 +937,13 @@
 		if type(value) == "table" then
 			if #value > 0 then
 				for i = 1, #value do
-					storeListItem(current, value[i])
+					storeListItem(current, value[i], field.allowDuplicates)
 				end
 			elseif not table.isempty(value) then
-				storeListItem(current, value)
+				storeListItem(current, value, field.allowDuplicates)
 			end
 		elseif value then
-			storeListItem(current, value)
+			storeListItem(current, value, field.allowDuplicates)
 		end
 
 		return current
@@ -948,7 +953,7 @@
 	local function mergeList(field, current, value, processor)
 		value = value or {}
 		for i = 1, #value do
-			storeListItem(current, value[i])
+			storeListItem(current, value[i], field.allowDuplicates)
 		end
 		return current
 	end
@@ -1100,9 +1105,7 @@
 
 	function configuration(terms)
 		if terms then
-			if (type(terms) == "table" and #terms == 1 and terms[1] == "*") or
-			   (terms == "*")
-			then
+			if (type(terms) == "table" and #terms == 1 and terms[1] == "*") or (terms == "*") then
 				terms = nil
 			end
 			configset.addblock(api.scope.current, {terms}, os.getcwd())
@@ -1119,9 +1122,7 @@
 
 	function filter(terms)
 		if terms then
-			if (type(terms) == "table" and #terms == 1 and terms[1] == "*") or
-			   (terms == "*")
-			then
+			if (type(terms) == "table" and #terms == 1 and terms[1] == "*") or (terms == "*") then
 				terms = nil
 			end
 			local ok, err = configset.addFilter(api.scope.current, {terms}, os.getcwd())

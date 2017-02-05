@@ -15,7 +15,7 @@
 	local wks, prj
 
 	function suite.setup()
-		_ACTION = "vs2008"
+		premake.action.set("vs2008")
 		premake.escaper(premake.vstudio.vs2005.esc)
 		wks, prj = test.createWorkspace()
 	end
@@ -110,7 +110,7 @@
 --
 
 	function suite.onSymbolsFlag()
-		flags "Symbols"
+		symbols "On"
 		prepare()
 		test.capture [[
 <Tool
@@ -127,7 +127,7 @@
 --
 
 	function suite.onC7DebugFormat()
-		flags "Symbols"
+		symbols "On"
 		debugformat "C7"
 		prepare()
 		test.capture [[

@@ -15,7 +15,7 @@
 	local wks, prj
 
 	function suite.setup()
-		_ACTION = "vs2010"
+		premake.action.set("vs2010")
 
 		wks = workspace("MyWorkspace")
 		configurations { "Debug", "Release" }
@@ -51,7 +51,6 @@
 		test.capture [[
 <Link>
 	<SubSystem>Console</SubSystem>
-	<GenerateDebugInformation>false</GenerateDebugInformation>
 	<EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
 </Link>
 		]]
@@ -70,7 +69,6 @@
 		test.capture [[
 <Link>
 	<SubSystem>Console</SubSystem>
-	<GenerateDebugInformation>false</GenerateDebugInformation>
 	<AdditionalDependencies>bin\Ares\Debug\MyProject2.lib;%(AdditionalDependencies)</AdditionalDependencies>
 	<EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
 </Link>

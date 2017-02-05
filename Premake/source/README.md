@@ -1,12 +1,12 @@
-# PREMAKE 5 (core) 
-* Linux: [![Build Status](https://travis-ci.org/premake/premake-core.svg?branch=master)](https://travis-ci.org/premake/premake-core)
-* Windows: [![Build Status](http://tomvandijck.org:8080/job/premake-core/badge/icon)](http://tomvandijck.org:8080/job/premake-core/)
+# PREMAKE 5 (core)
+<img src="https://github.com/premake/premake-core/wiki/linux-widget.jpeg" width="24" height="24"/> [![Build Status](https://travis-ci.org/premake/premake-core.svg?branch=master)](https://travis-ci.org/premake/premake-core)
+ <img src="https://github.com/premake/premake-core/wiki/windows-widget.jpeg" width="24" height="24"/> [![Build status](https://ci.appveyor.com/api/projects/status/lc9g332y2lqvel8h?svg=true)](https://ci.appveyor.com/project/PremakeOrganization/premake-core)
 
 <img src="http://premake.github.io/premake-logo.png" width="200" height="200" />
 
 Premake is a command line utility which reads a scripted definition of a software project and, most commonly, uses it to generate project files for toolsets like Visual Studio, Xcode, or GNU Make. Built-in and Third-Party [Modules](https://github.com/premake/premake-core/wiki/Modules) add support for even more toolsets.
 
-Find out in detail [what Premake is](https://github.com/premake/premake-core/wiki/What_Is_Premake) and how to use it in the [wiki](https://github.com/premake/premake-core/wiki).
+Find out in detail [what Premake is](https://github.com/premake/premake-core/wiki/What-Is-Premake) and how to use it in the [wiki](https://github.com/premake/premake-core/wiki).
 
 ### Get started
 
@@ -26,7 +26,7 @@ Something not working quite as expected? Do you need a feature that has not been
 
 ### Contribute
 
-Awesome! If you would like to contribute with a new feature or submit a bugfix, fork this repo and send a pull request. Please, make sure all the [unit tests](https://github.com/premake/premake-core/wiki/Unit-Tests) are passing before submitting and add new ones in case you introduced new features.
+Awesome! View the [contribution guidelines](https://github.com/premake/premake-core/wiki/Contribution-Guidelines) before you contribute. If you would like to contribute with a new feature or submit a bugfix, fork this repo and send a pull request. Please, make sure all the unit tests are passing before submitting and add new ones in case you introduced new features.
 
 ### Copyright & License
 
