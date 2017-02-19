@@ -44,6 +44,7 @@ namespace Flourish { namespace Memory
 		static void DestructObject(CallingDestructor<false>, T* pointer)
 		{
 			//Do Nothing
+            FL_UNUSED(pointer);
 		}
 
 		Allocator& mWrappedAllocator;
