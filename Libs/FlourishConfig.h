@@ -24,18 +24,18 @@
 // Defines the major and minor version of the engine. Minor number should be defined
 // as a 2 digit entry with leading zeros if needed e.g 04
 
-#ifndef EASTL_VERSION_MAJOR 
-	#define EASTL_VERSION_MAJOR 0
+#ifndef FL_VERSION_MAJOR
+	#define FL_VERSION_MAJOR 0
 #endif
 
-#ifndef EASTL_VERSION_MINOR
-	#define EASTL_VERSION_MINOR 01
+#ifndef FL_VERSION_MINOR
+	#define FL_VERSION_MINOR 01
 #endif
 
 //Formats the version number as the string "MAJOR.MINOR"
-#ifndef EASTL_VERSION_STRING
-	#define EASTL_VERSION_STRING \
-		FL_STRINGIFY(FL_JOIN(FL_JOIN(EASTL_VERSION_MAJOR,.),EASTL_VERSION_MINOR))
+#ifndef FL_VERSION_STRING
+	#define FL_VERSION_STRING \
+		FL_STRINGIFY(FL_JOIN(FL_JOIN(FL_VERSION_MAJOR,.),FL_VERSION_MINOR))
 #endif
 
 //-------------------------------------------------------------------------------
