@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Platform.h"
+
 //Platform independant macros for compiler specific functions
 #if FL_ENABLED(FL_COMPILER_GCC) || FL_ENABLED(FL_COMPILER_CLANG)
 #define FL_ALIGN_DECL(_align, _decl)	_decl __attribute__( (aligned(_align) ) )
@@ -22,3 +24,15 @@
 #else
 #error "Unknown Compiler"
 #endif
+
+// Simple macro to disable do {} while(0) errors (often used in macros)
+#if FL_ENABLED(FL_COMPILER_MSVC)		
+	#define FL_PUSH_DISABLE_COND_EXP_IS_CONSTANT_WARNING	\
+	__pragma(warning(push))									\
+	__pragma(warning(disable:4127))				
+	#define FL_POP_DISABLE_COND_EXP_IS_CONSTANT_WARNING		\
+	__pragma(warning(pop))						
+#else	
+	#define FL_PUSH_DISABLE_COND_EXP_IS_CONSTANT_WARNING			
+	#define FL_POP_DISABLE_COND_EXP_IS_CONSTANT_WARNING			
+#endif		
