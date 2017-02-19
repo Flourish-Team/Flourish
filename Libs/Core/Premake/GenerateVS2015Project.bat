@@ -1,4 +1,4 @@
 cd /d "../../../Premake"
-"bin/windows/premake5.exe" vs2015
+"bin/windows/premake5.exe" vs2015 --fatal
 @echo[
 PAUSE
