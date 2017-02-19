@@ -8,6 +8,8 @@
 #define FL_DEBUG_BREAK_COND(condition) \
 	_IMPL_FL_DEBUG_BREAK_COND((condition))
 
+#include <cstdarg>
+
 namespace Flourish { namespace Debug
 {
 	//Outputs text for debugging purposes using printf style formating
