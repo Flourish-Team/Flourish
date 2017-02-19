@@ -147,6 +147,7 @@ namespace Flourish { namespace Debug
 	#elif FL_ENABLED(FL_PLATFORM_OSX) || FL_ENABLED(FL_PLATFORM_LINUX)
 		#include <execinfo.h>
 		#include <cxxabi.h>
+        #include <inttypes.h>
 
 		StackTraceResult GetStackTrace(int numFramesToOmit, char* callstackBufOut, int callstackBufOutLength )
 		{
@@ -221,7 +222,7 @@ namespace Flourish { namespace Debug
 					{
 						//CB: __cxa_demangle may have reaallocated funcname buffer using realloc
 						funcname = ret;
-						if(snprintf(callstackBufOut + stringLength, bufferLeftLength, "%i: (0x%08I64X) - %s::%s\n", numFramesCaptured - i - 1, addrlist[i], symbollist[i], funcname) >= bufferLeftLength)
+						if(snprintf(callstackBufOut + stringLength, bufferLeftLength, "%i: (0x%" PRIXPTR ") - %s::%s\n", numFramesCaptured - i - 1, (uintptr_t)addrlist[i], symbollist[i], funcname) >= bufferLeftLength)
 						{
 							truncated = true;
 							break;
@@ -231,7 +232,7 @@ namespace Flourish { namespace Debug
 					{
 						// demangling failed. Output function name as a C function with
 						// no arguments.
-						if(snprintf(callstackBufOut + stringLength, bufferLeftLength, "%i: (0x%08I64X) - %s::%s\n", numFramesCaptured - i - 1, addrlist[i], symbollist[i], begin_name) >= bufferLeftLength)
+						if(snprintf(callstackBufOut + stringLength, bufferLeftLength, "%i: (0x%" PRIXPTR ") - %s::%s\n", numFramesCaptured - i - 1, (uintptr_t)addrlist[i], symbollist[i], begin_name) >= bufferLeftLength)
 						{
 							truncated = true;
 							break;
@@ -241,7 +242,7 @@ namespace Flourish { namespace Debug
 				else
 				{
 					// couldn't parse the line? print the whole line.
-					if(snprintf(callstackBufOut + stringLength, bufferLeftLength, "%i: (0x%08I64X) - %s\n", numFramesCaptured - i - 1, addrlist[i], symbollist[i]) >= bufferLeftLength)
+					if(snprintf(callstackBufOut + stringLength, bufferLeftLength, "%i: (0x%" PRIXPTR ") - %s\n", numFramesCaptured - i - 1, (uintptr_t)addrlist[i], symbollist[i]) >= bufferLeftLength)
 					{
 						truncated = true;
 						break;
