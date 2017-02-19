@@ -4,8 +4,6 @@
 
 namespace Flourish { namespace Debug
 {
-	const
-
 	//Simple wrapper around file/line/function macro data
 	struct SourceInfo
 	{
