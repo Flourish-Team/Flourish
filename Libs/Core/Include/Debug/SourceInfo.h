@@ -14,7 +14,7 @@ namespace Flourish { namespace Debug
 
 	namespace Internal
 	{
-		FORCEINLINE SourceInfo CreateSourceInfoStruct(char* fileName, long lineNumber, char* functionName)
+		FL_FORCE_INLINE SourceInfo CreateSourceInfoStruct(char* fileName, long lineNumber, char* functionName)
 		{
 			return {fileName, lineNumber, functionName};
 		}
