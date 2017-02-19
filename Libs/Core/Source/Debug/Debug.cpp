@@ -2,6 +2,7 @@
 #include "Debug/Debug.h"
 #include <cstdio>
 #include <cstdlib>
+#include <string.h>
 
 namespace Flourish { namespace Debug
 {
