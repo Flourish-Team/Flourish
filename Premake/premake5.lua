@@ -4,10 +4,10 @@ workspace "Flourish"
    location("../Projects/" .. _ACTION)
    flags 
    { 
-   		"Unicode", 
    		"ExtraWarnings", 
    		"FatalWarnings"
    }
+   characterset "Unicode"
    defines { "_HAS_EXCEPTIONS=0" }
    rtti ("Off")
    exceptionhandling ("Off")
@@ -18,24 +18,26 @@ workspace "Flourish"
 	filter { "system:windows" }
 		platforms { "Win32", "Win64" }
 
-	filter { "platforms:*64" }
+	filter { "platforms:*32" }
 	    architecture "x32"
 
 	filter { "platforms:*64" }
 	    architecture "x64"
 
    filter "configurations:Debug"
-      defines { "_DEBUG", }
-      flags { "Symbols" }
+      defines { "_DEBUG", "FL_BUILD_CONFIG_DEBUG" }
+      symbols "On"
 
    filter "configurations:Release"
-      defines { "NDEBUG" }
+      defines { "NDEBUG", "FL_BUILD_CONFIG_RELEASE" }
       optimize "On"
 
 	  -- Stripping symbols from OSX in release causes an error in LD
 	  if os.get() == "macosx" then
-	  flags { "Symbols" }
+	  symbols "On"
 	  end
+
+filter { }
 
 group("3rdParty")
 	include "../3rdParty/googletest"

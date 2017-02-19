@@ -7,8 +7,16 @@ project "Test"
    links { "GoogleTest" }
    includedirs { "Include", "../../3rdParty/googletest/include" }
 
-   files { "Include/**.h", "Source/**.c", "Source/**.cpp", "Tests/**.cpp" }
+   files 
+   { 
+      "../FlourishConfig.h",
+      "Include/**.h", 
+      "Include/**.inl", 
+      "Source/**.c", 
+      "Source/**.cpp", 
+      "Tests/**.cpp" 
+   }
 
-   configuration "macosx"
-            linkoptions  { "-std=c++11", "-stdlib=libc++" }
-            buildoptions { "-std=c++11", "-stdlib=libc++" }
+   filter {"system:macosx"}
+      linkoptions  { "-std=c++11", "-stdlib=libc++" }
+      buildoptions { "-std=c++11", "-stdlib=libc++" }

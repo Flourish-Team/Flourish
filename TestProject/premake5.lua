@@ -15,11 +15,12 @@ project "TestProject"
    files { 
       "Source/**.cpp",
       "../Libs/**/Tests/**.cpp",
-      "../Libs/**/Tests/**.h"
+      "../Libs/**/Tests/**.h",
+      "../Libs/**/Tests/**.inl"
    }
 
    defines { "FL_RUNNING_TESTS" }
 
-   configuration "macosx"
-            linkoptions  { "-std=c++11", "-stdlib=libc++" }
-            buildoptions { "-std=c++11", "-stdlib=libc++" }
+   filter {"system:macosx"}
+      linkoptions  { "-std=c++11", "-stdlib=libc++" }
+      buildoptions { "-std=c++11", "-stdlib=libc++" }
