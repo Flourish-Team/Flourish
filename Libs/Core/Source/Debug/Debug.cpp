@@ -4,6 +4,15 @@
 #include <cstdlib>
 #include <string.h>
 
+#if FL_ENABLED(FL_PLATFORM_OSX)
+    #if defined(__OBJC__)
+        #import <Foundation/NSObjCRuntime.h>
+    #else
+        #include <CoreFoundation/CFString.h>
+        extern "C" void NSLog(CFStringRef _format, ...);
+    #endif
+#endif
+
 namespace Flourish { namespace Debug
 {
 #if FL_ENABLED(FL_DEBUG_PRINTF_ENABLED)
@@ -25,7 +34,7 @@ namespace Flourish { namespace Debug
 
 		char* messageBufferPtr = messageBuffer;
 
-		int numCharsWritten;
+		size_t numCharsWritten;
 
 		numCharsWritten = vsnprintf(messageBufferPtr, bufferSize, message, args);
 
@@ -51,7 +60,7 @@ namespace Flourish { namespace Debug
 			#if defined(__OBJC__)
 				NSLog(@"%s", messageBuffer);
 			#else
-				NSLog(__CFStringMakeConstantString("%s"), messageBuffer);
+				NSLog(CFSTR("%s"), messageBuffer);
 			#endif 
 		#endif
 
@@ -143,8 +152,8 @@ namespace Flourish { namespace Debug
 		{
 			//Source: https://panthema.net/2008/0901-stacktrace-demangled/
 
-			const auto maxNumFramesToCapture = 512;
-			const auto maxSymbolNameSize = 256;
+			size_t maxNumFramesToCapture = 512;
+			size_t maxSymbolNameSize = 256;
 
 			// storage array for stack trace address data
 			void* addrlist[maxNumFramesToCapture];
