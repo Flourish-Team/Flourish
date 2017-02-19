@@ -57,6 +57,7 @@ namespace Flourish { namespace Memory
 
 		void deallocate(pointer p, size_type n)
 		{
+            FL_UNUSED(n);
 			FL_DELETE_RAW_BUFFER(mWrappedAllocator, p);
 		}
 
