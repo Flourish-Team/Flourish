@@ -7,14 +7,14 @@ namespace Flourish { namespace Debug
 	//Simple wrapper around file/line/function macro data
 	struct SourceInfo
 	{
-		char* FileName;
+		const char* FileName;
 		long Line;
-		char* FunctionName;
+		const char* FunctionName;
 	};
 
 	namespace Internal
 	{
-		FL_FORCE_INLINE SourceInfo CreateSourceInfoStruct(char* fileName, long lineNumber, char* functionName)
+		FL_FORCE_INLINE SourceInfo CreateSourceInfoStruct(const char* fileName, long lineNumber, const char* functionName)
 		{
 			return {fileName, lineNumber, functionName};
 		}
