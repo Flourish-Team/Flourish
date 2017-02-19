@@ -1,8 +1,12 @@
 #pragma once
 
+#include "Platform/Platform.h"
+
 #include <stdlib.h> 
 #include <memory>
-#include <malloc.h>
+#if FL_ENABLED(FL_PLATFORM_WINDOWS)
+    #include <malloc.h>
+#endif
 #include "Allocator.h"
 #include "Internal/MemoryNewDelInternal.h"
 
