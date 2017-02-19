@@ -1,36 +1,33 @@
 #pragma once
 
-// Will cause the program to break when called
-#define FL_BREAKPOINT() Flourish::Debug::DebugBreak();
+// Causes a break in the program to be triggered
+#define FL_DEBUG_BREAK() \
+	_IMPL_FL_DEBUG_BREAK()
 
-// Will cause the program to break if conditon evaluates to true
-#define FL_BREAKPOINT_COND(conditon)		\
-	do										\
-	{										\
-		if((conditon))						\
-		{									\
-			FL_BREAKPOINT();				\
-		}									\
-		__pragma(warning(push))				\
-		__pragma(warning(disable:4127))		\
-	} while(0)								\
-	__pragma(warning(pop))	
-
-//Outputs text for debugging purposes using printf style formating
-#define FL_DEBUG_PRINTF(x, ...) Flourish::Debug::DebugOutputf((x), __VA_ARGS__)
+// Causes a break in the program to be triggered if the condition is true
+#define FL_DEBUG_BREAK_COND(condition) \
+	_IMPL_FL_DEBUG_BREAK_COND((condition))
 
 namespace Flourish { namespace Debug
 {
-	// Will cause the program to break when called
-	void DebugBreak();
-
 	//Outputs text for debugging purposes using printf style formating
 	void DebugPrintf(const char* message, ...);
 
-	//TODO add crossplatform stacktrace funtions
+	//Same as above but takes a va_list instead to allow forwarding
+	void DebugPrintfVArgs(const char* message, va_list args);
+
+	enum class StackTraceResult
+	{
+		OK,
+		OKTruncated,
+		Failed,
+	}; 
+
+	// Walks the stack and converts it to a string using symbols is found to get function Names.
+	// numFramesToOmit sets how many stack frames to skip in the output
+	// Return value indicated if the stacktrace was obtained ok and if it was truncated
+	StackTraceResult GetStackTrace(int numFramesToOmit,	char* callstackBufOut, int callstackBufOutLength );
 }}
 
 //Include inline impimentation
-#define INCLUDING_DEBUG_IMP_FILE
 #include "Internal/Debug.inl"
-#undef INCLUDING_STRING_IMP_FILE
