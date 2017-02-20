@@ -172,20 +172,31 @@ namespace Flourish { namespace Debug
 			{
 				char *begin_name = 0, *begin_offset = 0, *end_offset = 0;
 
-				// find parentheses and +address offset surrounding the mangled name:
-				// ./module(function+0x15c) [0x8048a6d]
-				for (char *p = symbollist[i]; *p; ++p)
-				{
-					if (*p == '(')
-						begin_name = p;
-					else if (*p == '+')
-						begin_offset = p;
-					else if (*p == ')' && begin_offset) {
-						end_offset = p;
-						break;
-					}
-				}
-
+                #if FL_ENABLED(FL_PLATFORM_OSX)
+                    for ( char *p = symbollist[i]; *p; ++p )
+                    {
+                        if (( *p == '_' ) && ( *(p-1) == ' ' ))
+                            begin_name = p-1;
+                        else if ( *p == '+' )
+                            begin_offset = p-1;
+                        
+                        end_offset = p;
+                    }
+                #else
+                    // find parentheses and +address offset surrounding the mangled name:
+                    // ./module(function+0x15c) [0x8048a6d]
+                    for (char *p = symbollist[i]; *p; ++p)
+                    {
+                        if (*p == '(')
+                            begin_name = p;
+                        else if (*p == '+')
+                            begin_offset = p;
+                        else if (*p == ')' && begin_offset) {
+                            end_offset = p;
+                            break;
+                        }
+                    }
+                #endif
 
 				stringLength = strlen(callstackBufOut);
 				bufferLeftLength = callstackBufOutLength - stringLength;
