@@ -4,15 +4,6 @@
 #include <cstdlib>
 #include <string.h>
 
-#if FL_ENABLED(FL_PLATFORM_OSX)
-    #if defined(__OBJC__)
-        #import <Foundation/NSObjCRuntime.h>
-    #else
-        #include <CoreFoundation/CFString.h>
-        extern "C" void NSLog(CFStringRef _format, ...);
-    #endif
-#endif
-
 namespace Flourish { namespace Debug
 {
 #if FL_ENABLED(FL_DEBUG_PRINTF_ENABLED)
@@ -56,13 +47,7 @@ namespace Flourish { namespace Debug
 		//Also output to any platform specific logs
 		#if FL_ENABLED(FL_PLATFORM_WINDOWS)
 			OutputDebugStringA(messageBuffer);
-		#elif FL_ENABLED(FL_PLATFORM_OSX)
-			#if defined(__OBJC__)
-				NSLog(@"%s", messageBuffer);
-			#else
-				NSLog(CFSTR("%s"), messageBuffer);
-			#endif 
-		#endif
+        #endif
 
 		if(allocBuffer != nullptr)
 		{

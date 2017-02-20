@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Debug/Debug.h"
+
 #if FL_ENABLED(FL_ASSERT_ENABLED)
 	#define _IMPL_FL_ASSERT(condition, message, ...)					\
 		FL_PUSH_DISABLE_COND_EXP_IS_CONSTANT_WARNING					\
@@ -15,7 +17,7 @@
 					MAKE_SOURCE_INFO,									\
 					FL_STRINGIFY(condition),							\
 					message,											\
-					__VA_ARGS__))										\
+					##__VA_ARGS__))										\
 					{													\
 						FL_DEBUG_BREAK();								\
 					}													\

@@ -14,7 +14,7 @@
 
 //Assers the condition is true, outputing the printf style message to the Assert handler
 #define FL_ASSERT_MSG(condition, message, ...) \
-	_IMPL_FL_ASSERT(condition, message, __VA_ARGS__)
+	_IMPL_FL_ASSERT(condition, message, ##__VA_ARGS__)
 
 //Assert that always fails if called
 #define FL_ASSERT_ALWAYS() \
@@ -22,7 +22,7 @@
 
 //Assert that always fails if called, outputting the printf style message to the Assert handler
 #define FL_ASSERT_ALWAYS_MSG(message, ...) \
-	_IMPL_FL_ASSERT(false, message,  __VA_ARGS__)
+	_IMPL_FL_ASSERT(false, message,  ##__VA_ARGS__)
 
 //Compile time assert
 #define FL_STATIC_ASSERT(condition) \
