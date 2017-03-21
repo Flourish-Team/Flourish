@@ -52,7 +52,7 @@ namespace Flourish { namespace Debug
 		const char* message,
 		const char* callstack);
 
-	//Set the assert handler
+	//Set the assert handler, set to null to use the default handler
 	void SetAssertHandler(AssertHandler handler);
 
 	//Returns the current assert handler, if null then we are using the default handler
