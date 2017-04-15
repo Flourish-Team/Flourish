@@ -3,6 +3,18 @@
 
 using namespace Flourish::Debug;
 
+// TODO: This should probably go somewhere else.
+// Seems the strcpy_s that's templated is VS only?
+// Also you don't use the return value so we're faking it
+#if FL_ENABLED(FL_PLATFORM_OSX)
+template <size_t size>
+errno_t strcpy_s(char (&strDestination)[size], const char *strSource)
+{
+    strlcpy(strDestination, strSource, size);
+    return 0;
+}
+#endif
+
 class AssertTests : public ::testing::Test
 {
 public:
