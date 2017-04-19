@@ -1,11 +1,17 @@
 -- premake5.lua
+
+require "cmake"
+
 workspace "Flourish"
    configurations { "Debug", "Release" }
    location("../Projects/" .. _ACTION)
+   filter { "action:cmake"}
+      location("../")
    flags 
    { 
-   		"ExtraWarnings", 
-   		"FatalWarnings"
+       "ExtraWarnings",
+       "FatalWarnings",
+       "C++11"
    }
    characterset "Unicode"
    defines { "_HAS_EXCEPTIONS=0" }

@@ -29,3 +29,15 @@
 
 Projects
 Bin
+
+\.idea/
+
+cmake-build-debug/
+
+CMakeLists\.txt
+
+Core\.cmake
+
+GoogleTest\.cmake
+
+*.cmake
