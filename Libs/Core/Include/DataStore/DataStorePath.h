@@ -14,16 +14,19 @@ namespace Flourish
     public:
         DataStorePath(const char* path);
         DataStorePath(const std::string& path);
-        
+
+        bool operator==(const DataStorePath& rhs) const;
+        bool operator!=(const DataStorePath& rhs) const;
+
         std::string AsString() const;
         DataStorePath& GetDirectory();
         DataStorePath& GetFileName();
         DataStorePath& GetFileNameWithoutExtension();
-    
+
     private:
         std::string::size_type GetLastDirSeperatorIdx() const;
         void Validate() const;
-        
+
         std::string _contentsAsString;
     };
 }

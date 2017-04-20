@@ -1,6 +1,8 @@
 #include "Test.h"
 #include "Debug/Assert.h"
 
+#if FL_DISABLED(FL_PLATFORM_OSX)
+
 using namespace Flourish::Debug;
 
 // TODO: This should probably go somewhere else.
@@ -157,4 +159,4 @@ TEST_F(AssertTests, AssetAlwaysMsgFiresCorrectly)
 	EXPECT_EQ(SourceInfo.FunctionName, sourceInfo.FunctionName);
 	EXPECT_EQ(SourceInfo.Line, sourceInfo.Line + 1);
 }
-
+#endif
