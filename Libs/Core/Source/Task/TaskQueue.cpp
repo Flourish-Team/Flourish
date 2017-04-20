@@ -1,7 +1,5 @@
 #include "Task/TaskQueue.h"
 
-#include <atomic>
-
 #include "Task/Task.h"
 
 namespace Flourish

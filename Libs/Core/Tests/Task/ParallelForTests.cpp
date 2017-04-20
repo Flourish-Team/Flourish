@@ -8,7 +8,6 @@
 #include "Task/TaskTestHelpers/MockTaskSystem.h"
 #include "Task/TaskTestHelpers/RecordReplaySplitter.h"
 #include "Task/TaskTestHelpers/RecordTaskSystem.h"
-#include "Task/TaskTestHelpers/ReplaySplitter.h"
 #include "Task/TaskTestHelpers/StubSplitter.h"
 #include "Task/TaskTestHelpers/StubTaskSystem.h"
 

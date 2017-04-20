@@ -3,7 +3,6 @@
 #include <cassert>
 
 #include "Task/TaskQueue.h"
-#include "Platform/Os.h"
 
 namespace Flourish
 {
