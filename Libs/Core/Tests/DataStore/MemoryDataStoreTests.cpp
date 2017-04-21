@@ -7,141 +7,143 @@
 
 using namespace Flourish;
 
-TEST(MemoryDataStoreTests, ExistsReturnsFalseWithNoDataOrDirectory)
+
+class MemoryDataStoreTests : public ::testing::Test
 {
+protected:
     MemoryDataStore dataStore;
 
+    void SetUp() override
+    {
+        SetupCallWait();
+    }
+
+    void SetupCallWait()
+    {
+        promise = std::promise<void>();
+        future = promise.get_future();
+    }
+
+    void TriggerCallComplete()
+    {
+        promise.set_value();
+    }
+
+    void ExpectCallToCompleteInTime()
+    {
+        auto result = future.wait_for(std::chrono::seconds(1));
+            EXPECT_EQUAL(result, std::future_status::ready) << "Callback was not called in time";
+    }
+
+private:
+    std::promise<void> promise;
+    std::future<void> future;
+};
+
+TEST_F(MemoryDataStoreTests, ExistsReturnsFalseWithNoDataOrDirectory)
+{
     EXPECT_FALSE(dataStore.Exists(DataStorePath("does/not/exist")));
 }
 
-TEST(MemoryDataStoreTests, ExistsReturnsTrueAfterDataWrite)
+TEST_F(MemoryDataStoreTests, ExistsReturnsTrueAfterDataWrite)
 {
-    MemoryDataStore dataStore;
     DataStorePath path("will/be/written/to");
 
-    std::promise<void> promise;
-    auto future = promise.get_future();
-
-    dataStore.OpenForWrite(path, [&](Error<DataStoreWriteStream*> result)
+    dataStore.OpenForWrite(path, [&](DataStoreWriteCallbackParam result)
     {
         EXPECT_FALSE(result.HasError());
         EXPECT_TRUE(dataStore.Exists(path));
-        promise.set_value();
+        TriggerCallComplete();
     });
 
-    auto result = future.wait_for(std::chrono::seconds(1));
-        EXPECT_EQUAL(result, std::future_status::ready) << "Callback was not called in time";
+    ExpectCallToCompleteInTime();
 }
 
-TEST(MemoryDataStoreTests, IsDirReturnsFalseForNonExistantPath)
+TEST_F(MemoryDataStoreTests, IsDirReturnsFalseForNonExistantPath)
 {
-    MemoryDataStore dataStore;
-
     EXPECT_FALSE(dataStore.IsDir(DataStorePath("does/not/exist")));
 }
 
-TEST(MemoryDataStoreTests, IsDataReturnsFalseForNonExistantPath)
+TEST_F(MemoryDataStoreTests, IsDataReturnsFalseForNonExistantPath)
 {
-    MemoryDataStore dataStore;
-
     EXPECT_FALSE(dataStore.IsData(DataStorePath("does/not/exist")));
 }
 
-TEST(MemoryDataStoreTests, IsDirReturnsFalseForData)
+TEST_F(MemoryDataStoreTests, IsDirReturnsFalseForData)
 {
-    MemoryDataStore dataStore;
     DataStorePath path("will/be/written/to");
 
-    std::promise<void> promise;
-    auto future = promise.get_future();
-
-    dataStore.OpenForWrite(path, [&](Error<DataStoreWriteStream*> result)
+    dataStore.OpenForWrite(path, [&](DataStoreWriteCallbackParam result)
     {
         EXPECT_FALSE(result.HasError());
         EXPECT_FALSE(dataStore.IsDir(path));
-        promise.set_value();
+        TriggerCallComplete();
     });
 
-    auto result = future.wait_for(std::chrono::seconds(1));
-        EXPECT_EQUAL(result, std::future_status::ready) << "Callback was not called in time";
+    ExpectCallToCompleteInTime();
 }
 
-TEST(MemoryDataStoreTests, IsDataReturnsTrueForData)
+TEST_F(MemoryDataStoreTests, IsDataReturnsTrueForData)
 {
-    MemoryDataStore dataStore;
     DataStorePath path("will/be/written/to");
 
-    std::promise<void> promise;
-    auto future = promise.get_future();
-
-    dataStore.OpenForWrite(path, [&](Error<DataStoreWriteStream*> result)
+    dataStore.OpenForWrite(path, [&](DataStoreWriteCallbackParam result)
     {
         EXPECT_FALSE(result.HasError());
         EXPECT_TRUE(dataStore.IsData(path));
-        promise.set_value();
+        TriggerCallComplete();
     });
 
-    auto result = future.wait_for(std::chrono::seconds(1));
-        EXPECT_EQUAL(result, std::future_status::ready) << "Callback was not called in time";
+    ExpectCallToCompleteInTime();
 }
 
-TEST(MemoryDataStoreTests, OpenForReadOnNonExistantPathCreatesError)
+TEST_F(MemoryDataStoreTests, OpenForReadOnNonExistantPathCreatesError)
 {
-    MemoryDataStore dataStore;
     DataStorePath path("does/not/exist");
 
-    std::promise<void> promise;
-    auto future = promise.get_future();
-
-    dataStore.OpenForRead(path, [&](Error<DataStoreReadStream*> result)
+    dataStore.OpenForRead(path, [&](DataStoreReadCallbackParam result)
     {
         EXPECT_TRUE(result.HasError());
             EXPECT_STRING_EQUAL(result.GetError(), "Path 'does/not/exist' does not exist in data store");
-        promise.set_value();
+        TriggerCallComplete();
     });
 
-    auto result = future.wait_for(std::chrono::seconds(1));
-        EXPECT_EQUAL(result, std::future_status::ready) << "Callback was not called in time";
+    ExpectCallToCompleteInTime();
 }
 
-TEST(MemoryDataStoreTests, CanReadBackWrittenData)
+TEST_F(MemoryDataStoreTests, CanReadBackWrittenData)
 {
-    MemoryDataStore dataStore;
     DataStorePath path("will/be/written/to");
 
-    std::promise<void> promise;
-    auto future = promise.get_future();
-
-    dataStore.OpenForWrite(path, [&](Error<DataStoreWriteStream*> openResult)
+    dataStore.OpenForWrite(path, [&](DataStoreWriteCallbackParam openResult)
     {
         EXPECT_FALSE(openResult.HasError());
         auto dataToWrite = std::string("some data");
         openResult.Value()->Write(dataToWrite.c_str(), dataToWrite.length());
         openResult.Value()->Flush(
-            [&](Error<DataStoreWriteStream*> writeResult)
+            [&](DataStoreWriteCallbackParam writeResult)
             {
                 EXPECT_FALSE(writeResult.HasError());
-                dataStore.OpenForRead(path, [&](Error<DataStoreReadStream*> readResult)
-                {
-                        EXPECT_STRING_EQUAL(static_cast<const char*>(readResult.Value()->Data()), "some data");
-                    promise.set_value();
-                });
+                TriggerCallComplete();
             });
     });
 
-    auto result = future.wait_for(std::chrono::seconds(1));
-        EXPECT_EQUAL(result, std::future_status::ready) << "Callback was not called in time";
+    ExpectCallToCompleteInTime();
+    SetupCallWait();
+
+    dataStore.OpenForRead(path, [&](DataStoreReadCallbackParam readResult)
+    {
+            EXPECT_STRING_EQUAL(static_cast<const char*>(readResult.Value()->Data()), "some data");
+        TriggerCallComplete();
+    });
+    ExpectCallToCompleteInTime();
 }
 
-TEST(MemoryDataStoreTests, WritingDataCreatesParentDirectories)
+TEST_F(MemoryDataStoreTests, WritingDataCreatesParentDirectories)
 {
-    MemoryDataStore dataStore;
     DataStorePath path("will/be/written/to");
 
-    std::promise<void> promise;
-    auto future = promise.get_future();
-
-    dataStore.OpenForWrite(path, [&](Error<DataStoreWriteStream*> result)
+    dataStore.OpenForWrite(path, [&](DataStoreWriteCallbackParam result)
     {
         EXPECT_TRUE(dataStore.IsDir(DataStorePath("")));
         EXPECT_TRUE(dataStore.IsDir(DataStorePath("will")));
@@ -149,39 +151,43 @@ TEST(MemoryDataStoreTests, WritingDataCreatesParentDirectories)
         EXPECT_TRUE(dataStore.IsDir(DataStorePath("will/be/written")));
         EXPECT_FALSE(result.HasError());
         EXPECT_FALSE(dataStore.IsDir(path));
-        promise.set_value();
+        TriggerCallComplete();
     });
 
-    auto result = future.wait_for(std::chrono::seconds(1));
-        EXPECT_EQUAL(result, std::future_status::ready) << "Callback was not called in time";
+    ExpectCallToCompleteInTime();
 }
 
-TEST(MemoryDataStoreTests, MultipleWrites)
+TEST_F(MemoryDataStoreTests, Enumerate)
 {
     TEST_NOT_IMPLEMENTED;
 }
 
-TEST(MemoryDataStoreTests, MultipleReads)
+TEST_F(MemoryDataStoreTests, MultipleWrites)
 {
     TEST_NOT_IMPLEMENTED;
 }
 
-TEST(MemoryDataStoreTests, MultipleReadStreamsSamePath)
+TEST_F(MemoryDataStoreTests, MultipleReads)
 {
     TEST_NOT_IMPLEMENTED;
 }
 
-TEST(MemoryDataStoreTests, MultipleWriteStreamsSamePath)
+TEST_F(MemoryDataStoreTests, MultipleReadStreamsSamePath)
 {
     TEST_NOT_IMPLEMENTED;
 }
 
-TEST(MemoryDataStoreTests, CloseReadStream)
+TEST_F(MemoryDataStoreTests, MultipleWriteStreamsSamePath)
 {
     TEST_NOT_IMPLEMENTED;
 }
 
-TEST(MemoryDataStoreTests, CloseWriteStream)
+TEST_F(MemoryDataStoreTests, CloseReadStream)
+{
+    TEST_NOT_IMPLEMENTED;
+}
+
+TEST_F(MemoryDataStoreTests, CloseWriteStream)
 {
     TEST_NOT_IMPLEMENTED;
 }

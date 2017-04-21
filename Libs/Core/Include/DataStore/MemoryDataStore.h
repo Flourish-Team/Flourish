@@ -22,6 +22,7 @@ namespace Flourish
     private:
         void EnqueueWrite(DataStoreWriteStream* stream, DataBuffer* buffer, DataStoreWriteCallback callback) override;
         void EnqueueRead(DataStoreReadStream* stream, DataBuffer* buffer, DataStoreReadCallback callback) override;
+        void CreateDirTree(const DataStorePath& path);
 
         class Record
         {

@@ -43,19 +43,23 @@ namespace Flourish
 
     void MemoryDataStore::OpenForWrite(const DataStorePath& path, DataStoreWriteCallback callback)
     {
-        // Create the directory tree if needed
+        CreateDirTree(path);
+        _pathToRecord.insert(std::make_pair(path, Record::Data()));
+        auto stream = new DataStoreWriteStream(this, path);
+        callback(Error<DataStoreWriteStream*>::Successful(stream));
+    }
+
+    void MemoryDataStore::CreateDirTree(const DataStorePath& path)
+    {
         auto dirPath = path;
         do
         {
             dirPath.GetDirectory();
             if (!Exists(dirPath))
             {
-                _pathToRecord.insert((std::make_pair(dirPath, Record::Dir())));
+                _pathToRecord.insert(std::make_pair(dirPath, Record::Dir()));
             }
         } while (dirPath != DataStorePath(""));
-        _pathToRecord.insert(std::make_pair(path, Record::Data()));
-        auto stream = new DataStoreWriteStream(this, path);
-        callback(Error<DataStoreWriteStream*>::Successful(stream));
     }
 
     bool MemoryDataStore::IsDir(const DataStorePath& path) const

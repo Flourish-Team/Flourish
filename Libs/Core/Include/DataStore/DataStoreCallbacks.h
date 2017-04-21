@@ -6,6 +6,8 @@
 
 namespace Flourish
 {
-    typedef std::function<void(Error<class DataStoreWriteStream*>)> DataStoreWriteCallback;
-    typedef std::function<void(Error<class DataStoreReadStream*>)> DataStoreReadCallback;
+    typedef Error<class DataStoreWriteStream*> DataStoreWriteCallbackParam;
+    typedef std::function<void(DataStoreWriteCallbackParam)> DataStoreWriteCallback;
+    typedef Error<class DataStoreReadStream*> DataStoreReadCallbackParam;
+    typedef std::function<void(DataStoreReadCallbackParam)> DataStoreReadCallback;
 }
