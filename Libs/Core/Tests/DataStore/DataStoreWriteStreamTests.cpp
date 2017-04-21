@@ -13,18 +13,25 @@ public:
 
     void OpenForRead(const DataStorePath& path, DataStoreReadCallback callback) override
     {
-
     }
 
     void OpenForWrite(const DataStorePath& path, DataStoreWriteCallback callback) override
     {
+    }
 
+    bool IsDir(const DataStorePath& path) const override
+    {
+        return false;
+    }
+
+    bool IsData(const DataStorePath& path) const override
+    {
+        return false;
     }
 
 protected:
     void EnqueueRead(DataStoreReadStream* stream, DataBuffer* buffer, DataStoreReadCallback callback) override
     {
-
     }
 
 private:

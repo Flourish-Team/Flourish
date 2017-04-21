@@ -14,13 +14,21 @@ public:
     MockReadDataStore()
         : bufferToFill(nullptr)
     {
-
     }
 
 
     void OpenForRead(const DataStorePath& path, DataStoreReadCallback callback) override
     {
+    }
 
+    bool IsDir(const DataStorePath& path) const override
+    {
+        return false;
+    }
+
+    bool IsData(const DataStorePath& path) const override
+    {
+        return false;
     }
 
 protected:

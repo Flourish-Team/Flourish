@@ -14,12 +14,14 @@ namespace Flourish
         virtual ~MemoryDataStore();
 
         bool Exists(const DataStorePath& path) const;
-        void OpenForRead(const DataStorePath& path, DataStoreReadCallback callback);
-        void OpenForWrite(const DataStorePath& path, DataStoreWriteCallback callback);
+        void OpenForRead(const DataStorePath& path, DataStoreReadCallback callback) override;
+        void OpenForWrite(const DataStorePath& path, DataStoreWriteCallback callback) override;
+        bool IsDir(const DataStorePath& path) const override;
+        bool IsData(const DataStorePath& path) const override;
 
     private:
-        void EnqueueWrite(DataStoreWriteStream* stream, DataBuffer* buffer, DataStoreWriteCallback callback);
-        void EnqueueRead(DataStoreReadStream* stream, DataBuffer* buffer, DataStoreReadCallback callback);
+        void EnqueueWrite(DataStoreWriteStream* stream, DataBuffer* buffer, DataStoreWriteCallback callback) override;
+        void EnqueueRead(DataStoreReadStream* stream, DataBuffer* buffer, DataStoreReadCallback callback) override;
 
         class Record
         {
@@ -30,6 +32,7 @@ namespace Flourish
             void Append(DataBuffer* buffer);
             void Fill(DataBuffer* buffer);
 
+            bool IsDir();
         private:
             Record(bool isDir);
 
