@@ -20,6 +20,7 @@ namespace Flourish
         virtual void OpenForRead(const DataStorePath& path, DataStoreReadCallback callback) = 0;
         virtual bool IsDir(const DataStorePath& path) const = 0;
         virtual bool IsData(const DataStorePath& path) const = 0;
+        virtual void Enumerate(const DataStorePath& dirPath, std::vector<DataStorePath>& entries) const = 0;
 
     protected:
         virtual void EnqueueRead(DataStoreReadStream* stream, DataBuffer* buffer, DataStoreReadCallback callback) = 0;

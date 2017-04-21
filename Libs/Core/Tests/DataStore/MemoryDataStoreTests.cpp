@@ -3,6 +3,7 @@
 #include "DataStore/DataStoreWriteStream.h"
 #include "DataStore/DataStoreReadStream.h"
 
+#include <algorithm>
 #include <future>
 
 using namespace Flourish;
@@ -33,6 +34,17 @@ protected:
     {
         auto result = future.wait_for(std::chrono::seconds(1));
             EXPECT_EQUAL(result, std::future_status::ready) << "Callback was not called in time";
+    }
+
+    void WriteDataToPath(const DataStorePath& path)
+    {
+        SetupCallWait();
+        dataStore.OpenForWrite(path, [&](DataStoreWriteCallbackParam)
+        {
+            TriggerCallComplete();
+        });
+        ExpectCallToCompleteInTime();
+        SetupCallWait();
     }
 
 private:
@@ -157,9 +169,21 @@ TEST_F(MemoryDataStoreTests, WritingDataCreatesParentDirectories)
     ExpectCallToCompleteInTime();
 }
 
-TEST_F(MemoryDataStoreTests, Enumerate)
+TEST_F(MemoryDataStoreTests, EnumerateFindsDataAndDirectories)
 {
-    TEST_NOT_IMPLEMENTED;
+    WriteDataToPath(DataStorePath("some/path/to/file.txt"));
+    WriteDataToPath(DataStorePath("some/path/to/another_file.txt"));
+    WriteDataToPath(DataStorePath("some/path/to/subdir/with_file.txt"));
+
+    std::vector<DataStorePath> result;
+    dataStore.Enumerate(DataStorePath("some/path/to"), result);
+
+    // We don't care what order things are in, so just assert that
+    // all the expected elements (and only those) exist
+    EXPECT_EQUAL(result.size(), 3);
+    EXPECT_NOT_EQUAL(std::find(result.begin(), result.end(), DataStorePath("some/path/to/file.txt")), result.end());
+    EXPECT_NOT_EQUAL(std::find(result.begin(), result.end(), DataStorePath("some/path/to/another_file.txt")), result.end());
+    EXPECT_NOT_EQUAL(std::find(result.begin(), result.end(), DataStorePath("some/path/to/subdir")), result.end());
 }
 
 TEST_F(MemoryDataStoreTests, MultipleWrites)

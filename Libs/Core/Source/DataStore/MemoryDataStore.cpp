@@ -54,7 +54,7 @@ namespace Flourish
         auto dirPath = path;
         do
         {
-            dirPath.GetDirectory();
+            dirPath = dirPath.GetDirectory();
             if (!Exists(dirPath))
             {
                 _pathToRecord.insert(std::make_pair(dirPath, Record::Dir()));
@@ -80,6 +80,18 @@ namespace Flourish
             return false;
         }
         return !recordIter->second->IsDir();
+    }
+
+    void MemoryDataStore::Enumerate(const DataStorePath& dirPath, std::vector<DataStorePath>& entries) const
+    {
+        for(auto& entry : _pathToRecord)
+        {
+            const auto entryPath = entry.first;
+            if(entryPath.GetDirectory() == dirPath)
+            {
+                entries.push_back(entryPath);
+            }
+        }
     }
 
     void MemoryDataStore::EnqueueWrite(DataStoreWriteStream* stream, DataBuffer* buffer, DataStoreWriteCallback callback)

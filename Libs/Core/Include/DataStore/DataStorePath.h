@@ -19,9 +19,9 @@ namespace Flourish
         bool operator!=(const DataStorePath& rhs) const;
 
         std::string AsString() const;
-        DataStorePath& GetDirectory();
-        DataStorePath& GetFileName();
-        DataStorePath& GetFileNameWithoutExtension();
+        DataStorePath GetDirectory() const;
+        DataStorePath GetFileName() const;
+        DataStorePath GetFileNameWithoutExtension() const;
 
     private:
         std::string::size_type GetLastDirSeperatorIdx() const;

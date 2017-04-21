@@ -31,6 +31,11 @@ public:
         return false;
     }
 
+    void Enumerate(const DataStorePath& path, std::vector<DataStorePath>& entries) const override
+    {
+
+    }
+
 protected:
     void EnqueueRead(DataStoreReadStream* stream, DataBuffer* buffer, DataStoreReadCallback callback) override
     {

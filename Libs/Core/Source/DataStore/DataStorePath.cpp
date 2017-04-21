@@ -5,7 +5,7 @@
 namespace Flourish
 {
     DataStorePath::DataStorePath(const char* path)
-            : _contentsAsString(path)
+        : _contentsAsString(path)
     {
         Validate();
     }
@@ -21,7 +21,7 @@ namespace Flourish
     }
 
     DataStorePath::DataStorePath(const std::string& path)
-            : DataStorePath(path.c_str())
+        : DataStorePath(path.c_str())
     {
     }
 
@@ -30,41 +30,40 @@ namespace Flourish
         return _contentsAsString;
     }
 
-    DataStorePath& DataStorePath::GetDirectory()
+    DataStorePath DataStorePath::GetDirectory() const
     {
         auto lastSlash = GetLastDirSeperatorIdx();
         if (lastSlash != std::string::npos)
         {
-            _contentsAsString.resize(lastSlash);
-            return *this;
+            return DataStorePath(_contentsAsString.substr(0, lastSlash));
         }
-        _contentsAsString.resize(0);
-        return *this;
+        return DataStorePath("");
     }
 
-    DataStorePath& DataStorePath::GetFileName()
+    DataStorePath DataStorePath::GetFileName() const
     {
         auto lastSlash = GetLastDirSeperatorIdx();
         if (lastSlash != std::string::npos)
         {
-            _contentsAsString.erase(0, lastSlash + 1);
+            return DataStorePath(_contentsAsString.substr(lastSlash + 1));
         }
-        return *this;
+        return DataStorePath(_contentsAsString);
     }
 
-    DataStorePath& DataStorePath::GetFileNameWithoutExtension()
+    DataStorePath DataStorePath::GetFileNameWithoutExtension() const
     {
         auto lastSlash = GetLastDirSeperatorIdx();
+        auto strValue = _contentsAsString;
         if (lastSlash != std::string::npos)
         {
-            _contentsAsString.erase(0, lastSlash + 1);
+            strValue.erase(0, lastSlash + 1);
         }
-        auto lastDot = _contentsAsString.find_last_of('.');
+        auto lastDot = strValue.find_last_of('.');
         if (lastDot != std::string::npos)
         {
-            _contentsAsString.erase(lastDot);
+            strValue.erase(lastDot);
         }
-        return *this;
+        return DataStorePath(strValue);
     }
 
     std::string::size_type DataStorePath::GetLastDirSeperatorIdx() const

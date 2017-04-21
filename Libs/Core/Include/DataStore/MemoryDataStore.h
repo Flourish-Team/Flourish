@@ -18,6 +18,7 @@ namespace Flourish
         void OpenForWrite(const DataStorePath& path, DataStoreWriteCallback callback) override;
         bool IsDir(const DataStorePath& path) const override;
         bool IsData(const DataStorePath& path) const override;
+        void Enumerate(const DataStorePath& dirPath, std::vector<DataStorePath>& entries) const override;
 
     private:
         void EnqueueWrite(DataStoreWriteStream* stream, DataBuffer* buffer, DataStoreWriteCallback callback) override;
