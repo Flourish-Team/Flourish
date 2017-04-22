@@ -18,11 +18,28 @@ TEST(DataBufferTests, DataCanBeWritten)
     const char* someData = "some data";
     buffer.Write(someData, strlen(someData));
     
-    
     EXPECT_EQUAL(buffer.SpaceLeftToWrite(), 32U - strlen(someData));
     EXPECT_EQUAL(buffer.DataAvailableToRead(), strlen(someData));
 }
 
+TEST(DataBufferTests, DataCanBeManuallyWritten)
+{
+    DataBuffer buffer(32);
+
+    const char* someData = "some data";
+    memcpy(buffer.WriteData(), someData, strlen(someData));
+
+    EXPECT_STRING_EQUAL(static_cast<const char*>(buffer.ReadData()), someData);
+    EXPECT_EQUAL(buffer.SpaceLeftToWrite(), buffer.Size());
+
+    buffer.MarkAsWritten(strlen(someData));
+        EXPECT_EQUAL(buffer.SpaceLeftToWrite(), buffer.Size() - strlen(someData));
+
+    const char* moreData = " some more data";
+    memcpy(buffer.WriteData(), moreData, strlen(moreData));
+
+        EXPECT_STRING_EQUAL(static_cast<const char*>(buffer.ReadData()), "some data some more data");
+}
 
 TEST(DataBufferTests, ClearResetsSpace)
 {
@@ -44,7 +61,7 @@ TEST(DataBufferTests, CanReadBackWhatWasWritten)
     buffer.Write(someData, strlen(someData));
     
     char readData[32] = { 0 };
-    memcpy(readData, buffer.Data(), buffer.DataAvailableToRead());
+    memcpy(readData, buffer.ReadData(), buffer.DataAvailableToRead());
     buffer.MarkAsRead(strlen(readData));
     
     EXPECT_STRING_EQUAL(someData, readData);
@@ -62,7 +79,7 @@ TEST(DataBufferTests, MultipleWritesFillBuffer)
     buffer.Write(someOtherData, strlen(someOtherData));
     
     char readData[32] = { 0 };
-    memcpy(readData, buffer.Data(), buffer.DataAvailableToRead());
+    memcpy(readData, buffer.ReadData(), buffer.DataAvailableToRead());
     
     EXPECT_STRING_EQUAL("some data and some other data", readData);
 }
@@ -75,14 +92,14 @@ TEST(DataBufferTests, MultipleReadsExtractsDataInWriteOrder)
     buffer.Write(someData, strlen(someData));
     
     char readData[32] = { 0 };
-    memcpy(readData, buffer.Data(), strlen("some data"));
+    memcpy(readData, buffer.ReadData(), strlen("some data"));
     buffer.MarkAsRead(strlen("some data"));
     
     EXPECT_STRING_EQUAL("some data", readData);
     EXPECT_EQUAL(buffer.DataAvailableToRead(), strlen(" and some other data"));
     
     char secondReadData[32] = { 0 };
-    memcpy(secondReadData, buffer.Data(), buffer.DataAvailableToRead());
+    memcpy(secondReadData, buffer.ReadData(), buffer.DataAvailableToRead());
     
     EXPECT_STRING_EQUAL(" and some other data", secondReadData);
 }

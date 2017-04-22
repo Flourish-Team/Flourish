@@ -26,7 +26,7 @@ namespace Flourish
 
     const void* DataStoreReadStream::Data() const
     {
-        return _buffer.Data();
+        return _buffer.ReadData();
     }
 
     void DataStoreReadStream::Consume(size_t bytes)

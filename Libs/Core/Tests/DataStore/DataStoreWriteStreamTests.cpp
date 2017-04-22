@@ -101,7 +101,7 @@ TEST(DataStoreWriteStreamTests, FlushWritesDataToStore)
     stream.Flush([](DataStoreWriteCallbackParam) {});
 
         ASSERT_NOT_EQUAL(dataStore.bufferToWrite, nullptr);
-        EXPECT_STRING_EQUAL(data, static_cast<const char*>(dataStore.bufferToWrite->Data()));
+        EXPECT_STRING_EQUAL(data, static_cast<const char*>(dataStore.bufferToWrite->ReadData()));
 }
 
 TEST(DataStoreWriteStreamTests, ClosesStreamOnDestroy)

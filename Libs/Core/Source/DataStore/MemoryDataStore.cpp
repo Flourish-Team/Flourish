@@ -5,11 +5,6 @@
 
 namespace Flourish
 {
-    bool operator<(const DataStorePath& lhs, const DataStorePath& rhs)
-    {
-        return lhs.AsString() < rhs.AsString();
-    }
-
     MemoryDataStore::~MemoryDataStore()
     {
         for (auto iter : _pathToRecord)
@@ -189,7 +184,7 @@ namespace Flourish
     void MemoryDataStore::Record::Append(DataBuffer* buffer)
     {
         _data.reserve(_data.size() + buffer->DataAvailableToRead());
-        auto bufferData = static_cast<const uint8_t*>(buffer->Data());
+        auto bufferData = static_cast<const uint8_t*>(buffer->ReadData());
         for (auto byteIdx = 0; byteIdx < buffer->DataAvailableToRead(); byteIdx++)
         {
             _data.push_back(bufferData[byteIdx]);
@@ -202,10 +197,6 @@ namespace Flourish
         const auto numBytesToRead = std::min(buffer->SpaceLeftToWrite(), _data.size() - _readHead);
         buffer->Write(&_data.data()[_readHead], numBytesToRead);
         _readHead += numBytesToRead;
-        if(_readHead >= _data.size())
-        {
-
-        }
     }
 
     void MemoryDataStore::Record::Clear()

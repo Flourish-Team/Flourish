@@ -29,4 +29,6 @@ namespace Flourish
 
         std::string _contentsAsString;
     };
+
+    bool operator<(const DataStorePath& lhs, const DataStorePath& rhs);
 }

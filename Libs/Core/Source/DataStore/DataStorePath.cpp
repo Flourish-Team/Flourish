@@ -85,4 +85,8 @@ namespace Flourish
         FL_ASSERT_MSG(_contentsAsString.find('\\') == std::string::npos, "Data Store Path cannot contain \\");
     }
 
+    bool operator<(const DataStorePath& lhs, const DataStorePath& rhs)
+    {
+        return lhs.AsString() < rhs.AsString();
+    }
 }

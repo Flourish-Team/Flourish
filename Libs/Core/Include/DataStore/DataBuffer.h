@@ -19,9 +19,11 @@ namespace Flourish
 
         void Write(const void* dataToWrite, size_t sizeOfData);
         size_t SpaceLeftToWrite() const;
-        const void* Data() const;
+        const void* ReadData() const;
+        void* WriteData();
         size_t DataAvailableToRead() const;
         void MarkAsRead(size_t data);
+        void MarkAsWritten(size_t data);
         size_t Size() const;
         void Clear();
 

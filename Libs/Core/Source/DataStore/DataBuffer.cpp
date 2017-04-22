@@ -66,9 +66,14 @@ namespace Flourish
         return _size - _writeHead;
     }
 
-    const void* DataBuffer::Data() const
+    const void* DataBuffer::ReadData() const
     {
         return &_data[_readHead];
+    }
+
+    void* DataBuffer::WriteData()
+    {
+        return &_data[_writeHead];
     }
 
     size_t DataBuffer::DataAvailableToRead() const
@@ -79,6 +84,11 @@ namespace Flourish
     void DataBuffer::MarkAsRead(size_t data)
     {
         _readHead += data;
+    }
+
+    void DataBuffer::MarkAsWritten(size_t data)
+    {
+        _writeHead += data;
     }
 
     size_t DataBuffer::Size() const

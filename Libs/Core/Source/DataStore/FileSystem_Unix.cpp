@@ -146,6 +146,18 @@ namespace Flourish
             return fopen(path, "ab");
         }
 
+        bool FileExists(const char* path)
+        {
+            struct stat sb;
+            return stat(path, &sb) == 0 && S_ISREG(sb.st_mode);
+        }
+
+        bool DirExists(const char* path)
+        {
+            struct stat sb;
+            return stat(path, &sb) == 0 && S_ISDIR(sb.st_mode);
+        }
+
         void Close(FILE* file)
         {
             fclose(file);
