@@ -1,7 +1,9 @@
 #include "Test.h"
-#include "DataStore/MemoryDataStore.h"
-#include "DataStore/DataStoreWriteStream.h"
 #include "DataStore/DataStoreReadStream.h"
+#include "DataStore/DataStoreWriteStream.h"
+#include "DataStore/LocalFileDataStore.h"
+#include "DataStore/MemoryDataStore.h"
+#include "FileSystemHelpers.h"
 
 #include <future>
 
@@ -21,6 +23,19 @@ IWritableDataStore* CreateDataStore<MemoryDataStore>()
 template<>
 void DestroyDataStore<MemoryDataStore>(IWritableDataStore* dataStore)
 {
+}
+
+template<>
+IWritableDataStore* CreateDataStore<LocalFileDataStore>()
+{
+    FileSystemHelpers::makePath("temp/test/path");
+    return new LocalFileDataStore("temp/test/path");
+}
+
+template<>
+void DestroyDataStore<LocalFileDataStore>(IWritableDataStore* dataStore)
+{
+    // TODO: Wipe files
 
 }
 
@@ -56,7 +71,7 @@ protected:
 
     void ExpectCallToCompleteInTime()
     {
-        auto result = future.wait_for(std::chrono::seconds(1));
+        auto result = future.wait_for(std::chrono::milliseconds(500));
             EXPECT_EQUAL(result, std::future_status::ready) << "Callback was not called in time";
     }
 
@@ -76,7 +91,7 @@ private:
     std::future<void> future;
 };
 
-typedef ::testing::Types<MemoryDataStore> Implementations;
+typedef ::testing::Types<MemoryDataStore, LocalFileDataStore> Implementations;
 
 TYPED_TEST_CASE(DataStoreTests, Implementations);
 
