@@ -18,6 +18,10 @@ public:
     {
     }
 
+    bool Exists(const DataStorePath& path) const override
+    {
+        return false;
+    }
 
     void OpenForRead(const DataStorePath& path, DataStoreReadCallback callback) override
     {

@@ -23,7 +23,7 @@ public:
     }
 
 protected:
-    MemoryDataStore* dataStore;
+    IWritableDataStore* dataStore;
     
     void SetupCallWait()
     {

@@ -13,7 +13,7 @@ namespace Flourish
     public:
         virtual ~MemoryDataStore();
 
-        bool Exists(const DataStorePath& path) const;
+        bool Exists(const DataStorePath& path) const override;
         void OpenForRead(const DataStorePath& path, DataStoreReadCallback callback) override;
         void Close(DataStoreReadStream* stream) override;
         void OpenForWrite(const DataStorePath& path, DataStoreWriteCallback callback) override;

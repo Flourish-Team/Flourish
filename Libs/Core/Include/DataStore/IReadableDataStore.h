@@ -17,6 +17,7 @@ namespace Flourish
         {
         }
 
+        virtual bool Exists(const DataStorePath& path) const = 0;
         virtual void OpenForRead(const DataStorePath& path, DataStoreReadCallback callback) = 0;
         virtual void Close(DataStoreReadStream* stream) =  0;
         virtual bool IsDir(const DataStorePath& path) const = 0;
