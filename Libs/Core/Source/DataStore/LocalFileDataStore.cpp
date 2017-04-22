@@ -48,6 +48,13 @@ namespace Flourish
             _pathToOpenFile.insert({path, new OpenFile(file, stream)});
             callback(DataStoreReadCallbackParam::Successful(stream));
         }
+        else
+        {
+            std::string error("Path: '");
+            error.append(path.AsString());
+            error.append("' is already open in another stream");
+            callback(DataStoreReadCallbackParam::Failure(error.c_str()));
+        }
     }
 
     void LocalFileDataStore::Close(DataStoreReadStream* stream)
@@ -82,6 +89,14 @@ namespace Flourish
 
     void LocalFileDataStore::EnqueueRead(DataStoreReadStream* stream, DataBuffer* buffer, DataStoreReadCallback callback)
     {
+        if (stream->EndOfData())
+        {
+            std::string error("Attempted to read past end of stream  (Path: '");
+            error.append(stream->Path().AsString());
+            error.append("')");
+            callback(DataStoreReadCallbackParam::Failure(error.c_str()));
+            return;
+        }
         auto openFile = _pathToOpenFile[stream->Path()];
         openFile->Fill(buffer);
         callback(DataStoreReadCallbackParam::Successful(openFile->GetCurrentReadStream()));
@@ -89,6 +104,14 @@ namespace Flourish
 
     void LocalFileDataStore::OpenForWrite(const DataStorePath& path, DataStoreWriteCallback callback)
     {
+        if(_pathToOpenFile.find(path) != _pathToOpenFile.end())
+        {
+            std::string error("Path: '");
+            error.append(path.AsString());
+            error.append("' is already open in another stream");
+            callback(DataStoreWriteCallbackParam::Failure(error.c_str()));
+            return;
+        }
         auto fullPathToDir = GetFullPath(path.GetDirectory());
         FileSystem::CreateDirectoryTree(fullPathToDir.c_str());
         auto file = FileSystem::OpenWrite(GetFullPath(path).c_str());
@@ -99,6 +122,14 @@ namespace Flourish
 
     void LocalFileDataStore::OpenForAppend(const DataStorePath& path, DataStoreWriteCallback callback)
     {
+        if(_pathToOpenFile.find(path) != _pathToOpenFile.end())
+        {
+            std::string error("Path: '");
+            error.append(path.AsString());
+            error.append("' is already open in another stream");
+            callback(DataStoreWriteCallbackParam::Failure(error.c_str()));
+            return;
+        }
         auto fullPathToDir = GetFullPath(path.GetDirectory());
         FileSystem::CreateDirectoryTree(fullPathToDir.c_str());
         auto file = FileSystem::OpenAppend(GetFullPath(path).c_str());
