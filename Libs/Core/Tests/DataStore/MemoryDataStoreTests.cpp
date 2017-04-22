@@ -10,14 +10,21 @@ using namespace Flourish;
 
 class MemoryDataStoreTests : public ::testing::Test
 {
-protected:
-    MemoryDataStore dataStore;
-
-    void SetUp() override
+public:
+    MemoryDataStoreTests()
+        : dataStore(new MemoryDataStore())
     {
         SetupCallWait();
     }
 
+    virtual ~MemoryDataStoreTests()
+    {
+        delete dataStore;
+    }
+
+protected:
+    MemoryDataStore* dataStore;
+    
     void SetupCallWait()
     {
         promise = std::promise<void>();
@@ -38,7 +45,7 @@ protected:
     void WriteDataToPath(const DataStorePath& path)
     {
         SetupCallWait();
-        dataStore.OpenForWrite(path, [&](DataStoreWriteCallbackParam)
+        dataStore->OpenForWrite(path, [&](DataStoreWriteCallbackParam)
         {
             TriggerCallComplete();
         });
@@ -53,17 +60,17 @@ private:
 
 TEST_F(MemoryDataStoreTests, ExistsReturnsFalseWithNoDataOrDirectory)
 {
-    EXPECT_FALSE(dataStore.Exists(DataStorePath("does/not/exist")));
+    EXPECT_FALSE(dataStore->Exists(DataStorePath("does/not/exist")));
 }
 
 TEST_F(MemoryDataStoreTests, ExistsReturnsTrueAfterDataWrite)
 {
     DataStorePath path("will/be/written/to");
 
-    dataStore.OpenForWrite(path, [&](DataStoreWriteCallbackParam result)
+    dataStore->OpenForWrite(path, [&](DataStoreWriteCallbackParam result)
     {
         EXPECT_FALSE(result.HasError());
-        EXPECT_TRUE(dataStore.Exists(path));
+        EXPECT_TRUE(dataStore->Exists(path));
         TriggerCallComplete();
     });
 
@@ -72,22 +79,22 @@ TEST_F(MemoryDataStoreTests, ExistsReturnsTrueAfterDataWrite)
 
 TEST_F(MemoryDataStoreTests, IsDirReturnsFalseForNonExistantPath)
 {
-    EXPECT_FALSE(dataStore.IsDir(DataStorePath("does/not/exist")));
+    EXPECT_FALSE(dataStore->IsDir(DataStorePath("does/not/exist")));
 }
 
 TEST_F(MemoryDataStoreTests, IsDataReturnsFalseForNonExistantPath)
 {
-    EXPECT_FALSE(dataStore.IsData(DataStorePath("does/not/exist")));
+    EXPECT_FALSE(dataStore->IsData(DataStorePath("does/not/exist")));
 }
 
 TEST_F(MemoryDataStoreTests, IsDirReturnsFalseForData)
 {
     DataStorePath path("will/be/written/to");
 
-    dataStore.OpenForWrite(path, [&](DataStoreWriteCallbackParam result)
+    dataStore->OpenForWrite(path, [&](DataStoreWriteCallbackParam result)
     {
         EXPECT_FALSE(result.HasError());
-        EXPECT_FALSE(dataStore.IsDir(path));
+        EXPECT_FALSE(dataStore->IsDir(path));
         TriggerCallComplete();
     });
 
@@ -98,10 +105,10 @@ TEST_F(MemoryDataStoreTests, IsDataReturnsTrueForData)
 {
     DataStorePath path("will/be/written/to");
 
-    dataStore.OpenForWrite(path, [&](DataStoreWriteCallbackParam result)
+    dataStore->OpenForWrite(path, [&](DataStoreWriteCallbackParam result)
     {
         EXPECT_FALSE(result.HasError());
-        EXPECT_TRUE(dataStore.IsData(path));
+        EXPECT_TRUE(dataStore->IsData(path));
         TriggerCallComplete();
     });
 
@@ -112,7 +119,7 @@ TEST_F(MemoryDataStoreTests, OpenForReadOnNonExistantPathCreatesError)
 {
     DataStorePath path("does/not/exist");
 
-    dataStore.OpenForRead(path, [&](DataStoreReadCallbackParam result)
+    dataStore->OpenForRead(path, [&](DataStoreReadCallbackParam result)
     {
         EXPECT_TRUE(result.HasError());
             EXPECT_STRING_EQUAL(result.GetError(), "Path 'does/not/exist' does not exist in data store");
@@ -126,7 +133,7 @@ TEST_F(MemoryDataStoreTests, CanReadBackWrittenData)
 {
     DataStorePath path("will/be/written/to");
 
-    dataStore.OpenForWrite(path, [&](DataStoreWriteCallbackParam openResult)
+    dataStore->OpenForWrite(path, [&](DataStoreWriteCallbackParam openResult)
     {
         EXPECT_FALSE(openResult.HasError());
         auto dataToWrite = std::string("some data");
@@ -142,7 +149,7 @@ TEST_F(MemoryDataStoreTests, CanReadBackWrittenData)
     ExpectCallToCompleteInTime();
     SetupCallWait();
 
-    dataStore.OpenForRead(path, [&](DataStoreReadCallbackParam readResult)
+    dataStore->OpenForRead(path, [&](DataStoreReadCallbackParam readResult)
     {
             EXPECT_STRING_EQUAL(static_cast<const char*>(readResult.Value()->Data()), "some data");
         TriggerCallComplete();
@@ -154,14 +161,14 @@ TEST_F(MemoryDataStoreTests, WritingDataCreatesParentDirectories)
 {
     DataStorePath path("will/be/written/to");
 
-    dataStore.OpenForWrite(path, [&](DataStoreWriteCallbackParam result)
+    dataStore->OpenForWrite(path, [&](DataStoreWriteCallbackParam result)
     {
-        EXPECT_TRUE(dataStore.IsDir(DataStorePath("")));
-        EXPECT_TRUE(dataStore.IsDir(DataStorePath("will")));
-        EXPECT_TRUE(dataStore.IsDir(DataStorePath("will/be")));
-        EXPECT_TRUE(dataStore.IsDir(DataStorePath("will/be/written")));
+        EXPECT_TRUE(dataStore->IsDir(DataStorePath("")));
+        EXPECT_TRUE(dataStore->IsDir(DataStorePath("will")));
+        EXPECT_TRUE(dataStore->IsDir(DataStorePath("will/be")));
+        EXPECT_TRUE(dataStore->IsDir(DataStorePath("will/be/written")));
         EXPECT_FALSE(result.HasError());
-        EXPECT_FALSE(dataStore.IsDir(path));
+        EXPECT_FALSE(dataStore->IsDir(path));
         TriggerCallComplete();
     });
 
@@ -175,7 +182,7 @@ TEST_F(MemoryDataStoreTests, EnumerateFindsDataAndDirectories)
     WriteDataToPath(DataStorePath("some/path/to/subdir/with_file.txt"));
 
     std::vector<DataStorePath> result;
-    dataStore.Enumerate(DataStorePath("some/path/to"), result);
+    dataStore->Enumerate(DataStorePath("some/path/to"), result);
 
     // We don't care what order things are in, so just assert that
     // all the expected elements (and only those) exist
@@ -189,7 +196,7 @@ TEST_F(MemoryDataStoreTests, SequentialWritesAppend)
 {
     DataStorePath path("will/be/written/to");
 
-    dataStore.OpenForWrite(path, [&](DataStoreWriteCallbackParam openResult)
+    dataStore->OpenForWrite(path, [&](DataStoreWriteCallbackParam openResult)
     {
         std::string firstData("first data");
         openResult.Value()->Write(firstData.c_str(), firstData.length());
@@ -207,7 +214,7 @@ TEST_F(MemoryDataStoreTests, SequentialWritesAppend)
     ExpectCallToCompleteInTime();
 
     SetupCallWait();
-    dataStore.OpenForRead(path, [&](DataStoreReadCallbackParam readResult)
+    dataStore->OpenForRead(path, [&](DataStoreReadCallbackParam readResult)
     {
             EXPECT_STRING_EQUAL("first data second data", static_cast<const char*>(readResult.Value()->Data()));
         TriggerCallComplete();
@@ -220,7 +227,7 @@ TEST_F(MemoryDataStoreTests, ConsecutiveWritesOverwrite)
 {
     DataStorePath path("will/be/written/to");
 
-    dataStore.OpenForWrite(path, [&](DataStoreWriteCallbackParam openResult)
+    dataStore->OpenForWrite(path, [&](DataStoreWriteCallbackParam openResult)
     {
         std::string firstData("first data");
         openResult.Value()->Write(firstData.c_str(), firstData.length());
@@ -233,7 +240,7 @@ TEST_F(MemoryDataStoreTests, ConsecutiveWritesOverwrite)
     ExpectCallToCompleteInTime();
 
     SetupCallWait();
-    dataStore.OpenForWrite(path, [&](DataStoreWriteCallbackParam openResult)
+    dataStore->OpenForWrite(path, [&](DataStoreWriteCallbackParam openResult)
     {
         std::string secondData("second data");
         openResult.Value()->Write(secondData.c_str(), secondData.length());
@@ -246,7 +253,7 @@ TEST_F(MemoryDataStoreTests, ConsecutiveWritesOverwrite)
     ExpectCallToCompleteInTime();
 
     SetupCallWait();
-    dataStore.OpenForRead(path, [&](DataStoreReadCallbackParam readResult)
+    dataStore->OpenForRead(path, [&](DataStoreReadCallbackParam readResult)
     {
             EXPECT_STRING_EQUAL("second data", static_cast<const char*>(readResult.Value()->Data()));
         TriggerCallComplete();
@@ -259,7 +266,7 @@ TEST_F(MemoryDataStoreTests, ConsecutiveAppendsAppend)
 {
     DataStorePath path("will/be/written/to");
 
-    dataStore.OpenForAppend(path, [&](DataStoreWriteCallbackParam openResult)
+    dataStore->OpenForAppend(path, [&](DataStoreWriteCallbackParam openResult)
     {
         std::string firstData("first data");
         openResult.Value()->Write(firstData.c_str(), firstData.length());
@@ -272,7 +279,7 @@ TEST_F(MemoryDataStoreTests, ConsecutiveAppendsAppend)
     ExpectCallToCompleteInTime();
 
     SetupCallWait();
-    dataStore.OpenForAppend(path, [&](DataStoreWriteCallbackParam openResult)
+    dataStore->OpenForAppend(path, [&](DataStoreWriteCallbackParam openResult)
     {
         std::string firstData(" second data");
         openResult.Value()->Write(firstData.c_str(), firstData.length());
@@ -283,7 +290,7 @@ TEST_F(MemoryDataStoreTests, ConsecutiveAppendsAppend)
     });
 
     SetupCallWait();
-    dataStore.OpenForRead(path, [&](DataStoreReadCallbackParam readResult)
+    dataStore->OpenForRead(path, [&](DataStoreReadCallbackParam readResult)
     {
             EXPECT_STRING_EQUAL("first data second data", static_cast<const char*>(readResult.Value()->Data()));
         TriggerCallComplete();
@@ -298,7 +305,7 @@ TEST_F(MemoryDataStoreTests, ConsecutiveReadsReadSameData)
     // the write buffer
     DataStorePath path("will/be/written/to");
 
-    dataStore.OpenForWrite(path, [&](DataStoreWriteCallbackParam openResult)
+    dataStore->OpenForWrite(path, [&](DataStoreWriteCallbackParam openResult)
     {
         // Write a buffer full of 1's
         const auto openStream = openResult.Value();
@@ -324,7 +331,7 @@ TEST_F(MemoryDataStoreTests, ConsecutiveReadsReadSameData)
     ExpectCallToCompleteInTime();
 
     SetupCallWait();
-    dataStore.OpenForRead(path, [&](DataStoreReadCallbackParam openResult)
+    dataStore->OpenForRead(path, [&](DataStoreReadCallbackParam openResult)
     {
         const auto openStream = openResult.Value();
         const auto openData = static_cast<const uint8_t*>(openStream->Data());
@@ -334,7 +341,7 @@ TEST_F(MemoryDataStoreTests, ConsecutiveReadsReadSameData)
     ExpectCallToCompleteInTime();
 
     SetupCallWait();
-    dataStore.OpenForRead(path, [&](DataStoreReadCallbackParam openResult)
+    dataStore->OpenForRead(path, [&](DataStoreReadCallbackParam openResult)
     {
         const auto openStream = openResult.Value();
         const auto openData = static_cast<const uint8_t*>(openStream->Data());
@@ -351,7 +358,8 @@ TEST_F(MemoryDataStoreTests, ReadToEndOfDataSetsFlag)
 
     WriteDataToPath(path);
 
-    dataStore.OpenForRead(path, [&](DataStoreReadCallbackParam openResult){
+    dataStore->OpenForRead(path, [&](DataStoreReadCallbackParam openResult)
+    {
         EXPECT_TRUE(openResult.Value()->EndOfData());
         TriggerCallComplete();
     });
@@ -365,13 +373,15 @@ TEST_F(MemoryDataStoreTests, RefreshOnEndOfDataStreamCreatesError)
 
     WriteDataToPath(path);
 
-    dataStore.OpenForRead(path, [&](DataStoreReadCallbackParam openResult){
+    dataStore->OpenForRead(path, [&](DataStoreReadCallbackParam openResult)
+    {
         EXPECT_TRUE(openResult.Value()->EndOfData());
-        openResult.Value()->Refresh([&](DataStoreReadCallbackParam readResult){
-            EXPECT_TRUE(readResult.HasError());
-                EXPECT_STRING_EQUAL(readResult.GetError(), "Attempted to read past end of stream  (Path: 'will/be/written/to')");
-            TriggerCallComplete();
-        });
+        openResult.Value()->Refresh([&](DataStoreReadCallbackParam readResult)
+                                    {
+                                        EXPECT_TRUE(readResult.HasError());
+                                            EXPECT_STRING_EQUAL(readResult.GetError(), "Attempted to read past end of stream  (Path: 'will/be/written/to')");
+                                        TriggerCallComplete();
+                                    });
     });
 
     ExpectCallToCompleteInTime();
@@ -381,18 +391,20 @@ TEST_F(MemoryDataStoreTests, OpenMultipleStreamsToSamePathCreatesError)
 {
     DataStorePath path("some/path");
 
-    dataStore.OpenForWrite(path, [&](DataStoreWriteCallbackParam){
-       dataStore.OpenForRead(path, [&](DataStoreReadCallbackParam read)
+    dataStore->OpenForWrite(path, [&](DataStoreWriteCallbackParam)
+    {
+        dataStore->OpenForRead(path, [&](DataStoreReadCallbackParam read)
         {
             EXPECT_TRUE(read.HasError());
                 EXPECT_STRING_EQUAL(read.GetError(), "Path: 'some/path' is already open in another stream");
 
-            dataStore.OpenForAppend(path, [&](DataStoreWriteCallbackParam append)
+            dataStore->OpenForAppend(path, [&](DataStoreWriteCallbackParam append)
             {
                 EXPECT_TRUE(append.HasError());
                     EXPECT_STRING_EQUAL(append.GetError(), "Path: 'some/path' is already open in another stream");
 
-                dataStore.OpenForWrite(path, [&](DataStoreWriteCallbackParam secondWrite){
+                dataStore->OpenForWrite(path, [&](DataStoreWriteCallbackParam secondWrite)
+                {
                     EXPECT_TRUE(secondWrite.HasError());
                         EXPECT_STRING_EQUAL(secondWrite.GetError(), "Path: 'some/path' is already open in another stream");
                     TriggerCallComplete();
