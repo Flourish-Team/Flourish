@@ -37,6 +37,14 @@ namespace Flourish
 
         DataBuffer buffer(1024);
         auto record = recordIter->second;
+        if(record->HasCurrentStream())
+        {
+            std::string error("Path: '");
+            error.append(path.AsString());
+            error.append("' is already open in another stream");
+            callback(DataStoreReadCallbackParam::Failure(error.c_str()));
+            return;
+        }
         record->ResetReadHead();
         record->Fill(&buffer);
         auto stream = std::shared_ptr<DataStoreReadStream>(new DataStoreReadStream(this, path, buffer));
@@ -56,7 +64,16 @@ namespace Flourish
         if (!iterAndInserted.second)
         {
             // Element already exists
-            _pathToRecord[path]->Clear();
+            auto record = _pathToRecord[path];
+            record->Clear();
+            if(record->HasCurrentStream())
+            {
+                std::string error("Path: '");
+                error.append(path.AsString());
+                error.append("' is already open in another stream");
+                callback(DataStoreWriteCallbackParam::Failure(error.c_str()));
+                return;
+            }
         }
         const auto stream = std::shared_ptr<DataStoreWriteStream>(new DataStoreWriteStream(this, path));
         _pathToRecord[path]->SetCurrentStream(stream);
@@ -67,8 +84,17 @@ namespace Flourish
     {
         CreateDirTree(path);
         _pathToRecord.insert({path, Record::Data()});
+        auto record = _pathToRecord[path];
+        if(record->HasCurrentStream())
+        {
+            std::string error("Path: '");
+            error.append(path.AsString());
+            error.append("' is already open in another stream");
+            callback(DataStoreWriteCallbackParam::Failure(error.c_str()));
+            return;
+        }
         const auto stream = std::make_shared<DataStoreWriteStream>(this, path);
-        _pathToRecord[path]->SetCurrentStream(stream);
+        record->SetCurrentStream(stream);
         callback(DataStoreWriteCallbackParam::Successful(stream));
     }
 
@@ -191,6 +217,11 @@ namespace Flourish
     {
         _currentReadStream.reset();
         _currentWriteStream.reset();
+    }
+
+    bool MemoryDataStore::Record::HasCurrentStream()
+    {
+        return _currentReadStream.use_count() > 0 || _currentWriteStream.use_count() > 0;
     }
 
     bool MemoryDataStore::Record::IsDir()

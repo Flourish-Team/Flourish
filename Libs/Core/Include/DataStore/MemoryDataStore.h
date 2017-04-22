@@ -43,6 +43,7 @@ namespace Flourish
             const std::shared_ptr<DataStoreWriteStream> GetCurrentWriteStream() const;
             const std::shared_ptr<DataStoreReadStream> GetCurrentReadStream() const;
             void ClearCurrentStream();
+            bool HasCurrentStream();
             bool IsDir();
 
         private:
