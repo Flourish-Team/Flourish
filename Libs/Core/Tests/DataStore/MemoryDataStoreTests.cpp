@@ -403,18 +403,3 @@ TEST_F(MemoryDataStoreTests, OpenMultipleStreamsToSamePathCreatesError)
 
     ExpectCallToCompleteInTime();
 }
-
-TEST_F(MemoryDataStoreTests, MultipleWriteStreamsSamePath)
-{
-    TEST_NOT_IMPLEMENTED;
-}
-
-TEST_F(MemoryDataStoreTests, CloseReadStream)
-{
-    TEST_NOT_IMPLEMENTED;
-}
-
-TEST_F(MemoryDataStoreTests, CloseWriteStream)
-{
-    TEST_NOT_IMPLEMENTED;
-}
