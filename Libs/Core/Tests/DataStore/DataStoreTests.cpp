@@ -1,9 +1,9 @@
 #include "Test.h"
 #include "DataStore/DataStoreReadStream.h"
 #include "DataStore/DataStoreWriteStream.h"
+#include "DataStore/FileSystem.h"
 #include "DataStore/LocalFileDataStore.h"
 #include "DataStore/MemoryDataStore.h"
-#include "FileSystemHelpers.h"
 
 #include <future>
 
@@ -28,15 +28,14 @@ void DestroyDataStore<MemoryDataStore>(IWritableDataStore* dataStore)
 template<>
 IWritableDataStore* CreateDataStore<LocalFileDataStore>()
 {
-    FileSystemHelpers::makePath("temp/test/path");
+    FileSystem::CreateDirectoryTree("temp/test/path");
     return new LocalFileDataStore("temp/test/path");
 }
 
 template<>
 void DestroyDataStore<LocalFileDataStore>(IWritableDataStore* dataStore)
 {
-    // TODO: Wipe files
-
+    FileSystem::DeleteDirectory("temp");
 }
 
 template<typename T>
@@ -57,7 +56,7 @@ public:
 
 protected:
     IWritableDataStore* dataStore;
-    
+
     void SetupCallWait()
     {
         promise = std::promise<void>();

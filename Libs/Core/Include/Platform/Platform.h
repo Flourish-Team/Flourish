@@ -9,6 +9,7 @@
 #define FL_PLATFORM_WINDOWS FL_OFF
 #define FL_PLATFORM_OSX     FL_OFF
 #define FL_PLATFORM_LINUX   FL_OFF
+#define FL_PLATFORM_UNIX	FL_OFF;
 
 // Bit OSes
 #define FL_ARCHITECTURE_32BIT FL_OFF
@@ -24,7 +25,7 @@
 #define FL_CPU_ARCH_MIPS	FL_OFF
 #define FL_CPU_ARCH_PPC		FL_OFF
 #define FL_CPU_ARCH_RISCV	FL_OFF
-#define FL_CPU_ARCH_X86		FL_OFF	
+#define FL_CPU_ARCH_X86		FL_OFF
 
 // Endianess
 #define FL_ENDIAN_LITTLE	FL_OFF
@@ -41,6 +42,8 @@
 #elif defined(__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__)
     #undef FL_PLATFORM_OSX
     #define FL_PLATFORM_OSX FL_ON
+    #undef FL_PLATFORM_UNIX
+    #define FL_PLATFORM_UNIX FL_ON
 #else
 	#error Unable to determine the platform for FL_PLATFORM_*
 #endif
@@ -114,7 +117,7 @@
 #else
 	#undef  FL_ENDIAN_LITTLE
 	#define FL_ENDIAN_LITTLE FL_ON
-#endif 
+#endif
 
 #include "Os.h"
 #include "PlatformFeatures.h"
