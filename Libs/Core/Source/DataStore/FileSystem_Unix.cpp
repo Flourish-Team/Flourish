@@ -6,9 +6,8 @@
 
 #include <errno.h>
 #include <fts.h>
-#include <limits.h>
-#include <string.h>
 #include <sys/stat.h>
+#include <dirent.h>
 
 namespace Flourish
 {
@@ -129,6 +128,26 @@ namespace Flourish
             }
 
             return ret;
+        }
+
+        void EnumerateDirectory(const char* path, std::vector<std::string>& entries)
+        {
+            auto dir = opendir(path);
+            if (dir == nullptr)
+            {
+                return;
+            }
+            struct dirent* dirEntry;
+            while ((dirEntry = readdir(dir)) != nullptr)
+            {
+                if (strcmp(dirEntry->d_name, ".") == 0 ||
+                    strcmp(dirEntry->d_name, "..") == 0)
+                {
+                    continue;
+                }
+                entries.push_back(std::string(dirEntry->d_name));
+            }
+            closedir(dir);
         }
 
         FILE* OpenRead(const char* path)

@@ -9,7 +9,7 @@ namespace Flourish
     {
         FileSystem::CreateDirectoryTree(root);
         auto lastChar = root[_root.length() - 1];
-        if(lastChar != '\\' && lastChar != '/')
+        if (lastChar != '\\' && lastChar != '/')
         {
             _root.append("/");
         }
@@ -25,7 +25,7 @@ namespace Flourish
 
     bool LocalFileDataStore::Exists(const DataStorePath& path) const
     {
-        auto pathAsCStr = path.AsString().c_str();
+        auto pathAsCStr = GetFullPath(path).c_str();
         return FileSystem::FileExists(pathAsCStr) || FileSystem::DirExists(pathAsCStr);
     }
 
@@ -35,6 +35,14 @@ namespace Flourish
         {
             DataBuffer buffer(1024);
             auto file = FileSystem::OpenRead(GetFullPath(path).c_str());
+            if (file == nullptr)
+            {
+                std::string errorMessage = "Path '";
+                errorMessage.append(path.AsString());
+                errorMessage.append("' does not exist in data store");
+                callback(DataStoreReadCallbackParam::Failure(errorMessage.c_str()));
+                return;
+            }
             FileSystem::Read(static_cast<uint8_t*>(buffer.WriteData()), buffer.Size(), file);
             const auto stream = std::make_shared<DataStoreReadStream>(this, path, buffer);
             _pathToOpenFile.insert({path, new OpenFile(file, stream)});
@@ -51,17 +59,25 @@ namespace Flourish
 
     bool LocalFileDataStore::IsDir(const DataStorePath& path) const
     {
-        return FileSystem::DirExists(path.AsString().c_str());
+        return FileSystem::DirExists(GetFullPath(path).c_str());
     }
 
     bool LocalFileDataStore::IsData(const DataStorePath& path) const
     {
-        return FileSystem::FileExists(path.AsString().c_str());
+        return FileSystem::FileExists(GetFullPath(path).c_str());
     }
 
     void LocalFileDataStore::Enumerate(const DataStorePath& dirPath, std::vector<DataStorePath>& entries) const
     {
-
+        std::vector<std::string> stringEntries;
+        FileSystem::EnumerateDirectory(GetFullPath(dirPath).c_str(), stringEntries);
+        for (auto& stringEntry : stringEntries)
+        {
+            auto fullPath = dirPath.AsString();
+            fullPath.append("/");
+            fullPath.append(stringEntry);
+            entries.push_back(DataStorePath(fullPath));
+        }
     }
 
     void LocalFileDataStore::EnqueueRead(DataStoreReadStream* stream, DataBuffer* buffer, DataStoreReadCallback callback)
@@ -73,6 +89,8 @@ namespace Flourish
 
     void LocalFileDataStore::OpenForWrite(const DataStorePath& path, DataStoreWriteCallback callback)
     {
+        auto fullPathToDir = GetFullPath(path.GetDirectory());
+        FileSystem::CreateDirectoryTree(fullPathToDir.c_str());
         auto file = FileSystem::OpenWrite(GetFullPath(path).c_str());
         auto stream = std::make_shared<DataStoreWriteStream>(this, path);
         _pathToOpenFile.insert({path, new OpenFile(file, stream)});
@@ -81,6 +99,8 @@ namespace Flourish
 
     void LocalFileDataStore::OpenForAppend(const DataStorePath& path, DataStoreWriteCallback callback)
     {
+        auto fullPathToDir = GetFullPath(path.GetDirectory());
+        FileSystem::CreateDirectoryTree(fullPathToDir.c_str());
         auto file = FileSystem::OpenAppend(GetFullPath(path).c_str());
         auto stream = std::make_shared<DataStoreWriteStream>(this, path);
         _pathToOpenFile.insert({path, new OpenFile(file, stream)});
@@ -98,10 +118,11 @@ namespace Flourish
     {
         auto openFile = _pathToOpenFile[stream->Path()];
         openFile->Append(buffer);
+        buffer->Clear();
         callback(DataStoreWriteCallbackParam::Successful(openFile->GetCurrentWriteStream()));
     }
 
-    std::string LocalFileDataStore::GetFullPath(const DataStorePath& path)
+    std::string LocalFileDataStore::GetFullPath(const DataStorePath& path) const
     {
         auto fullPath = std::string(_root);
         return fullPath.append(path.AsString());

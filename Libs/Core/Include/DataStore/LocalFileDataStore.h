@@ -28,7 +28,7 @@ namespace Flourish
     private:
         void EnqueueRead(DataStoreReadStream* stream, DataBuffer* buffer, DataStoreReadCallback callback) override;
         void EnqueueWrite(DataStoreWriteStream* stream, DataBuffer* buffer, DataStoreWriteCallback callback) override;
-        std::string GetFullPath(const DataStorePath& path);
+        std::string GetFullPath(const DataStorePath& path) const;
 
         class OpenFile
         {

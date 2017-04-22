@@ -2,6 +2,8 @@
 
 #include <cstdio>
 #include <cstdint>
+#include <vector>
+#include <string>
 
 namespace Flourish
 {
@@ -9,6 +11,7 @@ namespace Flourish
     {
         bool CreateDirectoryTree(const char* path);
         bool DeleteDirectory(const char* path);
+        void EnumerateDirectory(const char* path, std::vector<std::string>& entries);
         FILE* OpenRead(const char* path);
         FILE* OpenWrite(const char* path);
         FILE* OpenAppend(const char* path);
