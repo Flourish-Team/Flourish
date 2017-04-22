@@ -375,9 +375,31 @@ TEST_F(MemoryDataStoreTests, RefreshOnEndOfDataStreamCreatesError)
     ExpectCallToCompleteInTime();
 }
 
-TEST_F(MemoryDataStoreTests, MultipleReadStreamsSamePath)
+TEST_F(MemoryDataStoreTests, OpenMultipleStreamsToSamePathCreatesError)
 {
-    TEST_NOT_IMPLEMENTED;
+    DataStorePath path("some/path");
+
+    dataStore.OpenForWrite(path, [&](DataStoreWriteCallbackParam){
+       dataStore.OpenForRead(path, [&](DataStoreReadCallbackParam read)
+        {
+            EXPECT_TRUE(read.HasError());
+                EXPECT_STRING_EQUAL(read.GetError(), "Path: 'some/path' is already open in another stream");
+
+            dataStore.OpenForAppend(path, [&](DataStoreWriteCallbackParam append)
+            {
+                EXPECT_TRUE(append.HasError());
+                    EXPECT_STRING_EQUAL(append.GetError(), "Path: 'some/path' is already open in another stream");
+
+                dataStore.OpenForWrite(path, [&](DataStoreWriteCallbackParam secondWrite){
+                    EXPECT_TRUE(secondWrite.HasError());
+                        EXPECT_STRING_EQUAL(secondWrite.GetError(), "Path: 'some/path' is already open in another stream");
+                    TriggerCallComplete();
+                });
+            });
+        });
+    });
+
+    ExpectCallToCompleteInTime();
 }
 
 TEST_F(MemoryDataStoreTests, MultipleWriteStreamsSamePath)
