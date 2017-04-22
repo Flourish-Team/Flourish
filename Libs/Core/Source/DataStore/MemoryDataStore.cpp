@@ -31,15 +31,22 @@ namespace Flourish
             std::string errorMessage = "Path '";
             errorMessage.append(path.AsString());
             errorMessage.append("' does not exist in data store");
-            callback(Error<DataStoreReadStream*>::Failure(errorMessage.c_str()));
+            callback(DataStoreReadCallbackParam::Failure(errorMessage.c_str()));
             return;
         }
 
         DataBuffer buffer(1024);
-        recordIter->second->ResetReadHead();
-        recordIter->second->Fill(&buffer);
-        auto stream = new DataStoreReadStream(this, path, buffer);
-        callback(Error<DataStoreReadStream*>::Successful(stream));
+        auto record = recordIter->second;
+        record->ResetReadHead();
+        record->Fill(&buffer);
+        auto stream = std::shared_ptr<DataStoreReadStream>(new DataStoreReadStream(this, path, buffer));
+        record->SetCurrentStream(stream);
+        callback(DataStoreReadCallbackParam::Successful(stream));
+    }
+
+    void MemoryDataStore::Close(DataStoreReadStream* stream)
+    {
+        _pathToRecord[stream->Path()]->ClearCurrentStream();
     }
 
     void MemoryDataStore::OpenForWrite(const DataStorePath& path, DataStoreWriteCallback callback)
@@ -51,14 +58,23 @@ namespace Flourish
             // Element already exists
             _pathToRecord[path]->Clear();
         }
-        callback(Error<DataStoreWriteStream*>::Successful(new DataStoreWriteStream(this, path)));
+        const auto stream = std::shared_ptr<DataStoreWriteStream>(new DataStoreWriteStream(this, path));
+        _pathToRecord[path]->SetCurrentStream(stream);
+        callback(DataStoreWriteCallbackParam::Successful(stream));
     }
 
     void MemoryDataStore::OpenForAppend(const DataStorePath& path, DataStoreWriteCallback callback)
     {
         CreateDirTree(path);
         _pathToRecord.insert({path, Record::Data()});
-        callback(Error<DataStoreWriteStream*>::Successful(new DataStoreWriteStream(this, path)));
+        const auto stream = std::make_shared<DataStoreWriteStream>(this, path);
+        _pathToRecord[path]->SetCurrentStream(stream);
+        callback(DataStoreWriteCallbackParam::Successful(stream));
+    }
+
+    void MemoryDataStore::Close(DataStoreWriteStream* stream)
+    {
+        _pathToRecord[stream->Path()]->ClearCurrentStream();
     }
 
     void MemoryDataStore::CreateDirTree(const DataStorePath& path)
@@ -111,7 +127,7 @@ namespace Flourish
         auto record = _pathToRecord.find(stream->Path())->second;
         record->Append(buffer);
         buffer->Clear();
-        callback(Error<DataStoreWriteStream*>::Successful(stream));
+        callback(DataStoreWriteCallbackParam::Successful(record->GetCurrentWriteStream()));
     }
 
     void MemoryDataStore::EnqueueRead(DataStoreReadStream* stream, DataBuffer* buffer, DataStoreReadCallback callback)
@@ -126,7 +142,7 @@ namespace Flourish
         }
         auto record = _pathToRecord.find(stream->Path())->second;
         record->Fill(buffer);
-        callback(Error<DataStoreReadStream*>::Successful(stream));
+        callback(DataStoreReadCallbackParam::Successful(record->GetCurrentReadStream()));
     }
 
     MemoryDataStore::Record* MemoryDataStore::Record::Dir()
@@ -171,6 +187,12 @@ namespace Flourish
         _data.clear();
     }
 
+    void MemoryDataStore::Record::ClearCurrentStream()
+    {
+        _currentReadStream.reset();
+        _currentWriteStream.reset();
+    }
+
     bool MemoryDataStore::Record::IsDir()
     {
         return _isDir;
@@ -180,6 +202,28 @@ namespace Flourish
         : _isDir(isDir)
         , _data()
         , _readHead(0)
+        , _currentWriteStream()
+        , _currentReadStream()
     {
+    }
+
+    void MemoryDataStore::Record::SetCurrentStream(std::shared_ptr<DataStoreWriteStream> stream)
+    {
+        _currentWriteStream = stream;
+    }
+
+    void MemoryDataStore::Record::SetCurrentStream(std::shared_ptr<DataStoreReadStream> stream)
+    {
+        _currentReadStream = stream;
+    }
+
+    const std::shared_ptr<DataStoreWriteStream> MemoryDataStore::Record::GetCurrentWriteStream() const
+    {
+        return _currentWriteStream.lock();
+    }
+
+    const std::shared_ptr<DataStoreReadStream> MemoryDataStore::Record::GetCurrentReadStream() const
+    {
+        return _currentReadStream.lock();
     }
 }

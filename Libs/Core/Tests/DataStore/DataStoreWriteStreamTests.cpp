@@ -8,10 +8,21 @@ using namespace Flourish;
 class MockWriteDataStore : public IWritableDataStore
 {
 public:
-
     DataBuffer* bufferToWrite;
+    DataStoreWriteStream* lastClosedStream;
+
+    MockWriteDataStore()
+        : bufferToWrite(nullptr)
+        , lastClosedStream(nullptr)
+    {
+
+    }
 
     void OpenForRead(const DataStorePath& path, DataStoreReadCallback callback) override
+    {
+    }
+
+    void Close(DataStoreReadStream* stream) override
     {
     }
 
@@ -21,6 +32,11 @@ public:
 
     void OpenForAppend(const DataStorePath& path, DataStoreWriteCallback callback) override
     {
+    }
+
+    void Close(DataStoreWriteStream* stream) override
+    {
+        lastClosedStream = stream;
     }
 
     bool IsDir(const DataStorePath& path) const override
@@ -77,9 +93,17 @@ TEST(DataStoreWriteStreamTests, FlushWritesDataToStore)
     auto data = "some data";
     stream.Write(data, strlen(data));
 
-    stream.Flush([](Error<DataStoreWriteStream*>)
-                 {});
+    stream.Flush([](DataStoreWriteCallbackParam) {});
 
         ASSERT_NOT_EQUAL(dataStore.bufferToWrite, nullptr);
         EXPECT_STRING_EQUAL(data, static_cast<const char*>(dataStore.bufferToWrite->Data()));
+}
+
+TEST(DataStoreWriteStreamTests, ClosesStreamOnDestroy)
+{
+    MockWriteDataStore dataStore;
+    {
+        DataStoreWriteStream stream(&dataStore, DataStorePath("some/path"));
+    }
+        EXPECT_NOT_EQUAL(dataStore.lastClosedStream, nullptr);
 }

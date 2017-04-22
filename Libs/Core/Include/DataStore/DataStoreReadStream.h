@@ -14,6 +14,7 @@ namespace Flourish
     {
     public:
         DataStoreReadStream(IReadableDataStore* dataStore, const DataStorePath& path, const DataBuffer& initialData);
+        virtual ~DataStoreReadStream();
 
         size_t Available() const;
         const void* Data() const;

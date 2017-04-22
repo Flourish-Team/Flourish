@@ -1,3 +1,4 @@
+#include <thread>
 #include "DataStore/DataStoreWriteStream.h"
 
 #include "DataStore/IWritableDataStore.h"
@@ -9,6 +10,14 @@ namespace Flourish
         , _path(path)
         , _buffer(1024)
     {
+    }
+
+    DataStoreWriteStream::~DataStoreWriteStream()
+    {
+        if(_dataStore != nullptr)
+        {
+            _dataStore->Close(this);
+        }
     }
 
     size_t DataStoreWriteStream::Available() const

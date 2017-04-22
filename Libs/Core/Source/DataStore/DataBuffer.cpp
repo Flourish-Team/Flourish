@@ -8,6 +8,7 @@ namespace Flourish
         , _writeHead(0)
         , _readHead(0)
     {
+        Clear();
     }
 
     DataBuffer::~DataBuffer() noexcept
@@ -89,5 +90,6 @@ namespace Flourish
     {
         _writeHead = 0;
         _readHead = 0;
+        memset(_data, 0, _size);
     }
 }

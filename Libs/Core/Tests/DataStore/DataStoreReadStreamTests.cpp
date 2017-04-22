@@ -10,15 +10,22 @@ class MockReadDataStore : public IReadableDataStore
 {
 public:
     DataBuffer* bufferToFill;
+    DataStoreReadStream* lastClosedStream;
 
     MockReadDataStore()
         : bufferToFill(nullptr)
+        , lastClosedStream(nullptr)
     {
     }
 
 
     void OpenForRead(const DataStorePath& path, DataStoreReadCallback callback) override
     {
+    }
+
+    void Close(DataStoreReadStream* stream) override
+    {
+        lastClosedStream = stream;
     }
 
     bool IsDir(const DataStorePath& path) const override
@@ -33,7 +40,6 @@ public:
 
     void Enumerate(const DataStorePath& path, std::vector<DataStorePath>& entries) const override
     {
-
     }
 
 protected:
@@ -69,7 +75,7 @@ TEST(DataStoreReadStreamTests, RequestsMoreDataOnRefresh)
     MockReadDataStore dataStore;
     DataStoreReadStream stream(&dataStore, DataStorePath("some/path"), buffer);
 
-    stream.Refresh([](Error<DataStoreReadStream*> result){});
+    stream.Refresh([](DataStoreReadCallbackParam result){});
 
         EXPECT_NOT_EQUAL(nullptr, dataStore.bufferToFill);
 }
@@ -85,4 +91,13 @@ TEST(DataStoreReadStreamTests, ConsumeMovesReadHead)
 
     EXPECT_EQUAL(strlen("data"), stream.Available());
     EXPECT_STRING_EQUAL("data", static_cast<const char*>(stream.Data()));
+}
+
+TEST(DataStoreReadStreamTests, ClosesStreamOnDestroy)
+{
+    MockReadDataStore dataStore;
+    {
+        DataStoreReadStream stream(&dataStore, DataStorePath("some/path"), DataBuffer(32));
+    }
+        EXPECT_NOT_EQUAL(dataStore.lastClosedStream, nullptr);
 }

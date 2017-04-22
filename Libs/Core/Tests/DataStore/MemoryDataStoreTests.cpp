@@ -235,13 +235,15 @@ TEST_F(MemoryDataStoreTests, ConsecutiveWritesOverwrite)
     SetupCallWait();
     dataStore.OpenForWrite(path, [&](DataStoreWriteCallbackParam openResult)
     {
-        std::string firstData("second data");
-        openResult.Value()->Write(firstData.c_str(), firstData.length());
+        std::string secondData("second data");
+        openResult.Value()->Write(secondData.c_str(), secondData.length());
         openResult.Value()->Flush([&](DataStoreWriteCallbackParam writeResult)
                                   {
                                       TriggerCallComplete();
                                   });
     });
+
+    ExpectCallToCompleteInTime();
 
     SetupCallWait();
     dataStore.OpenForRead(path, [&](DataStoreReadCallbackParam readResult)

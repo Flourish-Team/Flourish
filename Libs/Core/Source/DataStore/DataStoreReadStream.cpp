@@ -11,6 +11,14 @@ namespace Flourish
     {
     }
 
+    DataStoreReadStream::~DataStoreReadStream()
+    {
+        if(_dataStore != nullptr)
+        {
+            _dataStore->Close(this);
+        }
+    }
+
     size_t DataStoreReadStream::Available() const
     {
         return _buffer.DataAvailableToRead();
