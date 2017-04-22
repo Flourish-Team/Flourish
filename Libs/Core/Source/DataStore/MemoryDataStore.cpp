@@ -36,6 +36,7 @@ namespace Flourish
         }
 
         DataBuffer buffer(1024);
+        recordIter->second->ResetReadHead();
         recordIter->second->Fill(&buffer);
         auto stream = new DataStoreReadStream(this, path, buffer);
         callback(Error<DataStoreReadStream*>::Successful(stream));
@@ -44,9 +45,20 @@ namespace Flourish
     void MemoryDataStore::OpenForWrite(const DataStorePath& path, DataStoreWriteCallback callback)
     {
         CreateDirTree(path);
-        _pathToRecord.insert(std::make_pair(path, Record::Data()));
-        auto stream = new DataStoreWriteStream(this, path);
-        callback(Error<DataStoreWriteStream*>::Successful(stream));
+        auto iterAndInserted = _pathToRecord.insert({path, Record::Data()});
+        if (!iterAndInserted.second)
+        {
+            // Element already exists
+            _pathToRecord[path]->Clear();
+        }
+        callback(Error<DataStoreWriteStream*>::Successful(new DataStoreWriteStream(this, path)));
+    }
+
+    void MemoryDataStore::OpenForAppend(const DataStorePath& path, DataStoreWriteCallback callback)
+    {
+        CreateDirTree(path);
+        _pathToRecord.insert({path, Record::Data()});
+        callback(Error<DataStoreWriteStream*>::Successful(new DataStoreWriteStream(this, path)));
     }
 
     void MemoryDataStore::CreateDirTree(const DataStorePath& path)
@@ -84,10 +96,10 @@ namespace Flourish
 
     void MemoryDataStore::Enumerate(const DataStorePath& dirPath, std::vector<DataStorePath>& entries) const
     {
-        for(auto& entry : _pathToRecord)
+        for (auto& entry : _pathToRecord)
         {
             const auto entryPath = entry.first;
-            if(entryPath.GetDirectory() == dirPath)
+            if (entryPath.GetDirectory() == dirPath)
             {
                 entries.push_back(entryPath);
             }
@@ -104,6 +116,14 @@ namespace Flourish
 
     void MemoryDataStore::EnqueueRead(DataStoreReadStream* stream, DataBuffer* buffer, DataStoreReadCallback callback)
     {
+        if(stream->EndOfData())
+        {
+            std::string error("Attempted to read past end of stream  (Path: '");
+            error.append(stream->Path().AsString());
+            error.append("')");
+            callback(DataStoreReadCallbackParam::Failure(error.c_str()));
+            return;
+        }
         auto record = _pathToRecord.find(stream->Path())->second;
         record->Fill(buffer);
         callback(Error<DataStoreReadStream*>::Successful(stream));
@@ -119,6 +139,11 @@ namespace Flourish
         return new MemoryDataStore::Record(false);
     }
 
+    void MemoryDataStore::Record::ResetReadHead()
+    {
+        _readHead = 0;
+    }
+
     void MemoryDataStore::Record::Append(DataBuffer* buffer)
     {
         _data.reserve(_data.size() + buffer->DataAvailableToRead());
@@ -132,17 +157,29 @@ namespace Flourish
     void MemoryDataStore::Record::Fill(DataBuffer* buffer)
     {
         buffer->Clear();
-        buffer->Write(_data.data(), std::min(buffer->SpaceLeftToWrite(), _data.size()));
+        const auto numBytesToRead = std::min(buffer->SpaceLeftToWrite(), _data.size() - _readHead);
+        buffer->Write(&_data.data()[_readHead], numBytesToRead);
+        _readHead += numBytesToRead;
+        if(_readHead >= _data.size())
+        {
+
+        }
     }
 
-    MemoryDataStore::Record::Record(bool isDir)
-        : _isDir(isDir)
-        , _data()
+    void MemoryDataStore::Record::Clear()
     {
+        _data.clear();
     }
 
     bool MemoryDataStore::Record::IsDir()
     {
         return _isDir;
+    }
+
+    MemoryDataStore::Record::Record(bool isDir)
+        : _isDir(isDir)
+        , _data()
+        , _readHead(0)
+    {
     }
 }

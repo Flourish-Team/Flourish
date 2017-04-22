@@ -35,4 +35,9 @@ namespace Flourish
     {
         return _path;
     }
+
+    bool DataStoreReadStream::EndOfData() const
+    {
+        return _buffer.DataAvailableToRead() < _buffer.Size();
+    }
 }

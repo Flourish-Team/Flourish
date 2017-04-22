@@ -16,6 +16,7 @@ namespace Flourish
         bool Exists(const DataStorePath& path) const;
         void OpenForRead(const DataStorePath& path, DataStoreReadCallback callback) override;
         void OpenForWrite(const DataStorePath& path, DataStoreWriteCallback callback) override;
+        void OpenForAppend(const DataStorePath& path, DataStoreWriteCallback callback) override;
         bool IsDir(const DataStorePath& path) const override;
         bool IsData(const DataStorePath& path) const override;
         void Enumerate(const DataStorePath& dirPath, std::vector<DataStorePath>& entries) const override;
@@ -31,8 +32,10 @@ namespace Flourish
             static Record* Dir();
             static Record* Data();
 
+            void ResetReadHead();
             void Append(DataBuffer* buffer);
             void Fill(DataBuffer* buffer);
+            void Clear();
 
             bool IsDir();
         private:
@@ -40,6 +43,7 @@ namespace Flourish
 
             bool _isDir;
             std::vector<uint8_t> _data;
+            size_t _readHead;
         };
 
         typedef std::map<DataStorePath, Record*> RecordMap;

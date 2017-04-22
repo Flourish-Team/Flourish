@@ -19,6 +19,10 @@ public:
     {
     }
 
+    void OpenForAppend(const DataStorePath& path, DataStoreWriteCallback callback) override
+    {
+    }
+
     bool IsDir(const DataStorePath& path) const override
     {
         return false;

@@ -20,6 +20,7 @@ namespace Flourish
         void Consume(size_t bytes);
         void Refresh(DataStoreReadCallback callback);
         DataStorePath Path() const;
+        bool EndOfData() const;
 
     private:
         IReadableDataStore* _dataStore;
