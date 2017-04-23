@@ -1,3 +1,4 @@
+#include <mutex>
 #include "DataStore/LocalFileDataStore.h"
 
 #include "DataStore/FileSystem.h"
@@ -5,7 +6,10 @@
 namespace Flourish
 {
     LocalFileDataStore::LocalFileDataStore(const char* root)
-        : _root(root)
+        : _pathToOpenFile()
+        , _root(root)
+        , _operationQueue()
+        , _operationThread(&LocalFileDataStore::RunOperations, this)
     {
         FileSystem::CreateDirectoryTree(root);
         auto lastChar = root[_root.length() - 1];
@@ -17,6 +21,8 @@ namespace Flourish
 
     LocalFileDataStore::~LocalFileDataStore()
     {
+        _operationQueue.Stop();
+        _operationThread.join();
         for (auto iter : _pathToOpenFile)
         {
             delete iter.second;
@@ -31,37 +37,13 @@ namespace Flourish
 
     void LocalFileDataStore::OpenForRead(const DataStorePath& path, DataStoreReadCallback callback)
     {
-        if (_pathToOpenFile.find(path) == _pathToOpenFile.end())
-        {
-            DataBuffer buffer(1024);
-            auto file = FileSystem::OpenRead(GetFullPath(path).c_str());
-            if (file == nullptr)
-            {
-                std::string errorMessage = "Path '";
-                errorMessage.append(path.AsString());
-                errorMessage.append("' does not exist in data store");
-                callback(DataStoreReadCallbackParam::Failure(errorMessage.c_str()));
-                return;
-            }
-            FileSystem::Read(static_cast<uint8_t*>(buffer.WriteData()), buffer.Size(), file);
-            const auto stream = std::make_shared<DataStoreReadStream>(this, path, buffer);
-            _pathToOpenFile.insert({path, new OpenFile(file, stream)});
-            callback(DataStoreReadCallbackParam::Successful(stream));
-        }
-        else
-        {
-            std::string error("Path: '");
-            error.append(path.AsString());
-            error.append("' is already open in another stream");
-            callback(DataStoreReadCallbackParam::Failure(error.c_str()));
-        }
+        DataStorePath localPath(path);
+        _operationQueue.Push(new OpenForReadOperation(this, path, callback));
     }
 
     void LocalFileDataStore::Close(DataStoreReadStream* stream)
     {
-        auto iter = _pathToOpenFile.find(stream->Path());
-        delete iter->second;
-        _pathToOpenFile.erase(iter);
+        _operationQueue.Push(new CloseReadOperation(this, stream));
     }
 
     bool LocalFileDataStore::IsDir(const DataStorePath& path) const
@@ -89,74 +71,43 @@ namespace Flourish
 
     void LocalFileDataStore::EnqueueRead(DataStoreReadStream* stream, DataBuffer* buffer, DataStoreReadCallback callback)
     {
-        if (stream->EndOfData())
-        {
-            std::string error("Attempted to read past end of stream  (Path: '");
-            error.append(stream->Path().AsString());
-            error.append("')");
-            callback(DataStoreReadCallbackParam::Failure(error.c_str()));
-            return;
-        }
-        auto openFile = _pathToOpenFile[stream->Path()];
-        openFile->Fill(buffer);
-        callback(DataStoreReadCallbackParam::Successful(openFile->GetCurrentReadStream()));
+        _operationQueue.Push(new ReadOperation(this, stream, buffer, callback));
     }
 
     void LocalFileDataStore::OpenForWrite(const DataStorePath& path, DataStoreWriteCallback callback)
     {
-        if(_pathToOpenFile.find(path) != _pathToOpenFile.end())
-        {
-            std::string error("Path: '");
-            error.append(path.AsString());
-            error.append("' is already open in another stream");
-            callback(DataStoreWriteCallbackParam::Failure(error.c_str()));
-            return;
-        }
-        auto fullPathToDir = GetFullPath(path.GetDirectory());
-        FileSystem::CreateDirectoryTree(fullPathToDir.c_str());
-        auto file = FileSystem::OpenWrite(GetFullPath(path).c_str());
-        auto stream = std::make_shared<DataStoreWriteStream>(this, path);
-        _pathToOpenFile.insert({path, new OpenFile(file, stream)});
-        callback(DataStoreWriteCallbackParam::Successful(stream));
+        _operationQueue.Push(new OpenForWriteOperation(this, path, callback));
     }
 
     void LocalFileDataStore::OpenForAppend(const DataStorePath& path, DataStoreWriteCallback callback)
     {
-        if(_pathToOpenFile.find(path) != _pathToOpenFile.end())
-        {
-            std::string error("Path: '");
-            error.append(path.AsString());
-            error.append("' is already open in another stream");
-            callback(DataStoreWriteCallbackParam::Failure(error.c_str()));
-            return;
-        }
-        auto fullPathToDir = GetFullPath(path.GetDirectory());
-        FileSystem::CreateDirectoryTree(fullPathToDir.c_str());
-        auto file = FileSystem::OpenAppend(GetFullPath(path).c_str());
-        auto stream = std::make_shared<DataStoreWriteStream>(this, path);
-        _pathToOpenFile.insert({path, new OpenFile(file, stream)});
-        callback(DataStoreWriteCallbackParam::Successful(stream));
+        DataStorePath localPath(path);
+        _operationQueue.Push(new OpenForAppendOperation(this, path, callback));
     }
 
     void LocalFileDataStore::Close(DataStoreWriteStream* stream)
     {
-        auto iter = _pathToOpenFile.find(stream->Path());
-        delete iter->second;
-        _pathToOpenFile.erase(iter);
+        _operationQueue.Push(new CloseWriteOperation(this, stream));
     }
 
     void LocalFileDataStore::EnqueueWrite(DataStoreWriteStream* stream, DataBuffer* buffer, DataStoreWriteCallback callback)
     {
-        auto openFile = _pathToOpenFile[stream->Path()];
-        openFile->Append(buffer);
-        buffer->Clear();
-        callback(DataStoreWriteCallbackParam::Successful(openFile->GetCurrentWriteStream()));
+        _operationQueue.Push(new WriteOperation(this, stream, buffer, callback));
     }
 
     std::string LocalFileDataStore::GetFullPath(const DataStorePath& path) const
     {
-        auto fullPath = std::string(_root);
-        return fullPath.append(path.AsString());
+        auto fullPath(_root);
+        fullPath.append(path.AsString());
+        return fullPath;
+    }
+
+    void LocalFileDataStore::RunOperations()
+    {
+        while (!_operationQueue.IsFinishing())
+        {
+            _operationQueue.RunOneOperation();
+        }
     }
 
     LocalFileDataStore::OpenFile::OpenFile(FILE* file, std::shared_ptr<DataStoreReadStream> stream)
@@ -190,11 +141,76 @@ namespace Flourish
 
     const std::shared_ptr<DataStoreWriteStream> LocalFileDataStore::OpenFile::GetCurrentWriteStream() const
     {
-        return _currentWriteStream.lock();
+        return _currentWriteStream;
     }
 
     const std::shared_ptr<DataStoreReadStream> LocalFileDataStore::OpenFile::GetCurrentReadStream() const
     {
-        return _currentReadStream.lock();
+        return _currentReadStream;
     }
+
+    LocalFileDataStore::OperationQueue::OperationQueue()
+        : _operations()
+        , _mutex()
+        , _condition()
+        , _finishing(false)
+    {
+        printf("Starting\n");
+    }
+
+    void LocalFileDataStore::OperationQueue::Push(IOperation* operation)
+    {
+        while (true)
+        {
+            std::unique_lock<std::mutex> locker(_mutex);
+            printf("Pushed operation\n");
+            _operations.push(operation);
+            locker.unlock();
+            _condition.notify_all();
+            return;
+        }
+    }
+
+    void LocalFileDataStore::OperationQueue::RunOneOperation()
+    {
+        while (true)
+        {
+            std::unique_lock<std::mutex> locker(_mutex);
+            printf("Waiting for operation\n");
+            if (_operations.size() <= 0)
+            {
+                _condition.wait(locker);
+            }
+            printf("Came out of wait\n");
+            if (_finishing)
+            {
+                printf("Exiting because finishing\n");
+                return;
+            }
+            if (_operations.size() <= 0)
+            {
+                printf("Continueing because no operations\n");
+                continue;
+            }
+            printf("Running operation\n");
+            auto operation = _operations.back();
+            _operations.pop();
+            locker.unlock();
+            operation->Execute();
+            delete operation;
+        }
+    }
+
+    void LocalFileDataStore::OperationQueue::Stop()
+    {
+        printf("Stopping\n");
+        _finishing = true;
+        _condition.notify_all();
+    }
+
+    bool LocalFileDataStore::OperationQueue::IsFinishing()
+    {
+        return _finishing;
+    }
+
 }

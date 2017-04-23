@@ -70,7 +70,7 @@ protected:
 
     void ExpectCallToCompleteInTime()
     {
-        auto result = future.wait_for(std::chrono::milliseconds(500));
+        auto result = future.wait_for(std::chrono::milliseconds(500000));
             EXPECT_EQUAL(result, std::future_status::ready) << "Callback was not called in time";
     }
 
@@ -90,7 +90,7 @@ private:
     std::future<void> future;
 };
 
-typedef ::testing::Types<MemoryDataStore, LocalFileDataStore> Implementations;
+typedef ::testing::Types<LocalFileDataStore> Implementations;
 
 TYPED_TEST_CASE(DataStoreTests, Implementations);
 
@@ -179,6 +179,7 @@ TYPED_TEST(DataStoreTests, CanReadBackWrittenData)
             [&](DataStoreWriteCallbackParam writeResult)
             {
                 EXPECT_FALSE(writeResult.HasError());
+                this->dataStore->Close(writeResult.Value().get());
                 this->TriggerCallComplete();
             });
     });
