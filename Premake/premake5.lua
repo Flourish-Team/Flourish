@@ -5,8 +5,6 @@ require "cmake"
 workspace "Flourish"
    configurations { "Debug", "Release" }
    location("../Projects/" .. _ACTION)
-   filter { "action:cmake"}
-      location("../")
    flags 
    { 
        "FatalWarnings",
