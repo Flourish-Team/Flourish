@@ -9,9 +9,7 @@ workspace "Flourish"
       location("../")
    flags 
    { 
-       "ExtraWarnings",
        "FatalWarnings",
-       "C++11"
    }
    characterset "Unicode"
    defines { "_HAS_EXCEPTIONS=0" }
@@ -19,6 +17,8 @@ workspace "Flourish"
    exceptionhandling ("Off")
    floatingpoint "Fast"
    startproject "TestProject" 
+   warnings "Extra"
+   cppdialect "C++11"
 
    	--Create x32/x64 platforms for each system (TODO: OSX/linux)
 	filter { "system:windows" }
@@ -39,7 +39,7 @@ workspace "Flourish"
       optimize "On"
 
 	  -- Stripping symbols from OSX in release causes an error in LD
-	  if os.get() == "macosx" then
+	  if os.target() == "macosx" then
 	  symbols "On"
 	  end
 
