@@ -4,9 +4,9 @@
 -- Copyright (c) 2011-2014 Jason Perkins and the Premake project
 --
 
-	premake.fileconfig = {}
-
 	local p = premake
+	p.fileconfig = {}
+
 	local fileconfig = p.fileconfig
 	local context = p.context
 	local project = p.project
@@ -55,9 +55,10 @@
 		environ.file = fcfg
 		context.compile(fcfg)
 
-		fcfg.project = prj
-		fcfg.configs = {}
-		fcfg.abspath = fname
+		fcfg.project   = prj
+		fcfg.workspace = prj.workspace
+		fcfg.configs   = {}
+		fcfg.abspath   = fname
 
 		context.basedir(fcfg, prj.location)
 
@@ -91,6 +92,7 @@
 
 	function fileconfig.addconfig(fcfg, cfg)
 		local prj = cfg.project
+		local wks = cfg.workspace
 
 		-- Create a new context object for this configuration-file pairing.
 		-- The context has the ability to pull out configuration settings
@@ -98,8 +100,8 @@
 
 		local environ = {}
 		local fsub = context.new(prj, environ)
-		context.copyFilters(fsub, cfg)
-		context.mergeFilters(fsub, fcfg)
+		context.copyFilters(fsub, fcfg)
+		context.mergeFilters(fsub, cfg)
 
 		fcfg.configs[cfg] = fsub
 
@@ -122,6 +124,7 @@
 		fsub.vpath = fcfg.vpath
 		fsub.config = cfg
 		fsub.project = prj
+		fsub.workspace = wks
 
 		-- Set the context's base directory to the project's file system
 		-- location. Any path tokens which are expanded in non-path fields
@@ -130,8 +133,7 @@
 
 		context.basedir(fsub, prj.location)
 
-		setmetatable(fsub, fileconfig.fsub_mt)
-
+		return setmetatable(fsub, fileconfig.fsub_mt)
 	end
 
 
@@ -184,7 +186,7 @@
 --
 
 	function fileconfig.hasFileSettings(fcfg)
-		for key, field in pairs(premake.fields) do
+		for key, field in pairs(p.fields) do
 			if field.scopes[1] == "config" then
 				local value = fcfg[field.name]
 				if value then
@@ -243,7 +245,6 @@
 		return context.__mt.__index(fsub, key)
 	end
 
-
 --
 -- And here are the path building functions.
 --
@@ -257,6 +258,9 @@
 		return path.getdirectory(fcfg.abspath)
 	end
 
+	function fcfg_mt.reldirectory(fcfg)
+		return path.getdirectory(fcfg.relpath)
+	end
 
 	function fcfg_mt.name(fcfg)
 		return path.getname(fcfg.abspath)
@@ -285,4 +289,9 @@
 	function fcfg_mt.vpath(fcfg)
 		-- This only gets called if no explicit virtual path was set
 		return fcfg.relpath
+	end
+
+
+	function fcfg_mt.extension(fcfg)
+		return path.getextension(fcfg.abspath)
 	end

@@ -4,9 +4,10 @@
 -- Copyright (c) 2012-2013 Jason Perkins and the Premake project
 --
 
+	local p = premake
 	local suite = test.declare("tools_msc")
 
-	local msc = premake.tools.msc
+	local msc = p.tools.msc
 
 
 --
@@ -71,12 +72,83 @@
 		test.contains("/Oy", msc.getcflags(cfg))
 	end
 
+	function suite.cflags_onOmitFramePointer()
+		omitframepointer "On"
+		prepare()
+		test.contains("/Oy", msc.getcflags(cfg))
+	end
+
+	function suite.cflags_onNoOmitFramePointers()
+		omitframepointer "Off"
+		prepare()
+		test.excludes("/Oy", msc.getcflags(cfg))
+	end
+
 	function suite.ldflags_onLinkTimeOptimizations()
 		flags "LinkTimeOptimization"
 		prepare()
 		test.contains("/GL", msc.getldflags(cfg))
 	end
 
+	function suite.cflags_onStringPoolingOn()
+		stringpooling "On"
+		prepare()
+		test.contains("/GF", msc.getcflags(cfg))
+	end
+
+	function suite.cflags_onStringPoolingOff()
+		stringpooling "Off"
+		prepare()
+		test.contains("/GF-", msc.getcflags(cfg))
+	end
+
+	function suite.cflags_onStringPoolingNotSpecified()
+		prepare()
+		test.excludes("/GF", msc.getcflags(cfg))
+		test.excludes("/GF-", msc.getcflags(cfg))
+	end
+
+	function suite.cflags_onFloatingPointExceptionsOn()
+		floatingpointexceptions "On"
+		prepare()
+		test.contains("/fp:except", msc.getcflags(cfg))
+	end
+
+	function suite.cflags_onFloatingPointExceptionsOff()
+		floatingpointexceptions "Off"
+		prepare()
+		test.contains("/fp:except-", msc.getcflags(cfg))
+	end
+
+	function suite.cflags_onFloatingPointExceptionsNotSpecified()
+		prepare()
+		test.excludes("/fp:except", msc.getcflags(cfg))
+		test.excludes("/fp:except-", msc.getcflags(cfg))
+	end
+
+	function suite.cflags_onFunctionLevelLinkingOn()
+		functionlevellinking "On"
+		prepare()
+		test.contains("/Gy", msc.getcflags(cfg))
+	end
+
+	function suite.cflags_onFunctionLevelLinkingOff()
+		functionlevellinking "Off"
+		prepare()
+		test.contains("/Gy-", msc.getcflags(cfg))
+	end
+
+	function suite.cflags_onFunctionLevelLinkingNotSpecified()
+		prepare()
+		test.excludes("/Gy", msc.getcflags(cfg))
+		test.excludes("/Gy-", msc.getcflags(cfg))
+	end
+
+	function suite.cflags_onIntrinsicsOn()
+		intrinsics "On"
+		prepare()
+		test.contains("/Oi", msc.getcflags(cfg))
+	end
 
 --
 -- Check the translation of symbols.
@@ -101,6 +173,25 @@
 
 
 --
+-- Check the translation of unsignedchar.
+--
+
+	function suite.sharedflags_onUnsignedCharOn()
+		unsignedchar "On"
+		prepare()
+		test.contains({ "/J" }, msc.getcflags(cfg))
+		test.contains({ "/J" }, msc.getcxxflags(cfg))
+	end
+
+	function suite.sharedflags_onUnsignedCharOff()
+		unsignedchar "Off"
+		prepare()
+		test.excludes({ "/J" }, msc.getcflags(cfg))
+		test.excludes({ "/J" }, msc.getcxxflags(cfg))
+	end
+
+
+--
 -- Check handling of debugging support.
 --
 
@@ -119,6 +210,12 @@
 		warnings "Off"
 		prepare()
 		test.contains("/W0", msc.getcflags(cfg))
+	end
+
+	function suite.cflags_OnHighWarnings()
+		warnings "High"
+		prepare()
+		test.contains("/W4", msc.getcflags(cfg))
 	end
 
 	function suite.cflags_OnExtraWarnings()
@@ -352,6 +449,12 @@
 		characterset "MBCS"
 		prepare()
 		test.contains('/D"_MBCS"', msc.getdefines(cfg.defines, cfg))
+	end
+
+	function suite.cflags_onCharSetASCII()
+		characterset "ASCII"
+		prepare()
+		test.excludes({'/D"_MBCS"', '/D"_UNICODE"'}, msc.getdefines(cfg.defines, cfg))
 	end
 
 

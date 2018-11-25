@@ -48,9 +48,9 @@
 		local bundlename = ""
 		local bundlepath = ""
 
-		if cfg.system == premake.MACOSX and kind == premake.WINDOWEDAPP then
-			bundlename = basename .. ".app"
-			bundlepath = path.join(bundlename, "Contents/MacOS")
+		if cfg.system == p.MACOSX and (kind == p.WINDOWEDAPP or (kind == p.SHAREDLIB and cfg.sharedlibtype)) then
+			bundlename = basename .. extension
+			bundlepath = path.join(bundlename, iif(kind == p.SHAREDLIB and cfg.sharedlibtype == "OSXFramework", "Versions/A", "Contents/MacOS"))
 		end
 
 		local info = {}
@@ -192,9 +192,9 @@
 		-- if the configuration target is a DLL, and an import library
 		-- is provided, change the kind as import libraries are static.
 		local kind = cfg.kind
-		if project.iscpp(cfg.project) then
-			if cfg.system == premake.WINDOWS and kind == premake.SHAREDLIB and not cfg.flags.NoImportLib then
-				kind = premake.STATICLIB
+		if project.isnative(cfg.project)  then
+			if cfg.system == p.WINDOWS and kind == p.SHAREDLIB and not cfg.flags.NoImportLib then
+				kind = p.STATICLIB
 			end
 		end
 		return config.buildtargetinfo(cfg, kind, "implib")
@@ -231,7 +231,7 @@
 --    An array containing the requested link target information.
 --
 
- 	function config.getlinks(cfg, kind, part, linkage)
+	function config.getlinks(cfg, kind, part, linkage)
 		local result = {}
 
 		-- If I'm building a list of link directories, include libdirs
@@ -326,7 +326,12 @@
 --
 
 	function config.getruntime(cfg)
-		local linkage = iif(cfg.flags.StaticRuntime, "Static", "Shared")
+		if (not cfg.staticruntime or cfg.staticruntime == "Default") and not cfg.runtime then
+			return nil -- indicate that no runtime was explicitly selected
+		end
+
+		local linkage = iif(cfg.staticruntime == "On", "Static", "Shared") -- assume 'Shared' is default?
+
 		if not cfg.runtime then
 			return linkage .. iif(config.isDebugBuild(cfg), "Debug", "Release")
 		else
@@ -413,7 +418,10 @@
 --
 
 	function config.isDebugBuild(cfg)
-		return cfg.symbols == p.ON and not config.isOptimizedBuild(cfg)
+		return cfg.symbols ~= nil and
+				cfg.symbols ~= p.OFF and
+				cfg.symbols ~= "Default" and
+				not config.isOptimizedBuild(cfg)
 	end
 
 
@@ -490,6 +498,9 @@
 				-- replacement, if any, to the result
 
 				local values = cfg[field.name]
+				if type(values) == "boolean" then
+					values = iif(values, "On", "Off")
+				end
 				if type(values) ~= "table" then
 					values = { values }
 				end
