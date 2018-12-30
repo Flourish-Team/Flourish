@@ -20,10 +20,12 @@ project "Core"
 
    -- Link to the correct dbghelp.lib on windows debug
    filter {"system:windows", "configurations:Debug", "architecture:x32"}
-      links { "../../3rdParty/dbghelp/lib/x86/dbghelp" }
+      libdirs { "../../3rdParty/dbghelp/lib/x86/" }
+      links { "DbgHelp" }
 
    filter {"system:windows", "configurations:Debug", "architecture:x64"}
-      links { "../../3rdParty/dbghelp/lib/x64/dbghelp" }
+      libdirs { "../../3rdParty/dbghelp/lib/x64/" }
+      links { "DbgHelp" }
 
    filter {"system:macosx"}
       linkoptions  { "-std=c++11", "-stdlib=libc++" }
