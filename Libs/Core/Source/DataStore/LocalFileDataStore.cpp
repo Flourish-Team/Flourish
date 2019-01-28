@@ -1,6 +1,6 @@
 #include "DataStore/LocalFileDataStore.h"
 
-#include "DataStore/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 
 namespace Flourish
 {

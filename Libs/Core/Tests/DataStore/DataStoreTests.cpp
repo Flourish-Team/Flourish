@@ -1,7 +1,7 @@
 #include "Test.h"
 #include "DataStore/DataStoreReadStream.h"
 #include "DataStore/DataStoreWriteStream.h"
-#include "DataStore/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 #include "DataStore/LocalFileDataStore.h"
 #include "DataStore/MemoryDataStore.h"
 
@@ -48,7 +48,7 @@ public:
         this->SetupCallWait();
     }
 
-    virtual ~DataStoreTests()
+    ~DataStoreTests() override
     {
         DestroyDataStore<T>(dataStore);
         delete dataStore;
@@ -56,6 +56,7 @@ public:
 
 protected:
     IWritableDataStore* dataStore;
+
 
     void SetupCallWait()
     {
@@ -351,18 +352,18 @@ TYPED_TEST(DataStoreTests, ConsecutiveReadsReadSameData)
         openStream->Write(data, openStream->Available());
         delete[] data;
         openStream->Flush([&](DataStoreWriteCallbackParam writeResult)
-                          {
-                              // Write a buffer full of 2's
-                              const auto writeStream = writeResult.Value();
-                              auto data = new uint8_t[writeStream->Available()];
-                              std::fill_n(data, writeStream->Available(), 2);
-                              writeStream->Write(data, writeStream->Available());
-                              delete[] data;
-                              writeStream->Flush([&](DataStoreWriteCallbackParam)
-                                                 {
-                                                     this->TriggerCallComplete();
-                                                 });
-                          });
+            {
+              // Write a buffer full of 2's
+              const auto writeStream = writeResult.Value();
+              auto streamData = new uint8_t[writeStream->Available()];
+              std::fill_n(streamData, writeStream->Available(), 2);
+              writeStream->Write(streamData, writeStream->Available());
+              delete[] streamData;
+              writeStream->Flush([&](DataStoreWriteCallbackParam)
+                 {
+                     this->TriggerCallComplete();
+                 });
+            });
     });
 
     this->ExpectCallToCompleteInTime();

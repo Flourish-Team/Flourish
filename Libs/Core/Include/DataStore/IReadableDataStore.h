@@ -1,7 +1,7 @@
 #pragma once
 
 #include <functional>
-
+#include <vector>
 #include "DataStore/DataBuffer.h"
 #include "DataStore/DataStorePath.h"
 #include "DataStore/DataStoreCallbacks.h"

@@ -2,6 +2,8 @@
 
 require "cmake"
 
+include "FlourishUtils"
+
 workspace "Flourish"
    configurations { "Debug", "Release" }
    location("../Projects/" .. _ACTION)
@@ -18,9 +20,17 @@ workspace "Flourish"
    warnings "Extra"
    cppdialect "C++11"
 
-   	--Create x32/x64 platforms for each system (TODO: OSX/linux)
+   --Create x32/x64 platforms for each system
 	filter { "system:windows" }
 		platforms { "Win32", "Win64" }
+
+   filter { "system:macosx" }
+      platforms { "OSX32", "OSX64" }
+      -- Stripping symbols from OSX in release causes an error in LD
+      symbols "On"
+
+   filter { "system:linux" }
+      platforms { "Linux32", "Linux64" }
 
 	filter { "platforms:*32" }
 	    architecture "x32"
@@ -36,22 +46,16 @@ workspace "Flourish"
       defines { "NDEBUG", "FL_BUILD_CONFIG_RELEASE" }
       optimize "On"
 
-	  -- Stripping symbols from OSX in release causes an error in LD
-	  if os.target() == "macosx" then
-	  symbols "On"
-	  end
+   filter { }
 
-filter { }
+   --include libs
+   group("3rdParty")
+   	include "../3rdParty/googletest"
+   	
+   group("Flourish")
+   	include "../Libs/Core"
+   	include "../Libs/Test"
 
-group("3rdParty")
-	include "../3rdParty/googletest"
-	
-group("Flourish")
-	include "../Libs/Core"
-	include "../Libs/Test"
-
--- Include applications that need all the libs last
-group("Examples")
-	include "../TestProject"
-
-
+   -- Include applications that need all the libs last
+   group("Examples")
+   	include "../TestProject"

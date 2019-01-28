@@ -3,20 +3,20 @@ project "Core"
    language "C++"
    targetdir "../../Bin/%{cfg.buildcfg}"
    includedirs { "Include", "../../3rdParty/dbghelp/include"  }
-   links { "Test", "GoogleTest" }
+
+   
 
    files 
    { 
       "../FlourishConfig.h",
-      "Include/**.h", 
-      "Include/**.inl", 
-      "Source/**.c", 
-      "Source/**.cpp",
 
       -- Add the Premake bat files for easy project rebuilding (Use 
       -- http://stackoverflow.com/questions/5605885/how-to-run-a-bat-from-inside-the-ide to launch from IDE) 
       "Premake/*"  
    }
+
+   includeCommonFiles()
+   excludePlatformSepecificFilesIfNeeded()
 
    -- Link to the correct dbghelp.lib on windows debug
    filter {"system:windows", "configurations:Debug", "architecture:x32"}

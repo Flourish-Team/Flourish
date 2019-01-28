@@ -19,6 +19,8 @@ project "TestProject"
       "../Libs/**/Tests/**.inl"
    }
 
+   excludePlatformSepecificFilesIfNeeded()
+
    defines { "FL_RUNNING_TESTS" }
 
    filter {"system:macosx"}
