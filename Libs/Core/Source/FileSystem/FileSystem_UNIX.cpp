@@ -1,9 +1,7 @@
-#include "FileSystem/FileSystem.h"
-
 #include "Platform/Platform.h"
-
 #if FL_ENABLED(FL_PLATFORM_UNIX)
 
+#include "FileSystem/FileSystem.h"
 #include <errno.h>
 #include <fts.h>
 #include <sys/stat.h>
