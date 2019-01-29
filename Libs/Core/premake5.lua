@@ -2,10 +2,13 @@ project "Core"
    kind "StaticLib"
    language "C++"
    targetdir "../../Bin/%{cfg.buildcfg}"
-   includedirs { "Include", "../../3rdParty/dbghelp/include"  }
-
+   systemversion "latest"
+   includedirs 
+   { 
+      "Include", 
+      "../../3rdParty/dbghelp/include"  
+   }
    
-
    files 
    { 
       "../FlourishConfig.h",

@@ -2,6 +2,7 @@ project "TestProject"
    kind "ConsoleApp"
    language "C++"
    targetdir "../Bin/%{cfg.buildcfg}"
+   systemversion "latest"
    includedirs 
    { 
       "../Libs/Core/Include",

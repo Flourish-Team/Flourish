@@ -1,6 +1,7 @@
 project "GoogleTest"
    kind "StaticLib"
    language "C++"
+   systemversion "latest"
    targetdir "../../Bin/%{cfg.buildcfg}"
 
    --CB: using the unity build file

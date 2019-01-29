@@ -4,7 +4,12 @@ project "Test"
    kind "StaticLib"
    language "C++"
    targetdir "../../Bin/%{cfg.buildcfg}"
-   includedirs { "Include", "../../3rdParty/googletest/include" }
+   systemversion "latest"
+   includedirs 
+   { 
+      "Include", 
+      "../../3rdParty/googletest/include" 
+   }
 
    files 
    { 
