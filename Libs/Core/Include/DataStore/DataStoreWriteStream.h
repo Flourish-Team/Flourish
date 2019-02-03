@@ -11,8 +11,14 @@ namespace Flourish
     class DataStoreWriteStream
     {
     public:
-        DataStoreWriteStream(IWritableDataStore* dataStore, const DataStorePath& path);
+        DataStoreWriteStream(IWritableDataStore* dataStore, DataStorePath path);
         virtual ~DataStoreWriteStream();
+
+		DataStoreWriteStream(DataStoreWriteStream& other) = delete;
+		DataStoreWriteStream& operator=(const DataStoreWriteStream&) = delete;
+
+		DataStoreWriteStream(DataStoreWriteStream&& other) = delete;
+		DataStoreWriteStream& operator=(DataStoreWriteStream&&) = delete;
 
         size_t Available() const;
         virtual void Write(const void* data, size_t dataSize);

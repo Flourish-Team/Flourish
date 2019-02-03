@@ -3,10 +3,7 @@
 #include "Task/Task.h"
 
 namespace Flourish
-{
-    // Mask used for cheap modulo operators. Only works if MaxumuymNumerOfTasks is a power of 2
-    static const uint32_t Mask = TaskQueue::MaximumNumberOfTasks - 1u;
-    
+{    
     TaskQueue::TaskQueue()
         : _top(0)
         , _bottom(0)
@@ -23,7 +20,7 @@ namespace Flourish
     void TaskQueue::Push(Task* task)
     {
         long currentBottom = _bottom;
-        _tasks[currentBottom & Mask] = task;
+        _tasks[currentBottom & MASK] = task;
         atomic_signal_fence(std::memory_order_release);
         _bottom = currentBottom + 1;
     }
@@ -39,7 +36,7 @@ namespace Flourish
         if (currentTop <= newBottom)
         {
             // The queue has something in it
-            auto task = _tasks[newBottom & Mask];
+            auto task = _tasks[newBottom & MASK];
             if (currentTop != newBottom)
             {
                 // More than one item in the queue, we don't have to worry about
@@ -72,7 +69,7 @@ namespace Flourish
         if(currentTop < currentBottom)
         {
             // The queue has something in it
-            auto task = _tasks[currentTop & Mask];
+            auto task = _tasks[currentTop & MASK];
             if(!_top.compare_exchange_weak(currentTop, currentTop + 1))
             {
                 // Something else (probably another Steal) took this item

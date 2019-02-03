@@ -12,7 +12,6 @@ namespace Flourish
         TaskThreadGate()
         : _open(false)
         , _openPermenently(false)
-        , _mutex()
         , _waitMechanism()
         {
             

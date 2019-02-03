@@ -10,7 +10,14 @@ namespace Flourish
     public:
 		using IReadableDataStore::Close;
 
+		IWritableDataStore() = default;
         virtual ~IWritableDataStore() = default;
+
+		IWritableDataStore(IWritableDataStore& other) = delete;
+		IWritableDataStore& operator=(const IWritableDataStore&) = delete;
+
+		IWritableDataStore(IWritableDataStore&& other) = delete;
+		IWritableDataStore& operator=(IWritableDataStore&&) = delete;
 
 		virtual void OpenForWrite(const DataStorePath& path, DataStoreWriteCallback callback) = 0;
         virtual void OpenForAppend(const DataStorePath& path, DataStoreWriteCallback callback) = 0;

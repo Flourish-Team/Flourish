@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <utility>
 
 #include "Task/Task.h"
 
@@ -34,7 +35,7 @@ namespace Flourish
             : _data(data)
             , _dataCount(dataCount)
             , _splitter(splitter)
-            , _workFunc(workFunc)
+            , _workFunc(std::move(workFunc))
             , _taskSystem(taskSystem)
         {
         }

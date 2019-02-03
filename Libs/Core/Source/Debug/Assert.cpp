@@ -1,7 +1,7 @@
 #include "Debug/Assert.h"
 #include <cstdio>
 #include <cstdlib>
-#include <string.h>
+#include <cstring>
 
 namespace Flourish { namespace Debug
 {

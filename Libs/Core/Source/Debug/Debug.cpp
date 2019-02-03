@@ -2,7 +2,7 @@
 #include "Debug/Debug.h"
 #include <cstdio>
 #include <cstdlib>
-#include <string.h>
+#include <cstring>
 
 namespace Flourish { namespace Debug
 {
@@ -25,9 +25,7 @@ namespace Flourish { namespace Debug
 
 		char* messageBufferPtr = messageBuffer;
 
-		size_t numCharsWritten;
-
-		numCharsWritten = vsnprintf(messageBufferPtr, bufferSize, message, args);
+		size_t numCharsWritten = vsnprintf(messageBufferPtr, bufferSize, message, args);
 
 		char* allocBuffer = nullptr;
 
@@ -98,12 +96,9 @@ namespace Flourish { namespace Debug
 			}
 
 			//TODO: replace with allocator to track?
-			SYMBOL_INFO* symbol = static_cast<SYMBOL_INFO * >(malloc( sizeof( SYMBOL_INFO ) + maxSymbolNameSize * sizeof( char )));
+			auto symbol = static_cast<SYMBOL_INFO * >(malloc( sizeof( SYMBOL_INFO ) + maxSymbolNameSize * sizeof( char )));
 			symbol->MaxNameLen   = maxSymbolNameSize - 1; //-1 for null terminator
 			symbol->SizeOfStruct = sizeof( SYMBOL_INFO );
-
-			int stringLength;
-			int bufferLeftLength;
 
 			callstackBufOut[0] = '\0';
 
@@ -113,8 +108,8 @@ namespace Flourish { namespace Debug
 			{
 				SymFromAddr( process, reinterpret_cast<DWORD64 >(stackTraceFrames[ i ]), nullptr, symbol );
 
-				stringLength = strlen(callstackBufOut);
-				bufferLeftLength = callstackBufOutLength - stringLength;
+				int stringLength = strlen(callstackBufOut);
+				int bufferLeftLength = callstackBufOutLength - stringLength;
 
 				if(snprintf(callstackBufOut + stringLength, bufferLeftLength, "%i: (0x%08I64X) - %s()\n", numActualFramesCaptured - i - 1, symbol->Address, symbol->Name) >= bufferLeftLength)
 				{
@@ -122,7 +117,6 @@ namespace Flourish { namespace Debug
 					break;
 				}
 			}
-
 
 			free(symbol);
 

@@ -11,8 +11,14 @@ namespace Flourish
     class DataStoreReadStream
     {
     public:
-        DataStoreReadStream(IReadableDataStore* dataStore, const DataStorePath& path, const DataBuffer& initialData);
+        DataStoreReadStream(IReadableDataStore* dataStore, DataStorePath path, DataBuffer initialData);
         virtual ~DataStoreReadStream();
+
+		DataStoreReadStream(DataStoreReadStream& other) = delete;
+		DataStoreReadStream& operator=(const DataStoreReadStream&) = delete;
+
+		DataStoreReadStream(DataStoreReadStream&& other) = delete;
+		DataStoreReadStream& operator=(DataStoreReadStream&&) = delete;
 
         size_t Available() const;
         const void* Data() const;

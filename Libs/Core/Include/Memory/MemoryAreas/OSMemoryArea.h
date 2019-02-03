@@ -7,7 +7,7 @@ namespace Flourish { namespace Memory
 {
 	// OS Memory Area
 	//
-	// Providesa memory area allocated by the OS's virtual memory functions.
+	// Provides a memory area allocated by the OS's virtual memory functions.
 	class OSMemoryArea : MemoryArea
 	{
 	public:
@@ -32,6 +32,6 @@ namespace Flourish { namespace Memory
 		OSMemoryArea& operator=(const OSMemoryArea&) = delete;
 
 	private:
-		VAllocResult mVAllocResult;
+		VAllocResult mVAllocResult{ };
 	};
 }}

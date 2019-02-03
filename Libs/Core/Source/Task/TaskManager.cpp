@@ -8,11 +8,11 @@ namespace Flourish
 {
     struct RootAndDependencies
     {
-        RootAndDependencies(TaskManager* taskManager, TaskId root, std::vector<TaskId> dependenices)
+        RootAndDependencies(TaskManager* taskManager, TaskId root, std::vector<TaskId> dependencies)
         {
             _taskManager = taskManager;
             _root = root;
-            _dependencies = dependenices;
+            _dependencies = std::move(dependencies);
         }
         
         TaskManager* _taskManager;
@@ -22,7 +22,7 @@ namespace Flourish
     
     void WaitForRootThenAddDependencies(void* data)
     {
-        auto rootAndDependencies = (RootAndDependencies*)data;
+        auto rootAndDependencies = static_cast<RootAndDependencies*>(data);
         rootAndDependencies->_taskManager->Wait(rootAndDependencies->_root);
         for(auto& dependancy : rootAndDependencies->_dependencies)
         {
@@ -39,7 +39,6 @@ namespace Flourish
         , _numThreads(numThreads)
 		, _workerThreads(nullptr)
         , _taskQueues(nullptr)
-        , _taskThreadGate()
         , _exiting(false)
 	{
         CreateTasks();
@@ -64,7 +63,7 @@ namespace Flourish
         TaskId taskId = _nextTaskId++;
         auto task = GetTaskFromId(taskId);
 		task->_id = taskId;
-		task->_workItem = workItem;
+		task->_workItem = std::move(workItem);
         task->_added = false;
         task->_openWorkItems = 1;
 		return task->_id;
@@ -72,7 +71,7 @@ namespace Flourish
     
     TaskId TaskManager::AddDependentTasks(TaskId root, std::vector<TaskId> dependencies)
     {
-        WorkItem waitForRootThenAddDependencies(&WaitForRootThenAddDependencies, new RootAndDependencies(this, root, dependencies));
+        WorkItem waitForRootThenAddDependencies(&WaitForRootThenAddDependencies, new RootAndDependencies(this, root, std::move(dependencies)));
         auto wrapperTaskId = BeginAdd(waitForRootThenAddDependencies);
         FinishAdd(wrapperTaskId);
         return wrapperTaskId;
@@ -108,7 +107,7 @@ namespace Flourish
     
     TaskId TaskManager::AddTaskWithNoChildrenOrDependencies(Flourish::WorkItem workItem)
     {
-        auto taskId = BeginAdd(workItem);
+        auto taskId = BeginAdd(std::move(workItem));
         FinishAdd(taskId);
         return taskId;
     }
@@ -133,7 +132,7 @@ namespace Flourish
 
 	void TaskManager::CreateAndStartWorkerThreads()
 	{
-        if((int32_t)_numThreads == TaskManager::AutomaticallyDetectNumThreads)
+        if(static_cast<int32_t>(_numThreads) == TaskManager::AutomaticallyDetectNumThreads)
         {
             _numThreads = GetIdealNumThreads();
         }

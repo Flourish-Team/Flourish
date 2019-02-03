@@ -10,8 +10,8 @@ namespace Flourish { namespace Memory {
 	class MallocAllocator : public IAllocator
 	{
 	public:
-		MallocAllocator() {}
-		virtual ~MallocAllocator() {}
+		MallocAllocator() = default;
+		virtual ~MallocAllocator() = default;
 
 		//No Copying Of Moving of allocators
 		MallocAllocator(MallocAllocator& other) = delete;

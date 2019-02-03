@@ -2,7 +2,7 @@
 
 #include "Platform/Platform.h"
 
-#include <stdlib.h> 
+#include <cstdlib> 
 #include <memory>
 #include "IAllocator.h"
 #include "Internal/MemoryNewDelInternal.inl"

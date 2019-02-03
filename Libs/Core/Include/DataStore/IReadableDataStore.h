@@ -13,9 +13,14 @@ namespace Flourish
     class IReadableDataStore
     {
     public:
-        virtual ~IReadableDataStore()
-        {
-        }
+		IReadableDataStore() = default;
+        virtual ~IReadableDataStore() = default;
+
+		IReadableDataStore(IReadableDataStore& other) = delete;
+		IReadableDataStore& operator=(const IReadableDataStore&) = delete;
+
+		IReadableDataStore(IReadableDataStore&& other) = delete;
+		IReadableDataStore& operator=(IReadableDataStore&&) = delete;
 
         virtual bool Exists(const DataStorePath& path) const = 0;
         virtual void OpenForRead(const DataStorePath& path, DataStoreReadCallback callback) = 0;

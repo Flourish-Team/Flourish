@@ -16,7 +16,7 @@ namespace Flourish { namespace Memory
 			
 		}
 
-		virtual ~MemoryArea() {}
+		virtual ~MemoryArea() = default;
 
 		//No Copying Of Moving of Memory Areas
 		MemoryArea(MemoryArea& other) = delete;

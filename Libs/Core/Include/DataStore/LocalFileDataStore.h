@@ -15,6 +15,12 @@ namespace Flourish
         LocalFileDataStore(const char* root);
         ~LocalFileDataStore();
 
+		LocalFileDataStore(LocalFileDataStore& other) = delete;
+		LocalFileDataStore& operator=(const LocalFileDataStore&) = delete;
+
+		LocalFileDataStore(LocalFileDataStore&& other) = delete;
+		LocalFileDataStore& operator=(LocalFileDataStore&&) = delete;
+
         bool Exists(const DataStorePath& path) const override;
         void OpenForRead(const DataStorePath& path, DataStoreReadCallback callback) override;
         void Close(DataStoreReadStream* stream) override;
@@ -33,12 +39,18 @@ namespace Flourish
         class OpenFile
         {
         public:
-            OpenFile(FILE* file, std::shared_ptr<DataStoreReadStream> stream);
-            OpenFile(FILE* file, std::shared_ptr<DataStoreWriteStream> stream);
+            OpenFile(FILE* file, const std::shared_ptr<DataStoreReadStream>& stream);
+            OpenFile(FILE* file, const std::shared_ptr<DataStoreWriteStream>& stream);
             virtual ~OpenFile();
 
-            const std::shared_ptr<DataStoreWriteStream> GetCurrentWriteStream() const;
-            const std::shared_ptr<DataStoreReadStream> GetCurrentReadStream() const;
+			OpenFile(OpenFile& other) = delete;
+			OpenFile& operator=(const OpenFile&) = delete;
+
+			OpenFile(OpenFile&& other) = delete;
+			OpenFile& operator=(OpenFile&&) = delete;
+
+            std::shared_ptr<DataStoreWriteStream> GetCurrentWriteStream() const;
+            std::shared_ptr<DataStoreReadStream> GetCurrentReadStream() const;
 
             void Append(DataBuffer* buffer);
             void Fill(DataBuffer* buffer);

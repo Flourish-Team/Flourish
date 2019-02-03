@@ -7,7 +7,7 @@ namespace Flourish
 {
     MemoryDataStore::~MemoryDataStore()
     {
-        for (auto iter : _pathToRecord)
+        for (const auto& iter : _pathToRecord)
         {
             delete iter.second;
         }
@@ -42,7 +42,7 @@ namespace Flourish
         }
         record->ResetReadHead();
         record->Fill(&buffer);
-        auto stream = std::shared_ptr<DataStoreReadStream>(new DataStoreReadStream(this, path, buffer));
+        auto stream = std::make_shared<DataStoreReadStream>(this, path, buffer);
         record->SetCurrentStream(stream);
         callback(DataStoreReadCallbackParam::Successful(stream));
     }
@@ -210,31 +210,28 @@ namespace Flourish
         _currentWriteStream.reset();
     }
 
-    bool MemoryDataStore::Record::HasCurrentStream()
+    bool MemoryDataStore::Record::HasCurrentStream() const
     {
         return _currentReadStream.use_count() > 0 || _currentWriteStream.use_count() > 0;
     }
 
-    bool MemoryDataStore::Record::IsDir()
+    bool MemoryDataStore::Record::IsDir() const
     {
         return _isDir;
     }
 
     MemoryDataStore::Record::Record(bool isDir)
         : _isDir(isDir)
-        , _data()
         , _readHead(0)
-        , _currentWriteStream()
-        , _currentReadStream()
     {
     }
 
-    void MemoryDataStore::Record::SetCurrentStream(std::shared_ptr<DataStoreWriteStream> stream)
+    void MemoryDataStore::Record::SetCurrentStream(const std::shared_ptr<DataStoreWriteStream>& stream)
     {
         _currentWriteStream = stream;
     }
 
-    void MemoryDataStore::Record::SetCurrentStream(std::shared_ptr<DataStoreReadStream> stream)
+    void MemoryDataStore::Record::SetCurrentStream(const std::shared_ptr<DataStoreReadStream>& stream)
     {
         _currentReadStream = stream;
     }

@@ -2,7 +2,6 @@
 
 #include <atomic>
 #include <cstdint>
-#include <stdint.h>
 #include <functional>
 
 namespace Flourish
@@ -23,12 +22,12 @@ namespace Flourish
         
         WorkItem(WorkItemFunction function, void* data)
         {
-            _function = function;
+            _function = std::move(function);
             _data = data;
         }
         
         WorkItem(WorkItemFunction function)
-            : WorkItem(function, nullptr)
+            : WorkItem(std::move(function), nullptr)
         {
         }
         

@@ -11,7 +11,14 @@ namespace Flourish
     class MemoryDataStore : public IWritableDataStore
     {
     public:
+		MemoryDataStore() = default;
         virtual ~MemoryDataStore();
+
+		MemoryDataStore(MemoryDataStore& other) = delete;
+		MemoryDataStore& operator=(const MemoryDataStore&) = delete;
+
+		MemoryDataStore(MemoryDataStore&& other) = delete;
+		MemoryDataStore& operator=(MemoryDataStore&&) = delete;
 
         bool Exists(const DataStorePath& path) const override;
         void OpenForRead(const DataStorePath& path, DataStoreReadCallback callback) override;
@@ -38,13 +45,13 @@ namespace Flourish
             void Append(DataBuffer* buffer);
             void Fill(DataBuffer* buffer);
             void Clear();
-            void SetCurrentStream(std::shared_ptr<DataStoreWriteStream> stream);
-            void SetCurrentStream(std::shared_ptr<DataStoreReadStream> stream);
+            void SetCurrentStream(const std::shared_ptr<DataStoreWriteStream>& stream);
+            void SetCurrentStream(const std::shared_ptr<DataStoreReadStream>& stream);
             const std::shared_ptr<DataStoreWriteStream> GetCurrentWriteStream() const;
             const std::shared_ptr<DataStoreReadStream> GetCurrentReadStream() const;
             void ClearCurrentStream();
-            bool HasCurrentStream();
-            bool IsDir();
+            bool HasCurrentStream() const;
+            bool IsDir() const;
 
         private:
             Record(bool isDir);

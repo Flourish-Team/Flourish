@@ -13,6 +13,7 @@ namespace Flourish { namespace Memory
 	public:
 		StaticMemoryArea()
 			: MemoryArea(reinterpret_cast<void*>(mStaticMemory), BUFFER_SIZE)
+			, mStaticMemory{}
 		{
 		}
 

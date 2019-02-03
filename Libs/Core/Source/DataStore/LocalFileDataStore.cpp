@@ -17,7 +17,7 @@ namespace Flourish
 
     LocalFileDataStore::~LocalFileDataStore()
     {
-        for (auto iter : _pathToOpenFile)
+        for (const auto& iter : _pathToOpenFile)
         {
             delete iter.second;
         }
@@ -84,7 +84,7 @@ namespace Flourish
             auto fullPath = dirPath.AsString();
             fullPath.append("/");
             fullPath.append(stringEntry);
-            entries.push_back(DataStorePath(fullPath));
+            entries.emplace_back(DataStorePath(fullPath));
         }
     }
 
@@ -160,17 +160,15 @@ namespace Flourish
         return fullPath.append(path.AsString());
     }
 
-    LocalFileDataStore::OpenFile::OpenFile(FILE* file, std::shared_ptr<DataStoreReadStream> stream)
+    LocalFileDataStore::OpenFile::OpenFile(FILE* file, const std::shared_ptr<DataStoreReadStream>& stream)
         : _file(file)
-        , _currentWriteStream()
         , _currentReadStream(stream)
     {
     }
 
-    LocalFileDataStore::OpenFile::OpenFile(FILE* file, std::shared_ptr<DataStoreWriteStream> stream)
+    LocalFileDataStore::OpenFile::OpenFile(FILE* file, const std::shared_ptr<DataStoreWriteStream>& stream)
         : _file(file)
         , _currentWriteStream(stream)
-        , _currentReadStream()
     {
     }
 
@@ -189,12 +187,12 @@ namespace Flourish
         FileSystem::Read(static_cast<uint8_t*>(buffer->WriteData()), buffer->SpaceLeftToWrite(), _file);
     }
 
-    const std::shared_ptr<DataStoreWriteStream> LocalFileDataStore::OpenFile::GetCurrentWriteStream() const
+    std::shared_ptr<DataStoreWriteStream> LocalFileDataStore::OpenFile::GetCurrentWriteStream() const
     {
         return _currentWriteStream.lock();
     }
 
-    const std::shared_ptr<DataStoreReadStream> LocalFileDataStore::OpenFile::GetCurrentReadStream() const
+    std::shared_ptr<DataStoreReadStream> LocalFileDataStore::OpenFile::GetCurrentReadStream() const
     {
         return _currentReadStream.lock();
     }

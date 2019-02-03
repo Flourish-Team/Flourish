@@ -23,6 +23,12 @@ namespace Flourish
         TaskManager(int32_t numThreads = TaskManager::AutomaticallyDetectNumThreads);
 		~TaskManager();
 
+		TaskManager(TaskManager& other) = delete;
+		TaskManager& operator=(const TaskManager&) = delete;
+
+		TaskManager(TaskManager&& other) = delete;
+		TaskManager& operator=(TaskManager&&) = delete;
+
 		TaskId BeginAdd(WorkItem workItem);
         TaskId AddDependentTasks(TaskId root, std::vector<TaskId> dependencies);
         void AddChild(TaskId parent, TaskId child);

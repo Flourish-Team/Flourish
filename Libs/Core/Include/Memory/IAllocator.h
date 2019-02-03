@@ -18,11 +18,12 @@ namespace Flourish { namespace Memory
 
         //No Copying of allocators
 		IAllocator(IAllocator& other) = delete;
-		IAllocator& operator=(IAllocator&&) = delete;
+		IAllocator& operator=(const IAllocator&) = delete;
 		
 		//Suport moving of allocators
 		IAllocator(IAllocator&& other) = default;
-		IAllocator& operator=(const IAllocator&) = default;
+		IAllocator& operator=(IAllocator&&) = default;
+		
 
 		// Allocates some raw memory of size with alignment. 
 		// (Helper Macros exist in Memory.h for easier use)

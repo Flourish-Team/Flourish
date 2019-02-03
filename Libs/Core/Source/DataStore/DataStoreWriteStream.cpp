@@ -1,11 +1,12 @@
+#include <utility>
 #include "DataStore/DataStoreWriteStream.h"
 #include "DataStore/IWritableDataStore.h"
 
 namespace Flourish
 {
-    DataStoreWriteStream::DataStoreWriteStream(IWritableDataStore* dataStore, const DataStorePath& path)
+    DataStoreWriteStream::DataStoreWriteStream(IWritableDataStore* dataStore, DataStorePath path)
         : _dataStore(dataStore)
-        , _path(path)
+        , _path(std::move(path))
         , _buffer(1024)
     {
     }
@@ -30,7 +31,7 @@ namespace Flourish
 
     void DataStoreWriteStream::Flush(DataStoreWriteCallback result)
     {
-        _dataStore->EnqueueWrite(this, &_buffer, result);
+        _dataStore->EnqueueWrite(this, &_buffer, std::move(result));
     }
 
     DataStorePath DataStoreWriteStream::Path() const

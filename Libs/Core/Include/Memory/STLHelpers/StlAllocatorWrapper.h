@@ -1,8 +1,6 @@
 #pragma once
-#include <stdlib.h> 
-#include <type_traits>
 #include "Memory/Memory.h"
-
+#include <type_traits>
 
 namespace Flourish { namespace Memory
 {
@@ -12,13 +10,7 @@ namespace Flourish { namespace Memory
 	{
 	public:
 		using value_type      = T;
-		using pointer         = T*;
-		using const_pointer   = const T*;
-		using reference       = T&;
-		using const_reference = const T&;
-		using size_type       = size_t;
-		using difference_type = ptrdiff_t;
-
+		
 		using propagate_on_container_copy_assignment = std::true_type;
 		using propagate_on_container_move_assignment = std::true_type;
 		using propagate_on_container_swap = std::true_type;
@@ -40,7 +32,18 @@ namespace Flourish { namespace Memory
 		{
 		}
 
-		IAllocator& GetWrappedAllocator() const
+		value_type* allocate(std::size_t n)
+		{
+			return FL_NEW_RAW_BUFFER_ALIGN(mWrappedAllocator, n, ALIGN);
+		}
+
+		void deallocate(value_type* p, std::size_t n)
+		{
+            FL_UNUSED(n);
+			FL_DELETE_RAW_BUFFER(mWrappedAllocator, p);
+		}
+
+				IAllocator& GetWrappedAllocator() const
 		{
 			return mWrappedAllocator;
 		}
@@ -48,35 +51,6 @@ namespace Flourish { namespace Memory
 		StlAllocatorWrapper<T> select_on_container_copy_construction() const
 		{
 			return *this;
-		}
-
-		pointer allocate(size_type n, void* = nullptr)
-		{
-			return FL_NEW_RAW_BUFFER_ALIGN(mWrappedAllocator, n, ALIGN);
-		}
-
-		void deallocate(pointer p, size_type n)
-		{
-            FL_UNUSED(n);
-			FL_DELETE_RAW_BUFFER(mWrappedAllocator, p);
-		}
-
-		template <typename U, typename... Args>
-		void construct(U* p, Args&&... args)
-		{
-			void* mem = p;
-			new (mem) U(std::forward<Args>(args)...);
-		}
-
-		template <typename U>
-		void destroy(U* p)
-		{
-			p->~U();
-		}
-
-		size_type max_size() const
-		{
-			return std::numeric_limits<size_type>::max() / sizeof(value_type);
 		}
 
 	private: 

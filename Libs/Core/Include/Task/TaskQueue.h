@@ -14,7 +14,10 @@ namespace Flourish
     class TaskQueue
     {
     public:
-        static const uint32_t MaximumNumberOfTasks = 4096u;
+        static const uint32_t MAXIMUM_NUMBER_OF_TASKS = 4096u;
+
+		// Mask used for cheap modulo operators. Only works if MAXIMUM_NUMBER_OF_TASKS is a power of 2
+		static const uint32_t MASK = TaskQueue::MAXIMUM_NUMBER_OF_TASKS - 1u;
         
         TaskQueue();
         void Push(Task* task);
@@ -24,6 +27,6 @@ namespace Flourish
     private:
         std::atomic_long _top;
         std::atomic_long _bottom;
-        Task* _tasks[MaximumNumberOfTasks];
+        Task* _tasks[MAXIMUM_NUMBER_OF_TASKS];
     };
 }

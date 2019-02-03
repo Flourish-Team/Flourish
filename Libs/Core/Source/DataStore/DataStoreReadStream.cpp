@@ -1,13 +1,14 @@
+#include <utility>
 #include "DataStore/DataStoreReadStream.h"
 
 #include "DataStore/IWritableDataStore.h"
 
 namespace Flourish
 {
-    DataStoreReadStream::DataStoreReadStream(IReadableDataStore* dataStore, const DataStorePath& path, const DataBuffer& initialData)
+    DataStoreReadStream::DataStoreReadStream(IReadableDataStore* dataStore, DataStorePath path, DataBuffer initialData)
         : _dataStore(dataStore)
-        , _path(path)
-        , _buffer(initialData)
+        , _path(std::move(path))
+        , _buffer(std::move(initialData))
     {
     }
 
@@ -36,7 +37,7 @@ namespace Flourish
 
     void DataStoreReadStream::Refresh(DataStoreReadCallback callback)
     {
-        _dataStore->EnqueueRead(this, &_buffer, callback);
+        _dataStore->EnqueueRead(this, &_buffer, std::move(callback));
     }
 
     DataStorePath DataStoreReadStream::Path() const
