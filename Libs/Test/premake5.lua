@@ -8,6 +8,7 @@ project "Test"
    includedirs 
    { 
       "Include", 
+      "../Core/Include",
       "../../3rdParty/googletest/include" 
    }
 
@@ -19,6 +20,9 @@ project "Test"
    includeCommonFiles()
    excludePlatformSepecificFilesIfNeeded()
 
+
+   links { "Core" }
+
    filter {"system:macosx"}
-      linkoptions  { "-std=c++11", "-stdlib=libc++" }
-      buildoptions { "-std=c++11", "-stdlib=libc++" }
+      linkoptions  { "-std=c++17", "-stdlib=libc++" }
+      buildoptions { "-std=c++17", "-stdlib=libc++" }

@@ -31,5 +31,5 @@ project "Core"
       links { "DbgHelp" }
 
    filter {"system:macosx"}
-      linkoptions  { "-std=c++11", "-stdlib=libc++" }
-      buildoptions { "-std=c++11", "-stdlib=libc++" }
+      linkoptions  { "-std=c++17", "-stdlib=libc++" }
+      buildoptions { "-std=c++17", "-stdlib=libc++" }

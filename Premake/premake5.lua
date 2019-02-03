@@ -18,7 +18,7 @@ workspace "Flourish"
    floatingpoint "Fast"
    startproject "TestProject" 
    warnings "Extra"
-   cppdialect "C++11"
+   cppdialect "C++17"
 
    --Create x32/x64 platforms for each system
 	filter { "system:windows" }

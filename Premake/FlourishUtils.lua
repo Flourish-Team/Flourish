@@ -31,4 +31,6 @@ function excludePlatformSepecificFilesIfNeeded()
       filter {"system:linux", "files:**_WIN.* or files:**_OSX.*"}
          flags {"ExcludeFromBuild"}
    end 
+
+   filter { }
 end

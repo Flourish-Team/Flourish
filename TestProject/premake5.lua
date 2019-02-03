@@ -11,6 +11,8 @@ project "TestProject"
       "../3rdParty/googletest/include" 
    }
 
+   defines { "FL_RUNNING_TESTS" }
+
    links { "Core", "Test", "GoogleTest" }
 
    files { 
@@ -21,9 +23,7 @@ project "TestProject"
    }
 
    excludePlatformSepecificFilesIfNeeded()
-
-   defines { "FL_RUNNING_TESTS" }
-
+   
    filter {"system:macosx"}
-      linkoptions  { "-std=c++11", "-stdlib=libc++" }
-      buildoptions { "-std=c++11", "-stdlib=libc++" }
+      linkoptions  { "-std=c++17", "-stdlib=libc++" }
+      buildoptions { "-std=c++17", "-stdlib=libc++" }

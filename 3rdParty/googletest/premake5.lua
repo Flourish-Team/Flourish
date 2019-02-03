@@ -9,8 +9,8 @@ project "GoogleTest"
    includedirs { "include", "." }
 
    configuration "macosx"
-      linkoptions  { "-std=c++11", "-stdlib=libc++" }
-      buildoptions { "-std=c++11", "-stdlib=libc++" }
+      linkoptions  { "-std=c++17", "-stdlib=libc++" }
+      buildoptions { "-std=c++17", "-stdlib=libc++" }
 
    configuration "windows"
       defines { "GTEST_HAS_PTHREAD=0" }
