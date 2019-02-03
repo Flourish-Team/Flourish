@@ -185,7 +185,7 @@ namespace Flourish
     {
         _data.reserve(_data.size() + buffer->DataAvailableToRead());
         auto bufferData = static_cast<const uint8_t*>(buffer->ReadData());
-        for (auto byteIdx = 0; byteIdx < buffer->DataAvailableToRead(); byteIdx++)
+        for (size_t byteIdx = 0; byteIdx < buffer->DataAvailableToRead(); byteIdx++)
         {
             _data.push_back(bufferData[byteIdx]);
         }

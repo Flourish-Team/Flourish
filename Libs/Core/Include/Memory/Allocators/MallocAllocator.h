@@ -1,13 +1,13 @@
 #pragma once
 #include <cstdlib>
 #include "Macro/MacroUtils.h"
-#include "Memory/Allocator.h"
+#include "Memory/IAllocator.h"
 #include "Memory/AddressUtils.h"
 
 namespace Flourish { namespace Memory {
 
 	// Simmple Allocator implmentation that wraps around malloc/free
-	class MallocAllocator : public Allocator
+	class MallocAllocator : public IAllocator
 	{
 	public:
 		MallocAllocator() {}

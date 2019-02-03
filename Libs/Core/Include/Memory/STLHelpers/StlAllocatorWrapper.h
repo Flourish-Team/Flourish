@@ -29,7 +29,7 @@ namespace Flourish { namespace Memory
 			using other = StlAllocatorWrapper<U, U_ALIGN>;
 		};
 
-		explicit StlAllocatorWrapper(Allocator& allocator) 
+		explicit StlAllocatorWrapper(IAllocator& allocator) 
 			: mWrappedAllocator(allocator)
 		{
 		}
@@ -40,7 +40,7 @@ namespace Flourish { namespace Memory
 		{
 		}
 
-		Allocator& GetWrappedAllocator() const
+		IAllocator& GetWrappedAllocator() const
 		{
 			return mWrappedAllocator;
 		}
@@ -86,7 +86,7 @@ namespace Flourish { namespace Memory
 		template <typename T1, typename T2>
 		friend bool operator!=(const StlAllocatorWrapper<T1>&, const StlAllocatorWrapper<T2>&);
 
-		Allocator& mWrappedAllocator;
+		IAllocator& mWrappedAllocator;
 	};
 
 	template <typename T, typename U>

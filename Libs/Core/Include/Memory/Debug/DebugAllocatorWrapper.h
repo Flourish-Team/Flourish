@@ -1,12 +1,12 @@
 #pragma once
 
-#include <stdlib.h> 
-#include "Allocator.h"
+//#include <stdlib.h> 
+//#include "Allocator.h"
 
 namespace Flourish { namespace Memory
 {
 	//Base for all allocators that supplies numerious policies for easy debugging and multithreading use
-	template <
+	/*template <
 		class ThreadingPolicy,			//How thread safety in the allocator should be handled
 		class MemoryTrackingPolicy,		//How the allocator should track memory (normally for debuging purposes)
 		class BoundsCheckingPolicy,		//How the allocator should perform bounds checking
@@ -90,5 +90,5 @@ namespace Flourish { namespace Memory
 		MemoryTrackingPolicy mMemoryTrackingPolicyImpl;
 		BoundsCheckingPolicy mBoundsCheckingPolicyImpl;
 		MemoryMarkingPolicy mMemoryMarkingPolicyImpl;
-	};
+	};*/
 }}

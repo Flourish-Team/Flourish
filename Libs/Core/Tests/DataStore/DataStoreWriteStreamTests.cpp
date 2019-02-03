@@ -20,23 +20,31 @@ public:
 
     bool Exists(const DataStorePath& path) const override
     {
+		FL_UNUSED(path)
         return false;
     }
 
     void OpenForRead(const DataStorePath& path, DataStoreReadCallback callback) override
     {
+		FL_UNUSED(path)
+		FL_UNUSED(callback)
     }
 
     void Close(DataStoreReadStream* stream) override
     {
+		FL_UNUSED(stream)
     }
 
     void OpenForWrite(const DataStorePath& path, DataStoreWriteCallback callback) override
     {
+		FL_UNUSED(path)
+		FL_UNUSED(callback)
     }
 
     void OpenForAppend(const DataStorePath& path, DataStoreWriteCallback callback) override
     {
+		FL_UNUSED(path)
+		FL_UNUSED(callback)
     }
 
     void Close(DataStoreWriteStream* stream) override
@@ -46,26 +54,36 @@ public:
 
     bool IsDir(const DataStorePath& path) const override
     {
+		FL_UNUSED(path)
         return false;
     }
 
     bool IsData(const DataStorePath& path) const override
     {
+		FL_UNUSED(path)
         return false;
     }
 
     void Enumerate(const DataStorePath& path, std::vector<DataStorePath>& entries) const override
     {
+		FL_UNUSED(path)
+		FL_UNUSED(entries)
     }
 
 protected:
     void EnqueueRead(DataStoreReadStream* stream, DataBuffer* buffer, DataStoreReadCallback callback) override
     {
+		FL_UNUSED(stream)
+		FL_UNUSED(buffer)
+		FL_UNUSED(callback)
     }
 
 private:
     void EnqueueWrite(DataStoreWriteStream* stream, DataBuffer* buffer, DataStoreWriteCallback callback) override
     {
+		FL_UNUSED(stream)
+		FL_UNUSED(callback)
+
         bufferToWrite = buffer;
     }
 };

@@ -1,9 +1,6 @@
 #pragma once
 
-#include "Platform/Platform.h"
-#include "Macro/MacroUtils.h"
 #include "Debug/SourceInfo.h"
-
 //Simple runtime abd static asserts
 //Asserts can be forced on or off using FL_FORCE_ASSERTS_ON or FL_FORCE_ASSERTS_OFF, otherwise they are active 
 //on debug builds only

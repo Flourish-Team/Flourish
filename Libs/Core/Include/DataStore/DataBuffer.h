@@ -2,8 +2,6 @@
 
 #include <algorithm>
 
-#include "Debug/Assert.h"
-
 namespace Flourish
 {
     // Simple buffer that can be written to/read from

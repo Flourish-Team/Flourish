@@ -9,11 +9,13 @@
 
 using namespace Flourish;
 
+//Setup/Cleanup
 template<typename T>
 IWritableDataStore* CreateDataStore();
 template<typename T>
 void DestroyDataStore(IWritableDataStore* dataStore);
 
+//Memory Data Store Setup/Cleanup
 template<>
 IWritableDataStore* CreateDataStore<MemoryDataStore>()
 {
@@ -23,8 +25,10 @@ IWritableDataStore* CreateDataStore<MemoryDataStore>()
 template<>
 void DestroyDataStore<MemoryDataStore>(IWritableDataStore* dataStore)
 {
+	FL_UNUSED(dataStore)
 }
 
+//Local File Data Store Setup/Cleanup
 template<>
 IWritableDataStore* CreateDataStore<LocalFileDataStore>()
 {
@@ -35,8 +39,10 @@ IWritableDataStore* CreateDataStore<LocalFileDataStore>()
 template<>
 void DestroyDataStore<LocalFileDataStore>(IWritableDataStore* dataStore)
 {
+	FL_UNUSED(dataStore)
     FileSystem::DeleteDirectory("temp");
 }
+
 
 template<typename T>
 class DataStoreTests : public ::testing::Test
@@ -224,7 +230,7 @@ TYPED_TEST(DataStoreTests, EnumerateFindsDataAndDirectories)
 
     // We don't care what order things are in, so just assert that
     // all the expected elements (and only those) exist
-        EXPECT_EQUAL(result.size(), 3);
+        EXPECT_EQUAL(result.size(), 3u);
         EXPECT_NOT_EQUAL(std::find(result.begin(), result.end(), DataStorePath("some/path/to/file.txt")), result.end());
         EXPECT_NOT_EQUAL(std::find(result.begin(), result.end(), DataStorePath("some/path/to/another_file.txt")), result.end());
         EXPECT_NOT_EQUAL(std::find(result.begin(), result.end(), DataStorePath("some/path/to/subdir")), result.end());
@@ -348,7 +354,7 @@ TYPED_TEST(DataStoreTests, ConsecutiveReadsReadSameData)
         // Write a buffer full of 1's
         const auto openStream = openResult.Value();
         auto data = new uint8_t[openStream->Available()];
-        std::fill_n(data, openStream->Available(), 1);
+        std::fill_n(data, openStream->Available(), static_cast<uint8_t>(1u));
         openStream->Write(data, openStream->Available());
         delete[] data;
         openStream->Flush([&](DataStoreWriteCallbackParam writeResult)
@@ -356,7 +362,7 @@ TYPED_TEST(DataStoreTests, ConsecutiveReadsReadSameData)
               // Write a buffer full of 2's
               const auto writeStream = writeResult.Value();
               auto streamData = new uint8_t[writeStream->Available()];
-              std::fill_n(streamData, writeStream->Available(), 2);
+              std::fill_n(streamData, writeStream->Available(), static_cast<uint8_t>(2u));
               writeStream->Write(streamData, writeStream->Available());
               delete[] streamData;
               writeStream->Flush([&](DataStoreWriteCallbackParam)

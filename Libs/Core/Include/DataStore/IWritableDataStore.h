@@ -8,11 +8,11 @@ namespace Flourish
     class IWritableDataStore : public IReadableDataStore
     {
     public:
-        virtual ~IWritableDataStore()
-        {
-        }
+		using IReadableDataStore::Close;
 
-        virtual void OpenForWrite(const DataStorePath& path, DataStoreWriteCallback callback) = 0;
+        virtual ~IWritableDataStore() = default;
+
+		virtual void OpenForWrite(const DataStorePath& path, DataStoreWriteCallback callback) = 0;
         virtual void OpenForAppend(const DataStorePath& path, DataStoreWriteCallback callback) = 0;
         virtual void Close(DataStoreWriteStream* stream) = 0;
 

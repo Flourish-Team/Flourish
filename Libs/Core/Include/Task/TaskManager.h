@@ -6,8 +6,6 @@
 #include <mutex>
 #include <condition_variable>
 #include <atomic>
-#include <map>
-#include <functional>
 
 #include "Task/Task.h"
 #include "Task/TaskThreadGate.h"

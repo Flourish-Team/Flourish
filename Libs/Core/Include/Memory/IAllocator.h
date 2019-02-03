@@ -16,11 +16,13 @@ namespace Flourish { namespace Memory
 		IAllocator() = default;
         virtual ~IAllocator() = default;
 
-        //No Copying Of Moving of allocators
+        //No Copying of allocators
 		IAllocator(IAllocator& other) = delete;
-		IAllocator(IAllocator&& other) = delete;
 		IAllocator& operator=(IAllocator&&) = delete;
-		IAllocator& operator=(const IAllocator&) = delete;
+		
+		//Suport moving of allocators
+		IAllocator(IAllocator&& other) = default;
+		IAllocator& operator=(const IAllocator&) = default;
 
 		// Allocates some raw memory of size with alignment. 
 		// (Helper Macros exist in Memory.h for easier use)
@@ -30,7 +32,7 @@ namespace Flourish { namespace Memory
 		// (Helper Macros exist in Memory.h for easier use)
 		virtual void Free(void* ptr, const Debug::SourceInfo& sourceInfo) = 0;
 
-		//Given a pointer, calculates the size of the allocation. This size may be diffrent
+		//Given a pointer, calculates the size of the allocation. This size may be different
 		//to the requests size due to internal functionality of the allocator
 		virtual size_t GetAllocationSize(void* ptr) = 0;
 	};

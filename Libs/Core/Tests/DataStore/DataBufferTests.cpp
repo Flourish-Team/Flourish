@@ -49,8 +49,8 @@ TEST(DataBufferTests, ClearResetsSpace)
 
     buffer.Clear();
 
-    EXPECT_EQUAL(buffer.SpaceLeftToWrite(), 32);
-    EXPECT_EQUAL(buffer.DataAvailableToRead(), 0);
+    EXPECT_EQUAL(buffer.SpaceLeftToWrite(), 32u);
+    EXPECT_EQUAL(buffer.DataAvailableToRead(), 0u);
 }
 
 TEST(DataBufferTests, CanReadBackWhatWasWritten)

@@ -11,7 +11,7 @@ namespace Flourish { namespace Memory
 	// TODO: Expose more functionalty (e.g locking pages for debugging purposes)
 
 	// Allocates Virtual memory from the OS. The size of the allocation will be rounded up to
-	// the nearest GetVirtualPageSize() multiple as so may be bigger then requested
+	// the nearest GetVPageSize() multiple as so may be bigger then requested
 	VAllocResult VAlloc(size_t size);
 
 	// Releases Memory allocated by VirtualAlloc back to the system

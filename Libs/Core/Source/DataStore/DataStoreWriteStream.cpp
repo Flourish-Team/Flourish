@@ -1,6 +1,4 @@
-#include <thread>
 #include "DataStore/DataStoreWriteStream.h"
-
 #include "DataStore/IWritableDataStore.h"
 
 namespace Flourish

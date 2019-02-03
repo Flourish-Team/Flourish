@@ -14,7 +14,6 @@ namespace Flourish { namespace Memory
 		StaticMemoryArea()
 			: MemoryArea(reinterpret_cast<void*>(mStaticMemory), BUFFER_SIZE)
 		{
-			
 		}
 
 		virtual ~StaticMemoryArea() {}

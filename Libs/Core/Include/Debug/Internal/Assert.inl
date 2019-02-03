@@ -1,5 +1,4 @@
 #pragma once
-
 #include "Debug/Debug.h"
 
 #if FL_ENABLED(FL_ASSERT_ENABLED)

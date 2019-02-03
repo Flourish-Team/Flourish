@@ -1,7 +1,6 @@
 #pragma once
 #include <stdlib.h> 
-#include <type_traits>
-#include "Memory/Allocator.h"
+#include "Memory/IAllocator.h"
 #include "Debug/SourceInfo.h"
 
 namespace Flourish { namespace Memory
@@ -14,7 +13,7 @@ namespace Flourish { namespace Memory
 		template <bool>
 		struct CallingDestructor {};
 
-		StlAllocatorDeleter(Allocator& alloc) 
+		StlAllocatorDeleter(IAllocator& alloc) 
 			: mWrappedAllocator(alloc)
 		{
 		}
@@ -29,7 +28,7 @@ namespace Flourish { namespace Memory
 			}
 		}
 
-		Allocator& GetAllocator() const
+		IAllocator& GetAllocator() const
 		{
 			return mWrappedAllocator;
 		}
@@ -47,6 +46,6 @@ namespace Flourish { namespace Memory
             FL_UNUSED(pointer);
 		}
 
-		Allocator& mWrappedAllocator;
+		IAllocator& mWrappedAllocator;
 	};
 }}

@@ -2,18 +2,19 @@
 
 #include "Platform/Platform.h"
 
-namespace Flourish { namespace Memory
+namespace Flourish::Memory
 {
 #if FL_ENABLED(FL_PLATFORM_WINDOWS)
 	inline VAllocResult VAlloc(size_t size)
 	{
-		VAllocResult result;
+		const size_t pageSize = GetVPageSize();
+		const size_t roundedSize = size + pageSize - (size % pageSize);
 
-		auto pageSize = GetVPageSize();
-		auto roundedSize = size + pageSize - (size % pageSize);
-
-		result.data = VirtualAlloc(nullptr, roundedSize, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
-		result.size = roundedSize;
+		const VAllocResult result =
+		{
+			VirtualAlloc(nullptr, roundedSize, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE),
+			roundedSize
+		};
 
 		return result;
 	}
@@ -34,7 +35,7 @@ namespace Flourish { namespace Memory
 		}
 		return minAllocationSize;
 	}
-#elif FL_ENABLED(FL_PLATFORM_LINUX) || FL_ENABLED(FL_PLATFORM_LINUX)
+#elif FL_ENABLED(FL_PLATFORM_OSX) || FL_ENABLED(FL_PLATFORM_LINUX)
 	inline VAllocResult VAlloc(size_t size)
 	{
 		VAllocResult result;
@@ -65,4 +66,4 @@ namespace Flourish { namespace Memory
 		return pageSize;
 	}
 #endif
-}}
+}

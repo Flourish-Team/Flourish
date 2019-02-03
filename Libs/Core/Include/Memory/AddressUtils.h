@@ -36,16 +36,14 @@ namespace Flourish { namespace Memory { namespace AddressUtils
 			adjustment = 0; //already aligned
 		}
 
-		size_t spaceNeeded = headerSize;
-
-		if(adjustment < spaceNeeded)
+		if(adjustment < headerSize)
 		{
-			spaceNeeded -= adjustment;
+			headerSize -= adjustment;
 
 			//Increase adjustment to fit header
-			adjustment += alignment * (spaceNeeded / alignment);
+			adjustment += alignment * (headerSize / alignment);
 
-			if(spaceNeeded % alignment > 0)
+			if(headerSize % alignment > 0)
 			{
 				adjustment += alignment;
 			}

@@ -1,4 +1,5 @@
 #include "DataStore/DataBuffer.h"
+#include "Debug/Assert.h"
 
 namespace Flourish
 {

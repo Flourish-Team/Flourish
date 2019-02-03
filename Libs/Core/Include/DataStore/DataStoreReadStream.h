@@ -1,7 +1,5 @@
 #pragma once
 
-#include <stdint.h>
-
 #include "DataStore/DataBuffer.h"
 #include "DataStore/DataStoreCallbacks.h"
 #include "DataStore/DataStorePath.h"
