@@ -25,7 +25,8 @@ namespace Flourish
 
     bool LocalFileDataStore::Exists(const DataStorePath& path) const
     {
-        auto pathAsCStr = GetFullPath(path).c_str();
+		auto fullPath = GetFullPath(path);
+        auto pathAsCStr = fullPath.c_str();
         return FileSystem::FileExists(pathAsCStr) || FileSystem::DirExists(pathAsCStr);
     }
 
