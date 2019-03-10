@@ -6,7 +6,7 @@ namespace Flourish { namespace Memory
 {
 	//This wrappers allows the use of Flourish allocators where std:allocators are used
 	template <typename T>
-	class StlAllocatorWrapper
+	class StlAllocatorAlignedWrapper
 	{
 	public:
 		using value_type = T;
@@ -15,20 +15,21 @@ namespace Flourish { namespace Memory
 		using propagate_on_container_move_assignment = std::true_type;
 		using propagate_on_container_swap = std::true_type;
 
-		explicit StlAllocatorWrapper(IAllocator& allocator) 
+		explicit StlAllocatorAlignedWrapper(IAllocator& allocator, size_t alignment) 
 			: mWrappedAllocator(allocator)
+			, mAlignment(alignment)
 		{
 		}
 
 		value_type* allocate(std::size_t n)
 		{
-			return FL_NEW_RAW_BUFFER(mWrappedAllocator, n);
+			return FL_NEW_RAW_BUFFER_ALIGN(mWrappedAllocator, n, mAlignment);
 		}
 
 		void deallocate(value_type* p, std::size_t n)
 		{
             FL_UNUSED(n);
-			FL_DELETE_RAW_BUFFER(mWrappedAllocator, p);
+			FL_DELETE_RAW_BUFFER_ALIGN(mWrappedAllocator, p);
 		}
 
 		IAllocator& GetWrappedAllocator() const
@@ -43,23 +44,24 @@ namespace Flourish { namespace Memory
 
 	private: 
 		template <typename T1, typename T2>
-		friend bool operator==(const StlAllocatorWrapper<T1>&, const StlAllocatorWrapper<T2>&);
+		friend bool operator==(const StlAllocatorAlignedWrapper<T1>&, const StlAllocatorAlignedWrapper<T2>&);
 
 		template <typename T1, typename T2>
-		friend bool operator!=(const StlAllocatorWrapper<T1>&, const StlAllocatorWrapper<T2>&);
+		friend bool operator!=(const StlAllocatorAlignedWrapper<T1>&, const StlAllocatorAlignedWrapper<T2>&);
 
 		IAllocator& mWrappedAllocator;
+		size_t mAlignment;
 	};
 
 	template <typename T, typename U>
-	bool operator==(const StlAllocatorWrapper<T>& lhs, const StlAllocatorWrapper<U>& rhs)
+	bool operator==(const StlAllocatorAlignedWrapper<T>& lhs, const StlAllocatorAlignedWrapper<U>& rhs)
 	{
 		//On equal if same allocator, check memory address
 		return &lhs.mWrappedAllocator == &rhs.mWrappedAllocator;
 	}
 
 	template <typename T, typename U>
-	bool operator!=(const StlAllocatorWrapper<T>& lhs, const StlAllocatorWrapper<U>& rhs)
+	bool operator!=(const StlAllocatorAlignedWrapper<T>& lhs, const StlAllocatorAlignedWrapper<U>& rhs)
 	{
 		return !(lhs == rhs);
 	}

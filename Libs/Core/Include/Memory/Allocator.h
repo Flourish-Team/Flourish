@@ -2,7 +2,7 @@
 #include "Debug/SourceInfo.h"
 
 
-namespace Flourish { namespace Memory
+namespace Flourish::Memory
 {
 	struct MemoryNewDelInternal;
 
@@ -34,4 +34,4 @@ namespace Flourish { namespace Memory
 		//to the requests size due to internal functionality of the allocator
 		virtual size_t GetAllocationSize(void* ptr) = 0;
 	};
-}}
+}

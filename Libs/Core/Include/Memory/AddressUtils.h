@@ -8,13 +8,13 @@ namespace Flourish { namespace Memory { namespace AddressUtils
 	// Returns the address with the offset added
 	inline void* AddressAddOffset(const void* address, size_t offset)
 	{
-		return reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(address) - offset);
+		return reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(address) + offset);
 	}
 
 	// Returns the address with the offset subtracted
 	inline void* AddressSubOffset(const void* address, size_t offset)
 	{
-		return reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(address) + offset);
+		return reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(address) - offset);
 	}
 
 	// Returns the diffrence between two address
@@ -58,7 +58,7 @@ namespace Flourish { namespace Memory { namespace AddressUtils
 	// Also take into account the size needed for the header while also alligning the address
 	inline void* AlignAddress(void* address, size_t alignment, size_t headerSize = 0)
 	{
-		return AddressSubOffset(address, AlignAddressAdjustment(address, alignment, headerSize));
+		return AddressAddOffset(address, AlignAddressAdjustment(address, alignment, headerSize));
 	}
 
 	//returns true if the address is aligned to the passed in alignment

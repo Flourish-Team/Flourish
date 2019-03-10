@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <cstring>
 
-namespace Flourish { namespace Debug
+namespace Flourish::Debug
 {
 	namespace
 	{
@@ -126,4 +126,4 @@ namespace Flourish { namespace Debug
 			return shouldBreak;
 		}
 	}
-}}
+}

@@ -5,9 +5,10 @@
 using namespace Flourish;
 using namespace Memory;
 
+
 TEST(MemoryMacroTests, NewDeleteRawPointer)
 {
-	MallocAllocator mallocAllocator;
+	MallocAllocator mallocAllocator("TestAllocator");
 
 	auto intPtr = FL_NEW_RAW(mallocAllocator, int);
 
@@ -20,16 +21,23 @@ TEST(MemoryMacroTests, NewDeleteRawPointer)
 
 TEST(MemoryMacroTests, NewDeleteRawAlignedPointer)
 {
-	MallocAllocator mallocAllocator;
+	struct TestData
+	{
+		int intA;
+		int intB;
+	};
 
-	auto intPtr = FL_NEW_RAW_ALIGN(mallocAllocator, int, 64);
+	MallocAllocator mallocAllocator("TestAllocator");
 
-	ASSERT_TRUE(AddressUtils::IsAligned(intPtr, 64));
+	auto intPtr = FL_NEW_RAW_ALIGNED(mallocAllocator, TestData, 4);
 
-	(*intPtr) = 12345;
+	ASSERT_TRUE(AddressUtils::IsAligned(intPtr, 4));
 
-	ASSERT_EQUAL((*intPtr), 12345);
+	(*intPtr).intA = 12345;
+	(*intPtr).intB = 67890;
 
+	ASSERT_EQUAL((*intPtr).intA, 12345);
+	ASSERT_EQUAL((*intPtr).intB, 67890);
 
-	FL_DELETE_RAW(mallocAllocator, intPtr);
+	FL_DELETE_RAW_ALIGNED(mallocAllocator, intPtr);
 }
