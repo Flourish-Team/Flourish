@@ -53,6 +53,7 @@ namespace Flourish::FileSystem
 					return false;
 				}
 		    }
+			Sleep(1);
 		    end = strchr(++end, '\\');
 		}
 
