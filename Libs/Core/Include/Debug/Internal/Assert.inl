@@ -3,7 +3,8 @@
 
 #if FL_ENABLED(FL_ASSERT_ENABLED)
 	#define _IMPL_FL_ASSERT(condition, message, ...)					\
-		FL_PUSH_DISABLE_COND_EXP_IS_CONSTANT_WARNING					\
+		FL_WARNINGS_PUSH												\
+		FL_DISABLE_WARNING__COND_EXP_IS_CONSTANT						\
 		do																\
 		{																\
 			static bool ignoreThisAssert = false;						\
@@ -22,7 +23,7 @@
 					}													\
 			}															\
 		} while(0);														\
-		FL_POP_DISABLE_COND_EXP_IS_CONSTANT_WARNING
+		FL_WARNINGS_POP
 #else
 	#define _IMPL_FL_ASSERT(condition, message, ...)
 #endif

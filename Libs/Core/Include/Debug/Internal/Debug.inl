@@ -5,7 +5,8 @@
 	debug_break()
 
 #define _IMPL_FL_DEBUG_BREAK_COND(condition)		\
-	FL_PUSH_DISABLE_COND_EXP_IS_CONSTANT_WARNING	\
+	FL_WARNINGS_PUSH								\
+	FL_DISABLE_WARNING__COND_EXP_IS_CONSTANT		\
 	do												\
 	{												\
 		if((condition))								\
@@ -13,4 +14,4 @@
 			FL_DEBUG_BREAK();						\
 		}											\
 	} while(0);										\
-	FL_POP_DISABLE_COND_EXP_IS_CONSTANT_WARNING
+	FL_WARNINGS_POP
