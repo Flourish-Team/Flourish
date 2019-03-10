@@ -17,8 +17,8 @@ namespace Flourish { namespace Debug
 	
 	void DebugPrintfVArgs(const char* message, va_list args)
 	{
-		//va_list argsCopy;
-		//va_copy(argsCopy, args);
+		va_list argsCopy;
+		va_copy(argsCopy, args);
 
 		const size_t bufferSize = 2048; 
 		char messageBuffer[bufferSize];
@@ -33,10 +33,10 @@ namespace Flourish { namespace Debug
 		{
 			//Unable to write the full message to the buffer, allocate a correct size buffer and try again
 			allocBuffer = static_cast<char*>(malloc(sizeof(char) * (numCharsWritten + 1)));
-			//messageBufferPtr = allocBuffer;
+			messageBufferPtr = allocBuffer;
 
-			//vsnprintf(messageBufferPtr, (numCharsWritten + 1), message, argsCopy);
-			//va_end(argsCopy);
+			vsnprintf(messageBufferPtr, (numCharsWritten + 1), message, argsCopy);
+			va_end(argsCopy);
 		}
 
 		fputs(messageBuffer, stdout);
