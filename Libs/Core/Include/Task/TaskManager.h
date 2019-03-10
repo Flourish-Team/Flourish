@@ -46,7 +46,7 @@ namespace Flourish
         void CreateTasks();
 		void CreateAndStartWorkerThreads();
 		void WorkerThreadFunc(int32_t threadIdx);
-        void WaitForTaskAndExecute();
+        void WaitForTaskAndExecute(std::chrono::milliseconds timeout = std::chrono::milliseconds::zero());
         int32_t GetIdealNumThreads();
         Task* GetTaskToExecute();
         Task* GetTaskFromId(TaskId id);

@@ -12,6 +12,12 @@ public:
     {
         _hasWaited = true;
     }
+
+	template<class Rep, class Period, class Predicate>
+	void wait_for(std::unique_lock<std::mutex>&, const std::chrono::duration<Rep, Period>&, Predicate)
+	{
+		_hasWaited = true;
+	}
     
     void notify_one()
     {

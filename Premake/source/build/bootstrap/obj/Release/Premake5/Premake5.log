@@ -1,0 +1,158 @@
+﻿Build started 20/02/2016 23:09:27.
+     1>Project "D:\Anthor\Projects\Flourish\Premake\source\build\bootstrap\Premake5.vcxproj" on node 2 (Build target(s)).
+     1>ClCompile:
+         D:\Programs\Microsoft Visual Studio 14.0\VC\bin\CL.exe /c /I..\..\src\host\lua\src /I..\..\contrib\zlib /I..\..\contrib\libzip /I..\..\contrib\curl\include /Zi /nologo /W4 /WX- /O1 /Oi /Oy- /D _CRT_SECURE_NO_WARNINGS /D _CRT_NONSTDC_NO_WARNINGS /D PREMAKE_COMPRESSION /D CURL_STATICLIB /D PREMAKE_CURL /D NDEBUG /D _UNICODE /D UNICODE /GF /Gm- /EHsc /MT /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"obj\Release\Premake5\\" /Fd"obj\Release\Premake5\vc140.pdb" /Gd /TC /analyze- /errorReport:prompt ..\..\src\host\buffered_io.c ..\..\src\host\criteria_matches.c ..\..\src\host\debug_prompt.c ..\..\src\host\http.c ..\..\src\host\lua\src\lapi.c ..\..\src\host\lua\src\lbaselib.c ..\..\src\host\lua\src\lcode.c ..\..\src\host\lua\src\ldblib.c ..\..\src\host\lua\src\ldebug.c ..\..\src\host\lua\src\ldo.c ..\..\src\host\lua\src\ldump.c ..\..\src\host\lua\src\lfunc.c ..\..\src\host\lua\src\lgc.c ..\..\src\host\lua\src\linit.c ..\..\src\host\lua\src\liolib.c ..\..\src\host\lua\src\llex.c ..\..\src\host\lua\src\lmathlib.c ..\..\src\host\lua\src\lmem.c ..\..\src\host\lua\src\loadlib.c ..\..\src\host\lua\src\lobject.c ..\..\src\host\lua\src\lopcodes.c ..\..\src\host\lua\src\loslib.c ..\..\src\host\lua\src\lparser.c ..\..\src\host\lua\src\lstate.c ..\..\src\host\lua\src\lstring.c ..\..\src\host\lua\src\lstrlib.c ..\..\src\host\lua\src\ltable.c ..\..\src\host\lua\src\ltablib.c ..\..\src\host\lua\src\ltm.c ..\..\src\host\lua\src\lundump.c ..\..\src\host\lua\src\lvm.c ..\..\src\host\lua\src\lzio.c ..\..\src\host\lua_auxlib.c ..\..\src\host\os_chdir.c ..\..\src\host\os_chmod.c ..\..\src\host\os_compile.c ..\..\src\host\os_copyfile.c ..\..\src\host\os_getcwd.c ..\..\src\host\os_getversion.c ..\..\src\host\os_is64bit.c ..\..\src\host\os_isdir.c ..\..\src\host\os_isfile.c ..\..\src\host\os_islink.c ..\..\src\host\os_locate.c ..\..\src\host\os_match.c ..\..\src\host\os_mkdir.c ..\..\src\host\os_pathsearch.c ..\..\src\host\os_realpath.c ..\..\src\host\os_rmdir.c ..\..\src\host\os_stat.c ..\..\src\host\os_uuid.c ..\..\src\host\os_writefile_ifnotequal.c ..\..\src\host\path_getabsolute.c ..\..\src\host\path_getrelative.c ..\..\src\host\path_isabsolute.c ..\..\src\host\path_join.c ..\..\src\host\path_normalize.c ..\..\src\host\path_translate.c ..\..\src\host\path_wildcards.c ..\..\src\host\premake.c ..\..\src\host\premake_main.c ..\..\src\host\string_endswith.c ..\..\src\host\string_hash.c ..\..\src\host\string_sha1.c ..\..\src\host\string_startswith.c ..\..\src\host\zip_extract.c ..\..\src\scripts.c
+         buffered_io.c
+         criteria_matches.c
+         debug_prompt.c
+         http.c
+         lapi.c
+         lbaselib.c
+         lcode.c
+         ldblib.c
+         ldebug.c
+         ldo.c
+         ldump.c
+         lfunc.c
+         lgc.c
+         linit.c
+         liolib.c
+         llex.c
+         lmathlib.c
+         lmem.c
+         loadlib.c
+         lobject.c
+         Generating Code...
+         Compiling...
+         lopcodes.c
+         loslib.c
+         lparser.c
+         lstate.c
+         lstring.c
+         lstrlib.c
+         ltable.c
+         ltablib.c
+         ltm.c
+         lundump.c
+         lvm.c
+         lzio.c
+         lua_auxlib.c
+         os_chdir.c
+         os_chmod.c
+         os_compile.c
+         os_copyfile.c
+         os_getcwd.c
+         os_getversion.c
+     1>..\..\src\host\os_getversion.c(81): warning C4996: 'GetVersionExW': was declared deprecated
+         C:\Program Files (x86)\Windows Kits\8.1\Include\um\sysinfoapi.h(442): note: see declaration of 'GetVersionExW'
+         os_is64bit.c
+         Generating Code...
+         Compiling...
+         os_isdir.c
+         os_isfile.c
+     1>..\..\src\host\os_isfile.c(21): warning C4101: 'buf': unreferenced local variable
+         os_islink.c
+         os_locate.c
+         os_match.c
+         os_mkdir.c
+         os_pathsearch.c
+         os_realpath.c
+         os_rmdir.c
+         os_stat.c
+         os_uuid.c
+         os_writefile_ifnotequal.c
+         path_getabsolute.c
+         path_getrelative.c
+         path_isabsolute.c
+         path_join.c
+         path_normalize.c
+         path_translate.c
+         path_wildcards.c
+         premake.c
+         Generating Code...
+         Compiling...
+         premake_main.c
+         string_endswith.c
+         string_hash.c
+         string_sha1.c
+         string_startswith.c
+         zip_extract.c
+         scripts.c
+         Generating Code...
+       Link:
+         D:\Programs\Microsoft Visual Studio 14.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"..\..\bin\release\premake5.exe" /INCREMENTAL:NO /NOLOGO ole32.lib ws2_32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /PDB:"..\..\bin\release\premake5.pdb" /SUBSYSTEM:CONSOLE /OPT:REF /OPT:ICF /TLBID:1 /ENTRY:"mainCRTStartup" /DYNAMICBASE /NXCOMPAT /IMPLIB:"..\..\bin\release\premake5.lib" /MACHINE:X86 /SAFESEH obj\Release\Premake5\buffered_io.obj
+         obj\Release\Premake5\criteria_matches.obj
+         obj\Release\Premake5\debug_prompt.obj
+         obj\Release\Premake5\http.obj
+         obj\Release\Premake5\lapi.obj
+         obj\Release\Premake5\lbaselib.obj
+         obj\Release\Premake5\lcode.obj
+         obj\Release\Premake5\ldblib.obj
+         obj\Release\Premake5\ldebug.obj
+         obj\Release\Premake5\ldo.obj
+         obj\Release\Premake5\ldump.obj
+         obj\Release\Premake5\lfunc.obj
+         obj\Release\Premake5\lgc.obj
+         obj\Release\Premake5\linit.obj
+         obj\Release\Premake5\liolib.obj
+         obj\Release\Premake5\llex.obj
+         obj\Release\Premake5\lmathlib.obj
+         obj\Release\Premake5\lmem.obj
+         obj\Release\Premake5\loadlib.obj
+         obj\Release\Premake5\lobject.obj
+         obj\Release\Premake5\lopcodes.obj
+         obj\Release\Premake5\loslib.obj
+         obj\Release\Premake5\lparser.obj
+         obj\Release\Premake5\lstate.obj
+         obj\Release\Premake5\lstring.obj
+         obj\Release\Premake5\lstrlib.obj
+         obj\Release\Premake5\ltable.obj
+         obj\Release\Premake5\ltablib.obj
+         obj\Release\Premake5\ltm.obj
+         obj\Release\Premake5\lundump.obj
+         obj\Release\Premake5\lvm.obj
+         obj\Release\Premake5\lzio.obj
+         obj\Release\Premake5\lua_auxlib.obj
+         obj\Release\Premake5\os_chdir.obj
+         obj\Release\Premake5\os_chmod.obj
+         obj\Release\Premake5\os_compile.obj
+         obj\Release\Premake5\os_copyfile.obj
+         obj\Release\Premake5\os_getcwd.obj
+         obj\Release\Premake5\os_getversion.obj
+         obj\Release\Premake5\os_is64bit.obj
+         obj\Release\Premake5\os_isdir.obj
+         obj\Release\Premake5\os_isfile.obj
+         obj\Release\Premake5\os_islink.obj
+         obj\Release\Premake5\os_locate.obj
+         obj\Release\Premake5\os_match.obj
+         obj\Release\Premake5\os_mkdir.obj
+         obj\Release\Premake5\os_pathsearch.obj
+         obj\Release\Premake5\os_realpath.obj
+         obj\Release\Premake5\os_rmdir.obj
+         obj\Release\Premake5\os_stat.obj
+         obj\Release\Premake5\os_uuid.obj
+         obj\Release\Premake5\os_writefile_ifnotequal.obj
+         obj\Release\Premake5\path_getabsolute.obj
+         obj\Release\Premake5\path_getrelative.obj
+         obj\Release\Premake5\path_isabsolute.obj
+         obj\Release\Premake5\path_join.obj
+         obj\Release\Premake5\path_normalize.obj
+         obj\Release\Premake5\path_translate.obj
+         obj\Release\Premake5\path_wildcards.obj
+         obj\Release\Premake5\premake.obj
+         obj\Release\Premake5\premake_main.obj
+         obj\Release\Premake5\string_endswith.obj
+         obj\Release\Premake5\string_hash.obj
+         obj\Release\Premake5\string_sha1.obj
+         obj\Release\Premake5\string_startswith.obj
+         obj\Release\Premake5\zip_extract.obj
+         obj\Release\Premake5\scripts.obj
+         "D:\Anthor\Projects\Flourish\Premake\source\build\bootstrap\bin\Release\zip-lib.lib"
+         "D:\Anthor\Projects\Flourish\Premake\source\build\bootstrap\bin\Release\zlib-lib.lib"
+         "D:\Anthor\Projects\Flourish\Premake\source\build\bootstrap\bin\Release\curl-lib.lib"
+         Premake5.vcxproj -> D:\Anthor\Projects\Flourish\Premake\source\build\bootstrap\..\..\bin\release\premake5.exe
+     1>Done Building Project "D:\Anthor\Projects\Flourish\Premake\source\build\bootstrap\Premake5.vcxproj" (Build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:07.14

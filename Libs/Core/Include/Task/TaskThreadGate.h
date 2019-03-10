@@ -35,12 +35,19 @@ namespace Flourish
             _waitMechanism.notify_all();
         }
         
-        void Wait()
+        void Wait(std::chrono::milliseconds waitDuration = std::chrono::milliseconds::zero())
         {
             std::unique_lock<std::mutex> lock(_mutex);
             if(!_open)
             {
-                _waitMechanism.wait(lock, [&]{ return _open; });
+				if(waitDuration > std::chrono::milliseconds::zero())
+				{
+					_waitMechanism.wait_for(lock, waitDuration, [&] { return _open; });
+				}
+				else
+				{
+					_waitMechanism.wait(lock, [&] { return _open; });
+				}
             }
             if(!_openPermenently)
             {

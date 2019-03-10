@@ -121,7 +121,7 @@ namespace Flourish
         }
 		while (task->_openWorkItems > 0)
 		{
-            WaitForTaskAndExecute();
+            WaitForTaskAndExecute(std::chrono::milliseconds(100));
 		}
 	}
     
@@ -161,13 +161,13 @@ namespace Flourish
         delete _currentThreadTaskQueue;
 	}
     
-    void TaskManager::WaitForTaskAndExecute()
+	void TaskManager::WaitForTaskAndExecute(std::chrono::milliseconds waitDuration)
     {
         auto task = GetTaskToExecute();
         if(task == nullptr)
         {
             // Wait for a more work
-            _taskThreadGate.Wait();
+            _taskThreadGate.Wait(waitDuration);
             return;
         }
         task->_workItem();
