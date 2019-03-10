@@ -1,5 +1,4 @@
 #pragma once
-#include "Memory/Memory.h"
 #include <type_traits>
 
 namespace Flourish { namespace Memory
@@ -20,15 +19,24 @@ namespace Flourish { namespace Memory
 		{
 		}
 
+		template <class U> 
+		StlAllocatorWrapper(StlAllocatorWrapper<U> const& other)
+			: mWrappedAllocator(other.GetWrappedAllocator())
+		{
+			
+		}
+
 		value_type* allocate(std::size_t n)
 		{
-			return FL_NEW_RAW_BUFFER(mWrappedAllocator, n);
+			//CB: Have to use allocator directly due to circular dependencies
+			return static_cast<value_type*>(mWrappedAllocator.Alloc(n * sizeof(value_type), MAKE_SOURCE_INFO));
 		}
 
 		void deallocate(value_type* p, std::size_t n)
 		{
             FL_UNUSED(n);
-			FL_DELETE_RAW_BUFFER(mWrappedAllocator, p);
+			//CB: Have to use allocator directly due to circular dependencies
+			mWrappedAllocator.Free(p);
 		}
 
 		IAllocator& GetWrappedAllocator() const
@@ -40,13 +48,6 @@ namespace Flourish { namespace Memory
 		{
 			return *this;
 		}
-
-	private: 
-		template <typename T1, typename T2>
-		friend bool operator==(const StlAllocatorWrapper<T1>&, const StlAllocatorWrapper<T2>&);
-
-		template <typename T1, typename T2>
-		friend bool operator!=(const StlAllocatorWrapper<T1>&, const StlAllocatorWrapper<T2>&);
 
 		IAllocator& mWrappedAllocator;
 	};

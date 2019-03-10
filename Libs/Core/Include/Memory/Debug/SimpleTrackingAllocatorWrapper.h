@@ -18,10 +18,10 @@ namespace Flourish::Memory
 		DISALLOW_COPY_AND_MOVE(SimpleTrackingAllocatorWrapper);
 
 		//Total bytes allocated by the base allocator across its lifetime (not including extra size used by this wrapper)
-		long GetAllocatorTotalLifeTimeMemoryUsage() const { return AllocatorTotalLifeTimeMemoryUsage; }
+		long GetAllocatorTotalLifeTimeMemoryUsage() const { return mAllocatorTotalLifeTimeMemoryUsage; }
 
 		//Highest total bytes allocated at once by the base allocator across its lifetime (not including extra size used by this wrapper)
-		long GetAllocatorHighWatermarkMemoryUsage() const {	return AllocatorHighWatermarkMemoryUsage; }
+		long GetAllocatorHighWatermarkMemoryUsage() const {	return mAllocatorHighWatermarkMemoryUsage; }
 
 		// Allocates some raw memory of size with alignment. 
 		// (Helper Macros exist in Memory.h for easier use)
@@ -31,8 +31,7 @@ namespace Flourish::Memory
 		// (Helper Macros exist in Memory.h for easier use)
 		void Free(void* ptr) override;
 
-		//Given a pointer, calculates the size of the allocation. if includeInternalMetadataSize is true
-		//then the returned size will include the size of any extra bytes allocated for internal metadata
+		//Given a pointer, calculates the size of the allocation.
 		size_t GetAllocationSize(void* ptr) override;
 
 		//Given a pointer, calculates the size of any internal metadata that was needed for this allocation
@@ -46,6 +45,8 @@ namespace Flourish::Memory
 		//Fills statsReportOut with a report of all open allocations and misc stats about the allocator. Returns false 
 		//if the report was truncated due to the buffer been too small
 		bool DumpCurrentAllocationsStatsReport(char* statsReportOut, int statsReportOutLength);
+
+		const char* GetAllocatorName() override;
 
 	private:
 		//Simple Linked list for tracking allocations. 
@@ -94,9 +95,13 @@ namespace Flourish::Memory
 		IAllocator& mBaseAllocator;
 
 		//Total bytes allocated by the base allocator across its lifetime (not including extra size used by this wrapper)
-		long AllocatorTotalLifeTimeMemoryUsage;
+		long mAllocatorTotalLifeTimeMemoryUsage;
 
 		//Highest total bytes allocated at once by the base allocator across its lifetime (not including extra size used by this wrapper)
-		long AllocatorHighWatermarkMemoryUsage;
+		long mAllocatorHighWatermarkMemoryUsage;
+
+		//Buffer to sprintf name with
+		static const size_t NAME_BUFFER_SIZE = 256;
+		char mNameBuffer[NAME_BUFFER_SIZE];;
 	};
 }

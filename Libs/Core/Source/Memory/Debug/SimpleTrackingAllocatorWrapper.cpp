@@ -33,11 +33,11 @@ namespace Flourish::Memory
 
 		headerData->sourceInfo = sourceInfo;
 
-		AllocatorTotalLifeTimeMemoryUsage += mBaseAllocator.GetAllocationSize(baseMemPtr) + mBaseAllocator.GetMetaDataAllocationSize(baseMemPtr);
+		mAllocatorTotalLifeTimeMemoryUsage += mBaseAllocator.GetAllocationSize(baseMemPtr) + mBaseAllocator.GetMetaDataAllocationSize(baseMemPtr);
 
-		if(AllocatorTotalLifeTimeMemoryUsage > AllocatorHighWatermarkMemoryUsage)
+		if(mAllocatorTotalLifeTimeMemoryUsage > mAllocatorHighWatermarkMemoryUsage)
 		{
-			AllocatorHighWatermarkMemoryUsage = AllocatorTotalLifeTimeMemoryUsage;
+			mAllocatorHighWatermarkMemoryUsage = mAllocatorTotalLifeTimeMemoryUsage;
 		}
 
 		AddEntryToTrackingList(&headerData->listItem);
@@ -184,17 +184,23 @@ namespace Flourish::Memory
 			return false;
 		}
 
-		if(!Utils::CharArrayUtils::sprintfAppend(statsReportOut, statsReportOutLength, "- Total Bytes Allocated: %d", AllocatorTotalLifeTimeMemoryUsage))
+		if(!Utils::CharArrayUtils::sprintfAppend(statsReportOut, statsReportOutLength, "- Total Bytes Allocated: %d", mAllocatorTotalLifeTimeMemoryUsage))
 		{
 			return false;
 		}
 
-		if(!Utils::CharArrayUtils::sprintfAppend(statsReportOut, statsReportOutLength, "- Allocated Bytes High Watermark: %d", AllocatorHighWatermarkMemoryUsage))
+		if(!Utils::CharArrayUtils::sprintfAppend(statsReportOut, statsReportOutLength, "- Allocated Bytes High Watermark: %d", mAllocatorHighWatermarkMemoryUsage))
 		{
 			return false;
 		}
 
 		return true;
+	}
+
+	const char* SimpleTrackingAllocatorWrapper::GetAllocatorName()
+	{
+		sprintf_s(mNameBuffer, NAME_BUFFER_SIZE, "%s [Wrapped by SimpleTrackingAllocatorWrapper]", mBaseAllocator.GetAllocatorName());
+		return mNameBuffer;
 	}
 
 	void SimpleTrackingAllocatorWrapper::InitTrackingList()
@@ -206,8 +212,8 @@ namespace Flourish::Memory
 	void SimpleTrackingAllocatorWrapper::AddEntryToTrackingList(TrackingDataLinkedListItem* newItem)
 	{
 		FL_ASSERT(newItem != nullptr);
-		FL_ASSERT(newItem->next != nullptr);
-		FL_ASSERT(newItem->prev != nullptr);
+		FL_ASSERT(newItem->next == nullptr);
+		FL_ASSERT(newItem->prev == nullptr);
 
 		newItem->next = &mTrackingList;
 		newItem->prev = mTrackingList.prev;

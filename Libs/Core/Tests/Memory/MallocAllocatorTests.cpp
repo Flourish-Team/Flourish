@@ -9,7 +9,7 @@ TEST(MallocAllocatorTests, NameSetCorrectly)
 {
 	MallocAllocator mallocAllocator("TestAllocator");
 
-	ASSERT_STREQ(mallocAllocator.GetAllocatorName(), "TestAllocator [MallocAllocator]");
+	ASSERT_STRING_EQUAL(mallocAllocator.GetAllocatorName(), "TestAllocator [MallocAllocator]");
 }
 
 TEST(MallocAllocatorTests, NewDeleteRawPointer)

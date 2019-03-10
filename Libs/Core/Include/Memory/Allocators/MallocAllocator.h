@@ -48,8 +48,7 @@ namespace Flourish::Memory {
 			free(AddressUtils::AddressSubOffset(ptr, sizeof(size_t)));
 		}
 
-		//Given a pointer, calculates the size of the allocation. if includeInternalMetadataSize is true
-		//then the returned size will include the size of any extra bytes allocated for internal metadata
+		//Given a pointer, calculates the size of the allocation.
 		size_t GetAllocationSize(void* ptr) override
 		{
 			size_t* allocSize = static_cast<size_t *>(AddressUtils::AddressSubOffset(ptr, sizeof(size_t)));

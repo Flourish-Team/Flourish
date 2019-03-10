@@ -3,14 +3,13 @@
 #include <memory>
 #include "../IAllocator.h"
 #include "../STLHelpers/StlAllocatorWrapper.h"
-#include "../STLHelpers/StlAllocatorAlignedWrapper.h"
 #include "Memory/AddressUtils.h"
 #include "Debug/SourceInfo.h"
 #include "Debug/Assert.h"
 
 
 
-namespace Flourish { namespace Memory { namespace Internal 
+namespace Flourish::Memory::Internal 
 {
 	//Internal Allocation functions. Do not use directly, instead use the macro versions in Memory.h
 
@@ -27,7 +26,6 @@ namespace Flourish { namespace Memory { namespace Internal
 	{
 		FL_ASSERT_MSG(alignment >= 2, "Alignment must be >= 2");
 		FL_ASSERT_MSG(alignment && ((alignment & (alignment - 1)) == 0), "Alignment must be power of 2");
-		FL_ASSERT_MSG(size % alignment == 0, "Size must be a multiple of alignment");
 
 		//Added extra space so we can guarantee alignment + storage for offset
 		const size_t spaceNeeded = size + headerSize + (alignment - 1);
@@ -133,10 +131,10 @@ namespace Flourish { namespace Memory { namespace Internal
 		void* mem = RawAlloc(allocator, sizeof(T) * count + sizeof(size_t), sourceInfo);
 
 		//Step back and record the array count for when we delete it
-		size_t* arrayCount = static_cast<size_t *>(mem);
+		size_t* arrayCount = reinterpret_cast<size_t*>(mem);
 		(*arrayCount) = count;
 
-		T* arrayStart = static_cast<T*>(arrayCount + 1);
+		T* arrayStart = reinterpret_cast<T*>(arrayCount + 1);
 
 		for(size_t i = 0; i < count; ++i)
 		{
@@ -154,24 +152,27 @@ namespace Flourish { namespace Memory { namespace Internal
 		if (pointerValue != nullptr) 
 		{
 			//Get the array count from before the array
-			size_t* arrayCount = static_cast<size_t *>(pointerValue) - 1;
+			size_t* arrayCount = reinterpret_cast<size_t *>(pointerValue) - 1;
 
 			for(size_t i = 0; i < (*arrayCount); ++i)
 			{
 				pointerValue[i].~T();
 			}
 
-			allocator.Free(pointerValue);
+			void* basePtr = static_cast<void *>(AddressUtils::AddressSubOffset(pointerValue, sizeof(size_t)));
+
+			allocator.Free(basePtr);
 			pointer = nullptr;
 		}
 	}
 
-	//Allocates am array of objects of type T, aligned to alignment and returns an unmanaged raw pointer. 
+	//Allocates am array of objects of type T, aligned to alignment and returns an unmanaged raw pointer. (Note the size of T has to be a multiple of alignment to allow all elements to be aligned)
 	//Has to be freed manually with DeleteRawPointer()
 	template <class T, typename ...ParamArgs> 
 	FL_FORCE_INLINE T* NewRawPointerArrayAligned(IAllocator& allocator, size_t count, size_t alignment, const Debug::SourceInfo& sourceInfo, ParamArgs&&... params)
 	{
 		FL_ASSERT_MSG(count > 0, "Array count must be > 0");
+		FL_ASSERT_MSG(sizeof(T) % alignment == 0, "Size must be a multiple of alignment to allow array elements to all be aligned. Type should be padded or use FL_ALIGNED_* Macros to fix");
 
 		//allocate memory
 		void* baseMemPtr;
@@ -179,7 +180,7 @@ namespace Flourish { namespace Memory { namespace Internal
 		RawAllocAlignedWithHeaderSpaceHelper(allocator, sizeof(T) * count, alignment, sizeof(AllocAlignArrayHeader), sourceInfo, &baseMemPtr, &alignedPtr);
 
 		//record the offset and array count in the space before the aligned ptr
-		AllocAlignArrayHeader* header = static_cast<AllocAlignArrayHeader*>(alignedPtr) - 1;
+		AllocAlignArrayHeader* header = reinterpret_cast<AllocAlignArrayHeader*>(alignedPtr) - 1;
 
 		(*header).offset = static_cast<size_t>(AddressUtils::AddressDiff(baseMemPtr, alignedPtr));
 		(*header).arrayCount = count;
@@ -202,7 +203,7 @@ namespace Flourish { namespace Memory { namespace Internal
 		if (pointerValue != nullptr) 
 		{
 			//Get the data from before the array
-			AllocAlignArrayHeader* header = static_cast<AllocAlignArrayHeader*>(pointerValue) - 1;
+			AllocAlignArrayHeader* header = reinterpret_cast<AllocAlignArrayHeader*>(pointerValue) - 1;
 
 			for(size_t i = 0; i < (*header).arrayCount; ++i)
 			{
@@ -223,7 +224,7 @@ namespace Flourish { namespace Memory { namespace Internal
 	public:
 		typedef void (*DeleteFunction)(IAllocator& alloc, T** pointer); 
 
-		UniquePtrAllocatorDeleter(IAllocator& allocator, const DeleteFunction deleteFunction) 
+		UniquePtrAllocatorDeleter(IAllocator& allocator, DeleteFunction deleteFunction) 
 			: mWrappedAllocator(allocator)
 			, mDeleteFunction(deleteFunction)
 		{
@@ -245,8 +246,8 @@ namespace Flourish { namespace Memory { namespace Internal
 	FL_FORCE_INLINE std::unique_ptr<T, UniquePtrAllocatorDeleter<T>> NewUniquePtr(IAllocator& allocator, const Debug::SourceInfo& sourceInfo, ParamArgs&&... params)
 	{
 		std::unique_ptr<T, UniquePtrAllocatorDeleter<T>> newUniquePtr(
-			NewRawPointer(allocator, sourceInfo, std::forward<ParamArgs>(params)..., 
-			UniquePtrAllocatorDeleter(allocator, DeleteRawPointer)));
+			NewRawPointer<T>(allocator, sourceInfo, std::forward<ParamArgs>(params)...), 
+			UniquePtrAllocatorDeleter<T>(allocator, DeleteRawPointer));
 
 		return newUniquePtr;
 	}
@@ -256,8 +257,8 @@ namespace Flourish { namespace Memory { namespace Internal
 	FL_FORCE_INLINE std::unique_ptr<T[], UniquePtrAllocatorDeleter<T>> NewUniquePtrArray(IAllocator& allocator, size_t count, const Debug::SourceInfo& sourceInfo, ParamArgs&&... params)
 	{
 		std::unique_ptr<T[], UniquePtrAllocatorDeleter<T>> newUniquePtr(
-			NewRawPointerArray<T>(allocator, count, sourceInfo, std::forward<ParamArgs>(params)..., 
-			UniquePtrAllocatorDeleter(allocator, DeleteRawPointerArray)));
+			NewRawPointerArray<T>(allocator, count, sourceInfo, std::forward<ParamArgs>(params)...), 
+			UniquePtrAllocatorDeleter<T>(allocator, DeleteRawPointerArray));
 
 		return newUniquePtr;
 	}
@@ -267,8 +268,8 @@ namespace Flourish { namespace Memory { namespace Internal
 	FL_FORCE_INLINE std::unique_ptr<T, UniquePtrAllocatorDeleter<T>> NewUniquePtrAligned(IAllocator& allocator, size_t alignment, const Debug::SourceInfo& sourceInfo, ParamArgs&&... params)
 	{
 		std::unique_ptr<T, UniquePtrAllocatorDeleter<T>> newUniquePtr(
-			NewRawPointerAligned(allocator, alignment, sourceInfo, std::forward<ParamArgs>(params)..., 
-			UniquePtrAllocatorDeleter(allocator, DeleteRawPointerAligned)));
+			NewRawPointerAligned<T>(allocator, alignment, sourceInfo, std::forward<ParamArgs>(params)...), 
+			UniquePtrAllocatorDeleter<T>(allocator, DeleteRawPointerAligned));
 
 		return newUniquePtr;
 	}
@@ -278,8 +279,8 @@ namespace Flourish { namespace Memory { namespace Internal
 	FL_FORCE_INLINE std::unique_ptr<T[], UniquePtrAllocatorDeleter<T>> NewUniquePtrArrayAligned(IAllocator& allocator, size_t count, size_t alignment, const Debug::SourceInfo& sourceInfo, ParamArgs&&... params)
 	{
 		std::unique_ptr<T[], UniquePtrAllocatorDeleter<T>> newUniquePtr(
-			NewRawPointerArrayAligned(allocator, count, alignment, sourceInfo, std::forward<ParamArgs>(params)..., 
-			UniquePtrAllocatorDeleter(allocator, DeleteRawPointerArrayAligned)));
+			NewRawPointerArrayAligned<T>(allocator, count, alignment, sourceInfo, std::forward<ParamArgs>(params)...), 
+			UniquePtrAllocatorDeleter<T>(allocator, DeleteRawPointerArrayAligned));
 
 		return newUniquePtr;
 	}
@@ -287,16 +288,26 @@ namespace Flourish { namespace Memory { namespace Internal
 
 	//Allocates a object of type T and returns an shared_ptr to the object. Will be automatically cleaned up once out of scope using the provided deleter
 	template <class T, typename ...ParamArgs> 
-	std::shared_ptr<T> NewSharedPtr(IAllocator& allocator, size_t alignment, ParamArgs&&... params)
+	std::shared_ptr<T> NewSharedPtr(IAllocator& allocator, const Debug::SourceInfo& sourceInfo, ParamArgs&&... params)
 	{
-		return std::allocate_shared<T>(StlAllocatorWrapper<T>(allocator, alignment), std::forward<ParamArgs>(params)...);
+		std::shared_ptr<T> newSharedPtr(
+			NewRawPointer<T>(allocator, sourceInfo, std::forward<ParamArgs>(params)...),
+			UniquePtrAllocatorDeleter<T>(allocator, DeleteRawPointer),
+			StlAllocatorWrapper<T>(allocator));
+
+		return newSharedPtr;
 	}
 
 	//Allocates a object of type T with alignment and returns an shared_ptr to the object. Will be automatically cleaned up once out of scope using the provided deleter
 	template <class T, typename ...ParamArgs> 
-	std::shared_ptr<T> NewSharedPtrAligned(IAllocator& allocator, size_t alignment, ParamArgs&&... params)
+	std::shared_ptr<T> NewSharedPtrAligned(IAllocator& allocator, size_t alignment,  const Debug::SourceInfo& sourceInfo, ParamArgs&&... params)
 	{
-		return std::allocate_shared<T>(StlAllocatorAlignedWrapper<T>(allocator, alignment), std::forward<ParamArgs>(params)...);
+		std::shared_ptr<T> newSharedPtr(
+			NewRawPointerAligned<T>(allocator, alignment, sourceInfo, std::forward<ParamArgs>(params)...),
+			UniquePtrAllocatorDeleter<T>(allocator, DeleteRawPointerAligned),
+			StlAllocatorWrapper<T>(allocator));
+
+		return newSharedPtr;
 	}
 
-}}}
+}
