@@ -8,13 +8,13 @@ namespace Flourish::Debug
 	struct SourceInfo
 	{
 		const char* FileName;
-		int Line;
+		int32_t Line;
 		const char* FunctionName;
 	};
 
 	namespace Internal
 	{
-		FL_FORCE_INLINE SourceInfo CreateSourceInfoStruct(const char* fileName, int lineNumber, const char* functionName)
+		FL_FORCE_INLINE SourceInfo CreateSourceInfoStruct(const char* fileName, int32_t lineNumber, const char* functionName)
 		{
 			return {fileName, lineNumber, functionName};
 		}

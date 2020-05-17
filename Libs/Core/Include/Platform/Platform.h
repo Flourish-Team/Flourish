@@ -1,7 +1,7 @@
 #pragma once
 
 #include "BuildConfig.h"
-#include "../../FlourishConfig.h"
+#include "../FlourishConfig.h"
 #include "Macro/FeatureSwitches.h"
 
 

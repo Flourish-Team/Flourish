@@ -4,26 +4,26 @@
 #include "Memory/IAllocator.h"
 #include "Memory/AddressUtils.h"
 
-namespace Flourish::Memory {
+namespace Flourish::Memory
+{
 
 	// Simple Allocator implementation that wraps around malloc/free
 	class MallocAllocator : public IAllocator
 	{
 	public:
 		explicit MallocAllocator(const char* allocatorName)
+			: IAllocator(allocatorName)
 		{
-			const char* nameString = "%s [MallocAllocator]";
-
-			size_t nameBufferSize = snprintf(NULL, 0, nameString, allocatorName);
-			mAllocatorName = static_cast<char*>(malloc(nameBufferSize + 1));
-
-			snprintf(mAllocatorName, nameBufferSize + 1, nameString, allocatorName);
+			strcat_s(_allocatorName, " [MallocAllocator]");
 		}
 
 		virtual ~MallocAllocator() = default;
 
-		DISALLOW_COPY_AND_MOVE(MallocAllocator);
+		DISALLOW_COPY(MallocAllocator);
 
+		MallocAllocator(MallocAllocator&& other) noexcept = default;
+		MallocAllocator& operator=(MallocAllocator&& other) noexcept = default;
+		
 		// Allocates some raw memory of size with alignment. 
 		// (Helper Macros exist in Memory.h for easier use)
 		void* Alloc(size_t size, const Debug::SourceInfo& sourceInfo) override
@@ -61,14 +61,5 @@ namespace Flourish::Memory {
 			FL_UNUSED(ptr);
 			return sizeof(size_t);
 		}
-
-		const char* GetAllocatorName() override
-		{
-			return mAllocatorName;
-		}
-
-
-	private:
-		char* mAllocatorName;
 	};
 }

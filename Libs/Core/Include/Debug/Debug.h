@@ -28,7 +28,7 @@ namespace Flourish { namespace Debug
 	// Walks the stack and converts it to a string using symbols is found to get function Names.
 	// numFramesToOmit sets how many stack frames to skip in the output
 	// Return value indicated if the stacktrace was obtained ok and if it was truncated
-	StackTraceResult GetStackTrace(int numFramesToOmit,	char* callstackBufOut, int callstackBufOutLength );
+	StackTraceResult GetStackTrace(int32_t numFramesToOmit,	char* callstackBufOut, size_t callstackBufOutLength );
 }}
 
 //Include inline impimentation

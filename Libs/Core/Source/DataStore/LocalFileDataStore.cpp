@@ -134,11 +134,6 @@ namespace Flourish
         auto fullPathToDir = GetFullPath(path.GetDirectory());
         FileSystem::CreateDirectoryTree(fullPathToDir.c_str());
         auto file = FileSystem::OpenAppend(GetFullPath(path).c_str());
-		if(file == nullptr)
-		{
-			int i = 0;
-			i++;
-		}
         auto stream = std::make_shared<DataStoreWriteStream>(this, path);
         _pathToOpenFile.insert({path, new OpenFile(file, stream)});
         callback(DataStoreWriteCallbackParam::Successful(stream));

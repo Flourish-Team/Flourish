@@ -39,6 +39,9 @@ TEST(MemoryMacroTests, NewDeleteRawAlignedPointer)
 
 	ASSERT_EQUAL(testPtr->Data, 0xABCDABCDu);
 
+	void* userPtr = FL_GET_ALLOCATED_PTR_FROM_ALIGNED_ALLOC_PTR(testPtr);
+	ASSERT_EQUAL(testAllocator.GetUserPtr(), userPtr);
+
 	FL_DELETE_RAW_ALIGNED(testAllocator, testPtr);
 
 	ASSERT_EQUAL(callStats.NumCtorCalls, 1);
@@ -63,6 +66,9 @@ TEST(MemoryMacroTests, NewDeleteRawPointerArray)
 	ASSERT_EQUAL(intPtr[1].Data, 0x56785678u);
 	ASSERT_EQUAL(intPtr[2].Data, 0x90AB90ABu);
 	ASSERT_EQUAL(intPtr[3].Data, 0xCDEFCDEFu);
+
+	void* userPtr = FL_GET_ALLOCATED_PTR_FROM_ARRAY_ALLOC_PTR(intPtr);
+	ASSERT_EQUAL(testAllocator.GetUserPtr(), userPtr);
 
 	FL_DELETE_RAW_ARRAY(testAllocator, intPtr);
 
@@ -94,6 +100,9 @@ TEST(MemoryMacroTests, NewDeleteRawAlignedPointerArray)
 	ASSERT_EQUAL(testData[2].Data, 0x90AB90ABu);
 	ASSERT_EQUAL(testData[3].Data, 0xCDEFCDEFu);
 
+	void* userPtr = FL_GET_ALLOCATED_PTR_FROM_ALIGNED_ARRAY_ALLOC_PTR(testData);
+	ASSERT_EQUAL(testAllocator.GetUserPtr(), userPtr);
+
 	FL_DELETE_RAW_ARRAY_ALIGNED(testAllocator, testData);
 
 	ASSERT_EQUAL(callStats.NumCtorCalls, 4);
@@ -108,7 +117,7 @@ TEST(MemoryMacroTests, AllocFreeMemory)
 
 	void* testPtr = FL_ALLOC(testAllocator, 32);
 
-    unsigned int* intPtr = static_cast<unsigned int*>(testPtr);
+    uint32_t* intPtr = static_cast<uint32_t*>(testPtr);
 	(*intPtr) = 0xABCDABCDu;
 
 	ASSERT_EQUAL((*intPtr), 0xABCDABCDu);
@@ -126,7 +135,7 @@ TEST(MemoryMacroTests, AllocFreeAlignedMemory)
 
 	ASSERT_TRUE(AddressUtils::IsAligned(testPtr, 128));
 
-    unsigned int* intPtr = static_cast<unsigned int*>(testPtr);
+    uint32_t* intPtr = static_cast<uint32_t*>(testPtr);
 	(*intPtr) = 0xABCDABCDu;
 
 	ASSERT_EQUAL((*intPtr), 0xABCDABCDu);

@@ -30,6 +30,7 @@ namespace Flourish::Memory
 		// (Helper Macros exist in Memory.h for easier use)
 		virtual void Free(void* ptr, const Debug::SourceInfo& sourceInfo) = 0;
 
+	private:
 		//Given a pointer, calculates the size of the allocation. This size may be diffrent
 		//to the requests size due to internal functionality of the allocator
 		virtual size_t GetAllocationSize(void* ptr) = 0;

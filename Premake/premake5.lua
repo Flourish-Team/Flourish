@@ -16,7 +16,7 @@ workspace "Flourish"
    rtti ("Off")
    exceptionhandling ("Off")
    floatingpoint "Fast"
-   startproject "TestProject" 
+   startproject "UnitTestRunner" 
    warnings "Extra"
    cppdialect "C++17"
 
@@ -51,11 +51,14 @@ workspace "Flourish"
    --include libs
    group("3rdParty")
    	include "../3rdParty/googletest"
-   	
+   
+   --TODO: Generate this list automaticly by checking for premake files
    group("Flourish")
    	include "../Libs/Core"
-   	include "../Libs/Test"
+      include "../Libs/UnitTests"
 
    -- Include applications that need all the libs last
-   group("Examples")
-   	include "../TestProject"
+   group("Tools")
+   	include "../Tools/UnitTestRunner"
+
+   --group("Examples") TODO

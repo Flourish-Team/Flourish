@@ -13,8 +13,8 @@ namespace Flourish::Memory::Testing
 		{
 			
 		}
-		int NumCtorCalls;
-		int NumDtorCalls;
+		int32_t NumCtorCalls;
+		int32_t NumDtorCalls;
 	};
 
 	FL_WARNINGS_PUSH
@@ -36,7 +36,7 @@ namespace Flourish::Memory::Testing
 
 			DISALLOW_COPY_AND_MOVE(TestClass);
 
-			unsigned int Data;
+			uint32_t Data;
 
 		private:
 			CtorDtorCallStats& mCallStats;

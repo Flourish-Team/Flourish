@@ -23,8 +23,8 @@ ParallelFor<DataType, Splitter, TaskSystem> MakeParallelFor(DataType* data, uint
 TEST(ParallelForTests, ShouldAskSplitterIfDataShouldBeSplit)
 {
     const uint32_t dummyDataSize = 20;
-    int dummyData[dummyDataSize];
-    MockSplitter<int> mockSplitter;
+    int32_t dummyData[dummyDataSize];
+    MockSplitter<int32_t> mockSplitter;
     StubTaskSystem stubTaskSystem;
     
     auto parallelFor = MakeParallelFor(dummyData, dummyDataSize, &mockSplitter, &stubTaskSystem);
@@ -38,8 +38,8 @@ TEST(ParallelForTests, ShouldAskSplitterIfDataShouldBeSplit)
 TEST(ParallelForTests, ShouldAddTaskIfSplitReturnsFalse)
 {
     const uint32_t dummyDataSize = 20;
-    int dummyData[dummyDataSize];
-    StubSplitter<int> stubSplitter(false);
+    int32_t dummyData[dummyDataSize];
+    StubSplitter<int32_t> stubSplitter(false);
     MockTaskSystem mockTaskSystem;
     
     auto parallelFor = MakeParallelFor(dummyData, dummyDataSize, &stubSplitter, &mockTaskSystem);
@@ -52,13 +52,13 @@ TEST(ParallelForTests, ShouldAddTaskIfSplitReturnsFalse)
 TEST(ParallelForTests, ShouldSplitIntoSubtasksIfSplitReturnsTrue)
 {
     const uint32_t dummyDataSize = 20;
-    int dummyData[dummyDataSize];
+    int32_t dummyData[dummyDataSize];
     bool shouldSplit[] = {
         true,
         false,
         false
     };
-    ReplaySplitter<int, 3> replaySplitter(shouldSplit);
+    ReplaySplitter<int32_t, 3> replaySplitter(shouldSplit);
     RecordTaskSystem<3> recordTaskSystem;
     
     auto parallelFor = MakeParallelFor(dummyData, dummyDataSize, &replaySplitter, &recordTaskSystem);
@@ -74,13 +74,13 @@ TEST(ParallelForTests, ShouldSplitIntoSubtasksIfSplitReturnsTrue)
 TEST(ParallelForTests, ShouldSplitDataAndCount)
 {
     const uint32_t dummyDataSize = 19;
-    int dummyData[dummyDataSize];
+    int32_t dummyData[dummyDataSize];
     bool shouldSplit[] = {
         true,
         false,
         false
     };
-    RecordReplaySplitter<int, 3> recordReplaySplitter(shouldSplit);
+    RecordReplaySplitter<int32_t, 3> recordReplaySplitter(shouldSplit);
     StubTaskSystem stubTaskSystem;
     
     auto parallelFor = MakeParallelFor(dummyData, dummyDataSize, &recordReplaySplitter, &stubTaskSystem);
@@ -102,15 +102,15 @@ TEST(ParallelForTests, ShouldSplitDataAndCount)
 TEST(ParallelForTests, RunsAllTasks)
 {
     const uint32_t dummyDataSize = 100;
-    int dummyData[dummyDataSize];
-    CountSplitter<int> countSplitter(10);
+    int32_t dummyData[dummyDataSize];
+    CountSplitter<int32_t> countSplitter(10);
     TaskManager taskManager;
     for(uint32_t index = 0; index < dummyDataSize; index++)
     {
         dummyData[index] = index;
     }
     
-    auto parallelFor = ParallelFor<int, CountSplitter<int>>(dummyData, dummyDataSize, &countSplitter, [&](int* data, uint32_t dataCount){
+    auto parallelFor = ParallelFor<int32_t, CountSplitter<int32_t>>(dummyData, dummyDataSize, &countSplitter, [&](int32_t* data, uint32_t dataCount){
         for(uint32_t index = 0; index < dataCount; index++)
         {
             data[index] *= 2;

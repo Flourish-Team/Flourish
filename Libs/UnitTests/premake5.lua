@@ -1,6 +1,6 @@
 include "../../3rdParty/googletest/premake5.lua"
 
-project "Test"
+project "UnitTests"
    kind "StaticLib"
    language "C++"
    targetdir "../../Bin/%{cfg.buildcfg}"
@@ -14,7 +14,7 @@ project "Test"
 
    files 
    { 
-      "Tests/**.cpp" 
+      
    }
 
    includeCommonFiles()

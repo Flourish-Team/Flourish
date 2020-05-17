@@ -55,7 +55,7 @@ namespace Flourish { namespace Memory
 	template <typename T, typename U>
 	bool operator==(const StlAllocatorWrapper<T>& lhs, const StlAllocatorWrapper<U>& rhs)
 	{
-		//On equal if same allocator, check memory address
+		//Only equal if same allocator, check memory address
 		return &lhs.mWrappedAllocator == &rhs.mWrappedAllocator;
 	}
 

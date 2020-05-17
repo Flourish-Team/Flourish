@@ -58,6 +58,14 @@ namespace Flourish::Memory::Internal
 		return alignedPtr;
 	}
 
+	//Gets the pointer to the start of memory that was actually allocated from the aligned pointer that is
+	//returned to the user
+	FL_FORCE_INLINE void* GetRawAllocatedPointerFromRawAllocAlignedPointer(void* ptr)
+	{
+		size_t* offset = static_cast<size_t *>(ptr) - 1;
+		return static_cast<void *>(AddressUtils::AddressSubOffset(ptr, (*offset)));
+	}
+
 	//Frees a buffer of raw memory allocated with RawAlloc()
 	FL_FORCE_INLINE void RawFree(IAllocator& allocator, void* ptr)
 	{
@@ -71,8 +79,7 @@ namespace Flourish::Memory::Internal
 		FL_ASSERT_MSG(ptr != nullptr, "Trying to free null ptr");
 
 		//Step back and get the offset to the actual allocated ptr
-		size_t* offset = static_cast<size_t *>(ptr) - 1;
-		void* basePtr = static_cast<void *>(AddressUtils::AddressSubOffset(ptr, (*offset)));
+		void* basePtr =GetRawAllocatedPointerFromRawAllocAlignedPointer(ptr);
 
 		allocator.Free(basePtr);
 	}
@@ -144,6 +151,13 @@ namespace Flourish::Memory::Internal
 		return arrayStart;
 	}
 
+	//Gets the pointer to the start of memory that was actually allocated from the array pointer that is
+	//returned to the user
+	FL_FORCE_INLINE void* GetRawAllocatedPointerFromNewRawPointerArrayPointer(void* ptr)
+	{
+		return static_cast<void *>(AddressUtils::AddressSubOffset(ptr, sizeof(size_t)));
+	}
+
 	//Deletes a raw pointer allocated with NewRawPointer, Pointer is passed in via pointer and is null'd after delete
 	template <class T> 
 	FL_FORCE_INLINE void DeleteRawPointerArray(IAllocator& allocator, T **pointer) 
@@ -159,7 +173,7 @@ namespace Flourish::Memory::Internal
 				pointerValue[i].~T();
 			}
 
-			void* basePtr = static_cast<void *>(AddressUtils::AddressSubOffset(pointerValue, sizeof(size_t)));
+			void* basePtr = GetRawAllocatedPointerFromNewRawPointerArrayPointer(pointerValue);
 
 			allocator.Free(basePtr);
 			pointer = nullptr;
@@ -195,6 +209,14 @@ namespace Flourish::Memory::Internal
 		return arrayStart;
 	}
 
+	//Gets the pointer to the start of memory that was actually allocated from the array pointer that is
+	//returned to the user
+	FL_FORCE_INLINE void* GetRawAllocatedPointerFromNewRawPointerArrayAlignedPointer(void* ptr)
+	{
+		AllocAlignArrayHeader* header = reinterpret_cast<AllocAlignArrayHeader*>(ptr) - 1;
+		return static_cast<void *>(AddressUtils::AddressSubOffset(ptr, (*header).offset));
+	}
+
 	//Deletes a raw pointer allocated with NewRawPointerArrayAligned, Pointer is passed in via pointer and is null'd after delete
 	template <class T> 
 	FL_FORCE_INLINE void DeleteRawPointerArrayAligned(IAllocator& allocator, T **pointer) 
@@ -210,7 +232,7 @@ namespace Flourish::Memory::Internal
 				pointerValue[i].~T();
 			}
 
-			void* basePtr = static_cast<void *>(AddressUtils::AddressSubOffset(pointerValue, (*header).offset));
+			void* basePtr = GetRawAllocatedPointerFromNewRawPointerArrayAlignedPointer(pointerValue);
 
 			allocator.Free(basePtr);
 			pointer = nullptr;
@@ -239,7 +261,6 @@ namespace Flourish::Memory::Internal
 		IAllocator& mWrappedAllocator;
 		DeleteFunction mDeleteFunction;
 	};
-
 
 	//Allocates a object of type T and returns an unique_ptr to the object. Will be automatically cleaned up once out of scope
 	template <class T, typename ...ParamArgs> 
@@ -288,7 +309,7 @@ namespace Flourish::Memory::Internal
 
 	//Allocates a object of type T and returns an shared_ptr to the object. Will be automatically cleaned up once out of scope using the provided deleter
 	template <class T, typename ...ParamArgs> 
-	std::shared_ptr<T> NewSharedPtr(IAllocator& allocator, const Debug::SourceInfo& sourceInfo, ParamArgs&&... params)
+	FL_FORCE_INLINE std::shared_ptr<T> NewSharedPtr(IAllocator& allocator, const Debug::SourceInfo& sourceInfo, ParamArgs&&... params)
 	{
 		std::shared_ptr<T> newSharedPtr(
 			NewRawPointer<T>(allocator, sourceInfo, std::forward<ParamArgs>(params)...),
@@ -298,9 +319,20 @@ namespace Flourish::Memory::Internal
 		return newSharedPtr;
 	}
 
+	//Allocates a object of type T and returns an shared_ptr to the object. Will be automatically cleaned up once out of scope
+	template <class T, typename ...ParamArgs> 
+	FL_FORCE_INLINE std::shared_ptr<T[]> NewSharedPtrArray(IAllocator& allocator, size_t count, const Debug::SourceInfo& sourceInfo, ParamArgs&&... params)
+	{
+		std::shared_ptr<T[]> newUniquePtr(
+			NewRawPointerArray<T>(allocator, count, sourceInfo, std::forward<ParamArgs>(params)...), 
+			UniquePtrAllocatorDeleter<T>(allocator, DeleteRawPointerArray));
+
+		return newUniquePtr;
+	}
+
 	//Allocates a object of type T with alignment and returns an shared_ptr to the object. Will be automatically cleaned up once out of scope using the provided deleter
 	template <class T, typename ...ParamArgs> 
-	std::shared_ptr<T> NewSharedPtrAligned(IAllocator& allocator, size_t alignment,  const Debug::SourceInfo& sourceInfo, ParamArgs&&... params)
+	FL_FORCE_INLINE std::shared_ptr<T> NewSharedPtrAligned(IAllocator& allocator, size_t alignment,  const Debug::SourceInfo& sourceInfo, ParamArgs&&... params)
 	{
 		std::shared_ptr<T> newSharedPtr(
 			NewRawPointerAligned<T>(allocator, alignment, sourceInfo, std::forward<ParamArgs>(params)...),
@@ -310,4 +342,15 @@ namespace Flourish::Memory::Internal
 		return newSharedPtr;
 	}
 
+	//Allocates an array of objects of type T with alignment and returns an shared_ptr to the object. Will be automatically cleaned up once out of scope
+	template <class T, typename ...ParamArgs> 
+	FL_FORCE_INLINE std::shared_ptr<T[]> NewSharedPtrArrayAligned(IAllocator& allocator, size_t count, size_t alignment, const Debug::SourceInfo& sourceInfo, ParamArgs&&... params)
+	{
+		std::shared_ptr<T[]> newUniquePtr(
+			NewRawPointerArrayAligned<T>(allocator, count, alignment, sourceInfo, std::forward<ParamArgs>(params)...), 
+			UniquePtrAllocatorDeleter<T>(allocator, DeleteRawPointerArrayAligned));
+
+		return newUniquePtr;
+	}
+	
 }

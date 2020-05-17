@@ -1,7 +1,7 @@
 #pragma once
-#include "Core/Include/Macro/MacroUtils.h"
-#include "Core/Include/Macro/FeatureSwitches.h"
-#include "Core/Include/Platform/BuildConfig.h"
+#include "Include/Macro/MacroUtils.h"
+#include "Include/Macro/FeatureSwitches.h"
+#include "Include/Platform/BuildConfig.h"
 
 //-------------------------------------------------------------------------------
 // Flourish Config File
@@ -25,7 +25,7 @@
 // as a 2 digit entry with leading zeros if needed e.g 04
 
 #ifndef FL_VERSION_MAJOR
-	#define FL_VERSION_MAJOR 0
+	#define FL_VERSION_MAJOR 00
 #endif
 
 #ifndef FL_VERSION_MINOR
@@ -41,7 +41,7 @@
 //-------------------------------------------------------------------------------
 // Asserts (FL_ASSERT_ENABLED)
 // 
-// Settting FL_ASSERT_ENABLED to FL_ON will enable run-time asserts in the engine.
+// Setting FL_ASSERT_ENABLED to FL_ON will enable run-time asserts in the engine.
 //
 // By default this is enabled for Debug builds
 

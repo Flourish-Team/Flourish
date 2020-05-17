@@ -5,7 +5,7 @@
 
 namespace Flourish::FileSystem
 {
-	void ReportFileError(const char* path, const char* functionName, int errorCode)
+	void ReportFileError(const char* path, const char* functionName, DWORD errorCode)
 	{
 		char* messageBuffer = nullptr;
 		FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
@@ -20,9 +20,9 @@ namespace Flourish::FileSystem
 		char dirPath[MAX_PATH];
 
 	    strcpy_s(dirPath, path);
-		int pathLen = strlen(dirPath);
+		size_t pathLen = strlen(dirPath);
 
-		for(int i = 0; i < pathLen; ++i)
+		for(size_t i = 0; i < pathLen; ++i)
 		{
 			if(dirPath[i] == '/')
 			{

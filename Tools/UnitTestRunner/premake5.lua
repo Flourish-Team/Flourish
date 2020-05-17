@@ -1,25 +1,27 @@
-project "TestProject"
+project "UnitTestRunner"
    kind "ConsoleApp"
    language "C++"
    targetdir "../Bin/%{cfg.buildcfg}"
    systemversion "latest"
    includedirs 
    { 
-      "../Libs/Core/Include",
-      "../Libs/Core/Tests",
-      "../Libs/Test/Include",
-      "../3rdParty/googletest/include" 
+      "Include", 
+      "../../Libs/Core/Include",
+      "../../Libs/Core/Tests",
+      "../../Libs/UnitTests/Include",
+      "../../3rdParty/googletest/include" 
    }
 
    defines { "FL_RUNNING_TESTS" }
 
-   links { "Core", "Test", "GoogleTest" }
+   links { "Core", "GoogleTest" }
 
    files { 
+      "Include/**.h", 
       "Source/**.cpp",
-      "../Libs/**/Tests/**.cpp",
-      "../Libs/**/Tests/**.h",
-      "../Libs/**/Tests/**.inl"
+      "../../Libs/**/Tests/**.cpp",
+      "../../Libs/**/Tests/**.h",
+      "../../Libs/**/Tests/**.inl"
    }
 
    excludePlatformSepecificFilesIfNeeded()

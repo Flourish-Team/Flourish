@@ -3,6 +3,9 @@
 #include "Platform.h"
 #include "Warnings.h"
 
+//Common Includes
+#include <cstdint>
+
 //Platform independant macros for compiler specific functions
 #if FL_ENABLED(FL_COMPILER_GCC) || FL_ENABLED(FL_COMPILER_CLANG)
 	#define FL_ALIGN(alignment)				__attribute__((aligned(alignment)))

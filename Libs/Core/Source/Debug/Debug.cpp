@@ -78,7 +78,7 @@ namespace Flourish { namespace Debug
 		//Only include when doing stacktraces so we are not forced to link dbghelp.lib when not using it
 		#include "dbghelp.h"
 
-		StackTraceResult GetStackTrace(int numFramesToOmit, char* callstackBufOut, int callstackBufOutLength )
+		StackTraceResult GetStackTrace(int32_t numFramesToOmit, char* callstackBufOut, size_t callstackBufOutLength )
 		{
 			const auto maxNumFramesToCapture = 512;
 			const auto maxSymbolNameSize = 256;
@@ -88,7 +88,7 @@ namespace Flourish { namespace Debug
 			SymInitialize( process, nullptr, TRUE );
 
 			void* stackTraceFrames[ maxNumFramesToCapture ];
-			int numActualFramesCaptured = CaptureStackBackTrace( numFramesToOmit, maxNumFramesToCapture, stackTraceFrames, nullptr );
+			int32_t numActualFramesCaptured = CaptureStackBackTrace( numFramesToOmit, maxNumFramesToCapture, stackTraceFrames, nullptr );
 
 			if(numActualFramesCaptured == 0)
 			{
@@ -104,12 +104,12 @@ namespace Flourish { namespace Debug
 
 			bool truncated = false;
 
-			for(int i = 0; i < numActualFramesCaptured; ++i )
+			for(int32_t i = 0; i < numActualFramesCaptured; ++i )
 			{
 				SymFromAddr( process, reinterpret_cast<DWORD64 >(stackTraceFrames[ i ]), nullptr, symbol );
 
-				int stringLength = strlen(callstackBufOut);
-				int bufferLeftLength = callstackBufOutLength - stringLength;
+				int32_t stringLength = strlen(callstackBufOut);
+				int32_t bufferLeftLength = callstackBufOutLength - stringLength;
 
 				if(snprintf(callstackBufOut + stringLength, bufferLeftLength, "%i: (0x%08I64X) - %s()\n", numActualFramesCaptured - i - 1, symbol->Address, symbol->Name) >= bufferLeftLength)
 				{
@@ -128,7 +128,7 @@ namespace Flourish { namespace Debug
 		#include <cxxabi.h>
         #include <inttypes.h>
 
-		StackTraceResult GetStackTrace(int numFramesToOmit, char* callstackBufOut, int callstackBufOutLength )
+		StackTraceResult GetStackTrace(int32_t numFramesToOmit, char* callstackBufOut, size_t callstackBufOutLength )
 		{
 			//Source: https://panthema.net/2008/0901-stacktrace-demangled/
 
@@ -139,7 +139,7 @@ namespace Flourish { namespace Debug
 			void* addrlist[maxNumFramesToCapture];
 
 			// retrieve current stack addresses
-			int numFramesCaptured = backtrace(addrlist, sizeof(addrlist) / sizeof(void*));
+			int32_t numFramesCaptured = backtrace(addrlist, sizeof(addrlist) / sizeof(void*));
 
 			if (numFramesCaptured == 0) 
 			{
@@ -154,15 +154,15 @@ namespace Flourish { namespace Debug
 			//TODO: replace with allocator to track? (Kinda hard as __cxa_demangle can call remalloc)
 			auto funcname = static_cast<char*>(malloc(maxSymbolNameSize));
 
-			int stringLength;
-			int bufferLeftLength;
+			int32_t stringLength;
+			int32_t bufferLeftLength;
 			callstackBufOut[0] = '\0';
 
 			bool truncated = false;
 
 			// iterate over the returned symbol lines. skip the first, it is the
 			// address of this function.
-			for (int i = numFramesToOmit; i < numFramesCaptured; i++)
+			for (int32_t i = numFramesToOmit; i < numFramesCaptured; i++)
 			{
 				char *begin_name = 0, *begin_offset = 0, *end_offset = 0;
 
@@ -247,7 +247,7 @@ namespace Flourish { namespace Debug
 		}
 	#endif
 #else
-	StackTraceResult GetStackTrace(int numFramesToOmit,	char* callstackBufOut, int callstackBufOutLength )
+	StackTraceResult GetStackTrace(int32_t numFramesToOmit,	char* callstackBufOut, size_t callstackBufOutLength )
 	{
 		FL_UNUSED(numFramesToOmit);
 		FL_UNUSED(callstackBufOut);

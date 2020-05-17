@@ -7,7 +7,7 @@ namespace Flourish::Utils::CharArrayUtils
 {
 	//Appends a string to the end of a char array using sprintf. buffer must already contain a string (or have it first character null terminated).
 	//returns false if the string was truncated
-	bool sprintfAppend(char* buffer, int bufferLength, const char* string, ...)
+	inline bool sprintfAppend(char* buffer, int bufferLength, const char* string, ...)
 	{
 		int currentStringLength = strlen(buffer);
 		int bufferLeftLength = bufferLength - currentStringLength;
